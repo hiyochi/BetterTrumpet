@@ -149,6 +149,8 @@ Notes:
 
 Recent work in `master` includes:
 
+- CLI UTF-8 IPC fix (unreleased after 3.2.0): named-pipe messages are decoded as UTF-8 after byte-level line framing instead of casting each byte to a character. Device/app names and JSON responses now preserve non-ASCII characters such as German umlauts (`Kopfhörer`). Keep `PipeClient` and `PipeServer` on the shared `PipeTextProtocol.ReadLineUtf8` path.
+
 - Public 3.1.0 release on GitHub with setup exe, portable zip, and checksum file
 - 3.1.0 hotfix: when custom slider colors are disabled, volume bars and peak meters now reapply theme brushes instead of falling back to white WPF defaults
 - 3.1.1 hotfix: app-managed launch-at-startup now writes `BetterTrumpet.exe` via `Environment.ProcessPath` instead of `BetterTrumpet.dll` from `Assembly.Location`

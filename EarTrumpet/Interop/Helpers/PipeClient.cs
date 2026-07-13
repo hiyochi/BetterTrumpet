@@ -30,7 +30,7 @@ namespace EarTrumpet.Interop.Helpers
                     client.Flush();
 
                     // Read response (byte-by-byte to avoid StreamReader buffer blocking)
-                    return ReadLineRaw(client);
+                    return PipeTextProtocol.ReadLineUtf8(client);
                 }
             }
             catch (TimeoutException)
@@ -54,22 +54,27 @@ namespace EarTrumpet.Interop.Helpers
             return result != null;
         }
 
+    }
+
+    internal static class PipeTextProtocol
+    {
         /// <summary>
-        /// Read a line from a stream one byte at a time.
-        /// Avoids StreamReader's internal buffering which blocks on pipes.
+        /// Reads one newline-delimited UTF-8 message without StreamReader buffering.
         /// </summary>
-        private static string ReadLineRaw(Stream stream)
+        internal static string ReadLineUtf8(Stream stream)
         {
-            var sb = new StringBuilder();
-            while (true)
+            using (var bytes = new MemoryStream())
             {
-                int b = stream.ReadByte();
-                if (b == -1) break; // End of stream
-                if (b == '\n') break;
-                if (b == '\r') continue; // Skip CR
-                sb.Append((char)b);
+                while (true)
+                {
+                    var value = stream.ReadByte();
+                    if (value == -1 || value == '\n') break;
+                    if (value == '\r') continue;
+                    bytes.WriteByte((byte)value);
+                }
+
+                return Encoding.UTF8.GetString(bytes.GetBuffer(), 0, checked((int)bytes.Length));
             }
-            return sb.ToString();
         }
     }
 }

@@ -74,7 +74,7 @@ namespace EarTrumpet.Interop.Helpers
                     if (!_running) break;
 
                     // Read command (byte-by-byte to avoid StreamReader buffer blocking)
-                    var command = ReadLineRaw(server);
+                    var command = PipeTextProtocol.ReadLineUtf8(server);
                     if (string.IsNullOrEmpty(command))
                     {
                         server.Dispose();
@@ -118,24 +118,6 @@ namespace EarTrumpet.Interop.Helpers
                     catch { }
                 }
             }
-        }
-
-        /// <summary>
-        /// Read a line from a stream one byte at a time. 
-        /// Avoids StreamReader's internal buffering which blocks on pipes.
-        /// </summary>
-        private static string ReadLineRaw(Stream stream)
-        {
-            var sb = new StringBuilder();
-            while (true)
-            {
-                int b = stream.ReadByte();
-                if (b == -1) break; // End of stream
-                if (b == '\n') break;
-                if (b == '\r') continue; // Skip CR
-                sb.Append((char)b);
-            }
-            return sb.ToString();
         }
 
         private static string EscapeJson(string s)
