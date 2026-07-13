@@ -433,6 +433,7 @@ Route an app's audio output to a specific device. Uses the Windows per-app audio
 
 ```
 BetterTrumpet.exe --set-device spotify "Headphones (BEACN Mic)"
+BetterTrumpet.exe --set-device spotify "Kopfhörer"
 ```
 
 ```json
