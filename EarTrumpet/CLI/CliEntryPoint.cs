@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace EarTrumpet.CLI
 {
@@ -19,6 +20,29 @@ namespace EarTrumpet.CLI
 
         [DllImport("kernel32.dll")]
         private static extern bool FreeConsole();
+
+        /// <summary>
+        /// Attach to the parent console and force UTF-8 output.
+        /// Without this, a redirected stdout falls back to the OEM codepage, so box-drawing
+        /// characters in the help banner and accented device names arrive as mojibake in
+        /// wrappers that read UTF-8 (bt.cmd).
+        /// </summary>
+        private static void AttachConsoleForOutput()
+        {
+            AttachConsole(ATTACH_PARENT_PROCESS);
+
+            try
+            {
+                // No BOM: a preamble would corrupt the first line for anything parsing the output.
+                Console.OutputEncoding = new UTF8Encoding(false);
+            }
+            catch (Exception ex)
+            {
+                // Setting the encoding throws when there is no console handle at all
+                // (for example when stdout is closed). Output still works, just in the default codepage.
+                Trace.WriteLine($"CliEntryPoint: could not set UTF-8 console output - {ex.Message}");
+            }
+        }
 
         /// <summary>
         /// Check if the app was launched with CLI arguments.
@@ -41,14 +65,14 @@ namespace EarTrumpet.CLI
                 case "help":
                 case "h":
                 case "?":
-                    AttachConsole(ATTACH_PARENT_PROCESS);
+                    AttachConsoleForOutput();
                     PrintHelp();
                     FreeConsole();
                     return true;
 
                 case "version":
                 case "v":
-                    AttachConsole(ATTACH_PARENT_PROCESS);
+                    AttachConsoleForOutput();
                     Console.WriteLine($"BetterTrumpet v{GetVersion()}");
                     FreeConsole();
                     return true;
@@ -88,7 +112,7 @@ namespace EarTrumpet.CLI
                 case "apps":
                 case "update":
                 case "settings":
-                    AttachConsole(ATTACH_PARENT_PROCESS);
+                    AttachConsoleForOutput();
                     HandleRemoteCommand(cliArgs);
                     FreeConsole();
                     return true;
@@ -97,7 +121,7 @@ namespace EarTrumpet.CLI
                     // Treat a plain argument as a QuickTrumpet preset alias, e.g. `bt focus`.
                     if (!cliArgs[0].StartsWith("-") && !cliArgs[0].StartsWith("/"))
                     {
-                        AttachConsole(ATTACH_PARENT_PROCESS);
+                        AttachConsoleForOutput();
                         HandleRemoteCommand(cliArgs);
                         FreeConsole();
                         return true;

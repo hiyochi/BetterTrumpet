@@ -51,6 +51,8 @@ powershell -ExecutionPolicy Bypass -File build-portable.ps1
 - After rebuilding public assets, recalculate and update `release-checksums-*.txt`, Chocolatey checksum, and Winget `InstallerSha256` together.
 - Never touch `dist/` unless the task explicitly requires release packaging.
 - Microsoft Store packaging is now for the new BetterTrumpet Partner Center app, not the inherited EarTrumpet listing. Partner Center identity: `Package/Identity/Name=xammen.Bettertrumpet`, `Package/Identity/Publisher=CN=7EDFC72A-8780-4841-8F34-30B45D719EAF`, `Package/Properties/PublisherDisplayName=xammen`.
+- Microsoft Store builds must pass `/p:Channel=Store`; without it, GitVersion appends the post-tag commit count (for example `3.2.0.3`) instead of producing the required four-part Store version `3.2.0.0`.
+- Packaged/MSIX runs (`App.HasIdentity == true`) must not initialize or expose the GitHub/Inno updater. Microsoft Store owns updates for those installations; unpackaged GitHub/Chocolatey/Winget builds keep the existing updater.
 
 ## Workbench
 
@@ -149,6 +151,7 @@ Notes:
 
 Recent work in `master` includes:
 
+- Microsoft Store/MSIX runs no longer initialize or expose the GitHub/Inno updater. The tray update actions and update settings page are hidden when `App.HasIdentity` is true so Store installations update exclusively through Microsoft Store.
 - CLI UTF-8 IPC fix (unreleased after 3.2.0): named-pipe messages are decoded as UTF-8 after byte-level line framing instead of casting each byte to a character. Device/app names and JSON responses now preserve non-ASCII characters such as German umlauts (`Kopfhörer`). Keep `PipeClient` and `PipeServer` on the shared `PipeTextProtocol.ReadLineUtf8` path.
 
 - Public 3.1.0 release on GitHub with setup exe, portable zip, and checksum file
@@ -201,6 +204,7 @@ Recent work in `master` includes:
   - `BetterTrumpet-3.2.0-portable.zip` SHA256 `5BEA8FEAA70437286B7CA93E12F44236236B851699174443B93566BB46B6C9EE`
 - Chocolatey `bettertrumpet.3.2.0.nupkg` was pushed successfully and is awaiting automated checks/moderation.
 - Winget PR: `https://github.com/microsoft/winget-pkgs/pull/401693` (open, CLA passed, WinGetSvc checks running at submission time).
+- Microsoft Store Partner Center product `9PKBH40D32G8`, submission `1152921505701257832`, was submitted for certification on 2026-07-14 with `EarTrumpet.Package_3.2.0.0_x86_bundle.msixupload` (SHA256 `D39B5E25E1DE64F4BFC460A9614C2E7EF2EBA21324A2AC11983BEA6CF4383BB8`). Partner Center accepted package version `3.2.0.0`; preprocessing is in progress and publication is configured to start automatically after certification. The package carries the expected `runFullTrust` restricted-capability warning, which remains subject to Microsoft approval.
 
 If replacing same-version GitHub assets again, update hashes everywhere before or immediately after upload. Winget and Chocolatey verify the setup hash and will fail if the GitHub asset changes without their metadata changing.
 

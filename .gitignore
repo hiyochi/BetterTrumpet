@@ -219,6 +219,7 @@ nul
 # Release / local-only files
 /CLAUDE.md
 /AGENTS.md
+/BUILD_INSTRUCTIONS.md
 /temp_bt.exe
 /.impeccable.md
 /pr-body*.txt
