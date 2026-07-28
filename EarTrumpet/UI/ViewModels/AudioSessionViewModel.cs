@@ -67,6 +67,18 @@ namespace EarTrumpet.UI.ViewModels
                 }
             }
         }
+
+        /// <summary>
+        /// Writes the volume without recording an undo step. For automatic enforcement
+        /// (persistent app rules), which can fire repeatedly and is not a user action.
+        /// </summary>
+        internal void SetVolumeWithoutUndo(int volumePercent)
+        {
+            if (_stream.Volume.ToVolumeInt() != volumePercent)
+            {
+                _stream.Volume = volumePercent / 100f;
+            }
+        }
         public virtual float PeakValue1 => _stream.PeakValue1;
         public virtual float PeakValue2 => _stream.PeakValue2;
 

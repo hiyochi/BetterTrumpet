@@ -36,24 +36,26 @@ namespace EarTrumpet
         public event Action CustomSliderColorsChanged;
         public event Action HiddenAppsChanged;
         public event Action HiddenDevicesChanged;
-        public event Action HardMutedAppsChanged;
+        public event Action AppRulesChanged;
 
         private ISettingsBag _settings = StorageFactory.GetSettings();
         private const string HiddenAppEntriesJsonKey = "HiddenAppEntriesJson";
         private const string HiddenDeviceEntriesJsonKey = "HiddenDeviceEntriesJson";
-        private const string HardMutedAppEntriesJsonKey = "HardMutedAppEntriesJson";
+        private const string AppRuleEntriesJsonKey = "AppRuleEntriesJson";
+        // Pre-3.2.1 key, still read once to migrate hard mutes into AppRuleEntriesJson.
+        private const string LegacyHardMutedAppEntriesJsonKey = "HardMutedAppEntriesJson";
         private readonly object _hiddenAppsSync = new object();
         private readonly object _hiddenDevicesSync = new object();
-        private readonly object _hardMutedAppsSync = new object();
+        private readonly object _appRulesSync = new object();
         private bool _hiddenAppsLoaded;
         private bool _hiddenDevicesLoaded;
-        private bool _hardMutedAppsLoaded;
+        private bool _appRulesLoaded;
         private bool _hotkeyPressHandlerRegistered;
         private DateTime _lastQuickTrumpetHotkeyAt = DateTime.MinValue;
         private string _lastQuickTrumpetHotkey;
         private List<HiddenAppEntry> _hiddenAppEntries = new List<HiddenAppEntry>();
         private List<HiddenDeviceEntry> _hiddenDeviceEntries = new List<HiddenDeviceEntry>();
-        private List<HardMutedAppEntry> _hardMutedAppEntries = new List<HardMutedAppEntry>();
+        private List<AppRuleEntry> _appRuleEntries = new List<AppRuleEntry>();
         private List<HotkeyData> _quickTrumpetHotkeys = new List<HotkeyData>();
 
         public class HiddenAppEntry
@@ -72,7 +74,43 @@ namespace EarTrumpet
             public DateTime HiddenAtUtc { get; set; }
         }
 
-        public class HardMutedAppEntry
+        /// <summary>
+        /// How a per-app volume rule behaves. Launch and Lock are mutually exclusive:
+        /// a rule carries one mode and one volume, never "launch at X but lock at Y".
+        /// </summary>
+        public enum VolumeRuleMode
+        {
+            None = 0,
+            /// <summary>Set the volume once when a new instance of the app appears, then leave it alone.</summary>
+            Launch = 1,
+            /// <summary>Hold the volume at the rule value, reverting any change from the app or the OS.</summary>
+            Lock = 2,
+        }
+
+        /// <summary>
+        /// A persistent per-app rule. Hard mute and the volume rule are independent axes
+        /// of the same entry, so the settings list can show one row per app.
+        /// </summary>
+        public class AppRuleEntry
+        {
+            public string ExeName { get; set; }
+            public string DisplayName { get; set; }
+            public bool HardMuted { get; set; }
+            public VolumeRuleMode VolumeMode { get; set; }
+            public int VolumePercent { get; set; }
+            public DateTime CreatedAtUtc { get; set; }
+
+            // Derived, so they must not be persisted: serializing them bloats every
+            // entry and invites drift if the rules behind them ever change.
+            [Newtonsoft.Json.JsonIgnore]
+            public bool HasVolumeRule => VolumeMode != VolumeRuleMode.None;
+
+            [Newtonsoft.Json.JsonIgnore]
+            public bool IsEmpty => !HardMuted && VolumeMode == VolumeRuleMode.None;
+        }
+
+        // Legacy shape, only deserialized during the one-shot migration.
+        private class LegacyHardMutedAppEntry
         {
             public string ExeName { get; set; }
             public string DisplayName { get; set; }
@@ -579,44 +617,78 @@ namespace EarTrumpet
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToLowerInvariant();
         }
 
-        // Hard Muted Apps Methods
-        // A hard-muted app is forced muted every time one of its audio sessions appears,
+        // App Rules Methods
+        // A rule is applied every time one of the app's audio sessions appears,
         // including after the app relaunches or the machine reboots. Keyed by ExeName
         // because AppId and session ids are not stable across restarts.
         public bool IsAppHardMuted(string exeName)
         {
+            return GetAppRule(exeName)?.HardMuted ?? false;
+        }
+
+        public AppRuleEntry GetAppRule(string exeName)
+        {
             var normalizedExeName = NormalizeHiddenKeyValue(exeName);
             if (string.IsNullOrEmpty(normalizedExeName))
             {
-                return false;
+                return null;
             }
 
-            lock (_hardMutedAppsSync)
+            lock (_appRulesSync)
             {
-                EnsureHardMutedAppsLoaded();
-                return _hardMutedAppEntries.Any(entry => entry.ExeName == normalizedExeName);
+                EnsureAppRulesLoaded();
+                var existing = _appRuleEntries.FirstOrDefault(entry => entry.ExeName == normalizedExeName);
+                return existing == null ? null : CloneRule(existing);
             }
         }
 
-        public List<HardMutedAppEntry> GetHardMutedApps()
+        public List<AppRuleEntry> GetAppRules()
         {
-            lock (_hardMutedAppsSync)
+            lock (_appRulesSync)
             {
-                EnsureHardMutedAppsLoaded();
-                return _hardMutedAppEntries
-                    .OrderBy(entry => entry.DisplayName)
+                EnsureAppRulesLoaded();
+                return _appRuleEntries
+                    .OrderBy(entry => string.IsNullOrEmpty(entry.DisplayName) ? entry.ExeName : entry.DisplayName)
                     .ThenBy(entry => entry.ExeName)
-                    .Select(entry => new HardMutedAppEntry
-                    {
-                        ExeName = entry.ExeName,
-                        DisplayName = entry.DisplayName,
-                        HardMutedAtUtc = entry.HardMutedAtUtc,
-                    })
+                    .Select(CloneRule)
                     .ToList();
             }
         }
 
         public void SetAppHardMuted(string exeName, bool hardMuted, string displayName = null)
+        {
+            UpdateRule(exeName, displayName, rule =>
+            {
+                if (rule.HardMuted == hardMuted)
+                {
+                    return false;
+                }
+
+                rule.HardMuted = hardMuted;
+                return true;
+            });
+        }
+
+        public void SetAppVolumeRule(string exeName, VolumeRuleMode mode, int volumePercent, string displayName = null)
+        {
+            var boundedVolume = Math.Max(0, Math.Min(100, volumePercent));
+
+            UpdateRule(exeName, displayName, rule =>
+            {
+                if (rule.VolumeMode == mode && (mode == VolumeRuleMode.None || rule.VolumePercent == boundedVolume))
+                {
+                    return false;
+                }
+
+                rule.VolumeMode = mode;
+                rule.VolumePercent = mode == VolumeRuleMode.None ? 0 : boundedVolume;
+                return true;
+            });
+        }
+
+        // Applies a mutation to one app's rule, creating it if needed and dropping it
+        // once nothing is left to remember. Returns without notifying if nothing changed.
+        private void UpdateRule(string exeName, string displayName, Func<AppRuleEntry, bool> mutate)
         {
             var normalizedExeName = NormalizeHiddenKeyValue(exeName);
             if (string.IsNullOrEmpty(normalizedExeName))
@@ -625,89 +697,166 @@ namespace EarTrumpet
             }
 
             var safeDisplayName = string.IsNullOrWhiteSpace(displayName) ? string.Empty : displayName.Trim();
-            bool changed = false;
+            bool changed;
 
-            lock (_hardMutedAppsSync)
+            lock (_appRulesSync)
             {
-                EnsureHardMutedAppsLoaded();
-                var existing = _hardMutedAppEntries.FirstOrDefault(entry => entry.ExeName == normalizedExeName);
+                EnsureAppRulesLoaded();
+                var existing = _appRuleEntries.FirstOrDefault(entry => entry.ExeName == normalizedExeName);
+                var rule = existing ?? new AppRuleEntry
+                {
+                    ExeName = normalizedExeName,
+                    DisplayName = safeDisplayName,
+                    CreatedAtUtc = DateTime.UtcNow,
+                };
 
-                if (hardMuted && existing == null)
+                changed = mutate(rule);
+                if (!changed)
                 {
-                    _hardMutedAppEntries.Add(new HardMutedAppEntry
-                    {
-                        ExeName = normalizedExeName,
-                        DisplayName = safeDisplayName,
-                        HardMutedAtUtc = DateTime.UtcNow,
-                    });
-                    SaveHardMutedAppsUnsafe();
-                    changed = true;
+                    return;
                 }
-                else if (!hardMuted && existing != null)
+
+                if (existing == null)
                 {
-                    _hardMutedAppEntries.RemoveAll(entry => entry.ExeName == normalizedExeName);
-                    SaveHardMutedAppsUnsafe();
+                    _appRuleEntries.Add(rule);
+                }
+                else if (!string.IsNullOrEmpty(safeDisplayName))
+                {
+                    rule.DisplayName = safeDisplayName;
+                }
+
+                // An entry with no mute and no volume rule carries no information.
+                _appRuleEntries.RemoveAll(entry => !entry.HardMuted && entry.VolumeMode == VolumeRuleMode.None);
+                SaveAppRulesUnsafe();
+            }
+
+            AppRulesChanged?.Invoke();
+        }
+
+        public void RemoveAppRule(string exeName)
+        {
+            var normalizedExeName = NormalizeHiddenKeyValue(exeName);
+            if (string.IsNullOrEmpty(normalizedExeName))
+            {
+                return;
+            }
+
+            bool changed = false;
+            lock (_appRulesSync)
+            {
+                EnsureAppRulesLoaded();
+                if (_appRuleEntries.RemoveAll(entry => entry.ExeName == normalizedExeName) > 0)
+                {
+                    SaveAppRulesUnsafe();
                     changed = true;
                 }
             }
 
             if (changed)
             {
-                HardMutedAppsChanged?.Invoke();
+                AppRulesChanged?.Invoke();
             }
         }
 
-        public void ClearHardMutedApps()
+        public void ClearAppRules()
         {
             bool changed = false;
-            lock (_hardMutedAppsSync)
+            lock (_appRulesSync)
             {
-                EnsureHardMutedAppsLoaded();
-                if (_hardMutedAppEntries.Count > 0)
+                EnsureAppRulesLoaded();
+                if (_appRuleEntries.Count > 0)
                 {
-                    _hardMutedAppEntries.Clear();
-                    SaveHardMutedAppsUnsafe();
+                    _appRuleEntries.Clear();
+                    SaveAppRulesUnsafe();
                     changed = true;
                 }
             }
 
             if (changed)
             {
-                HardMutedAppsChanged?.Invoke();
+                AppRulesChanged?.Invoke();
             }
         }
 
-        private void EnsureHardMutedAppsLoaded()
+        private void EnsureAppRulesLoaded()
         {
-            if (_hardMutedAppsLoaded)
+            if (_appRulesLoaded)
             {
                 return;
             }
 
             try
             {
-                var json = _settings.Get(HardMutedAppEntriesJsonKey, "[]");
-                var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<List<HardMutedAppEntry>>(json) ?? new List<HardMutedAppEntry>();
-                _hardMutedAppEntries = NormalizeHardMutedEntries(loaded);
+                var json = _settings.Get(AppRuleEntriesJsonKey, "[]");
+                var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AppRuleEntry>>(json) ?? new List<AppRuleEntry>();
+                _appRuleEntries = NormalizeAppRuleEntries(loaded);
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"AppSettings EnsureHardMutedAppsLoaded failed: {ex.Message}");
-                _hardMutedAppEntries = new List<HardMutedAppEntry>();
+                Trace.WriteLine($"AppSettings EnsureAppRulesLoaded failed: {ex.Message}");
+                _appRuleEntries = new List<AppRuleEntry>();
             }
 
-            _hardMutedAppsLoaded = true;
+            // One-shot migration from the pre-merge hard-mute-only list.
+            if (_appRuleEntries.Count == 0)
+            {
+                MigrateLegacyHardMutedAppsUnsafe();
+            }
+
+            _appRulesLoaded = true;
         }
 
-        private void SaveHardMutedAppsUnsafe()
+        // Converts HardMutedAppEntriesJson (BetterTrumpet <= 3.2.0) into the merged rule list.
+        // The legacy key is left untouched so downgrading keeps working.
+        private void MigrateLegacyHardMutedAppsUnsafe()
         {
-            _settings.Set(HardMutedAppEntriesJsonKey, Newtonsoft.Json.JsonConvert.SerializeObject(_hardMutedAppEntries));
+            try
+            {
+                if (!_settings.HasKey(LegacyHardMutedAppEntriesJsonKey))
+                {
+                    return;
+                }
+
+                var legacyJson = _settings.Get(LegacyHardMutedAppEntriesJsonKey, "[]");
+                var legacy = Newtonsoft.Json.JsonConvert.DeserializeObject<List<LegacyHardMutedAppEntry>>(legacyJson);
+                if (legacy == null || legacy.Count == 0)
+                {
+                    return;
+                }
+
+                _appRuleEntries = NormalizeAppRuleEntries(legacy
+                    .Where(entry => entry != null)
+                    .Select(entry => new AppRuleEntry
+                    {
+                        ExeName = entry.ExeName,
+                        DisplayName = entry.DisplayName,
+                        HardMuted = true,
+                        VolumeMode = VolumeRuleMode.None,
+                        VolumePercent = 0,
+                        CreatedAtUtc = entry.HardMutedAtUtc,
+                    })
+                    .ToList());
+
+                SaveAppRulesUnsafe();
+                Trace.WriteLine($"AppSettings migrated {_appRuleEntries.Count} legacy hard-mute entries to app rules");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"AppSettings MigrateLegacyHardMutedApps failed: {ex.Message}");
+            }
         }
 
-        private List<HardMutedAppEntry> NormalizeHardMutedEntries(List<HardMutedAppEntry> entries)
+        private void SaveAppRulesUnsafe()
+        {
+            _settings.Set(AppRuleEntriesJsonKey, Newtonsoft.Json.JsonConvert.SerializeObject(_appRuleEntries));
+        }
+
+        // Drops malformed entries, lowercases the exe key, dedupes on it, clamps the
+        // volume, and forgets rules that no longer do anything.
+        private List<AppRuleEntry> NormalizeAppRuleEntries(List<AppRuleEntry> entries)
         {
             var dedup = new HashSet<string>(StringComparer.Ordinal);
-            var normalizedEntries = new List<HardMutedAppEntry>();
+            var normalizedEntries = new List<AppRuleEntry>();
 
             foreach (var entry in entries)
             {
@@ -722,15 +871,42 @@ namespace EarTrumpet
                     continue;
                 }
 
-                normalizedEntries.Add(new HardMutedAppEntry
+                // Hand-edited or downgraded JSON can carry a mode we don't know.
+                var mode = Enum.IsDefined(typeof(VolumeRuleMode), entry.VolumeMode) ? entry.VolumeMode : VolumeRuleMode.None;
+                var percent = Math.Max(0, Math.Min(100, entry.VolumePercent));
+
+                if (!entry.HardMuted && mode == VolumeRuleMode.None)
+                {
+                    continue;
+                }
+
+                normalizedEntries.Add(new AppRuleEntry
                 {
                     ExeName = normalizedExeName,
                     DisplayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? string.Empty : entry.DisplayName.Trim(),
-                    HardMutedAtUtc = entry.HardMutedAtUtc,
+                    HardMuted = entry.HardMuted,
+                    VolumeMode = mode,
+                    VolumePercent = percent,
+                    CreatedAtUtc = entry.CreatedAtUtc,
                 });
             }
 
             return normalizedEntries;
+        }
+
+        // Rules are handed out as copies so callers can't mutate the cached list
+        // without going through SetApp* and raising AppRulesChanged.
+        private static AppRuleEntry CloneRule(AppRuleEntry entry)
+        {
+            return new AppRuleEntry
+            {
+                ExeName = entry.ExeName,
+                DisplayName = entry.DisplayName,
+                HardMuted = entry.HardMuted,
+                VolumeMode = entry.VolumeMode,
+                VolumePercent = entry.VolumePercent,
+                CreatedAtUtc = entry.CreatedAtUtc,
+            };
         }
 
         // Hidden Devices Methods
@@ -1221,18 +1397,59 @@ namespace EarTrumpet
             }
         }
 
-        // Hard-muted apps JSON storage (passthrough for settings export/import).
-        public string HardMutedAppsJson
+        // Per-app rules JSON storage (passthrough for settings export/import).
+        public string AppRulesJson
         {
-            get => _settings.Get(HardMutedAppEntriesJsonKey, "[]");
+            get
+            {
+                // Force the migration so exporting right after an upgrade carries the rules.
+                lock (_appRulesSync)
+                {
+                    EnsureAppRulesLoaded();
+                }
+                return _settings.Get(AppRuleEntriesJsonKey, "[]");
+            }
             set
             {
-                _settings.Set(HardMutedAppEntriesJsonKey, string.IsNullOrWhiteSpace(value) ? "[]" : value);
-                lock (_hardMutedAppsSync)
+                _settings.Set(AppRuleEntriesJsonKey, string.IsNullOrWhiteSpace(value) ? "[]" : value);
+                lock (_appRulesSync)
                 {
-                    _hardMutedAppsLoaded = false;
+                    _appRulesLoaded = false;
                 }
-                HardMutedAppsChanged?.Invoke();
+                AppRulesChanged?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Import-only passthrough for pre-3.2.1 exports, which carried hard mutes under
+        /// their own key. Merges them into the rule list instead of replacing it.
+        /// </summary>
+        public string LegacyHardMutedAppsJson
+        {
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    return;
+                }
+
+                try
+                {
+                    var legacy = Newtonsoft.Json.JsonConvert.DeserializeObject<List<LegacyHardMutedAppEntry>>(value);
+                    if (legacy == null)
+                    {
+                        return;
+                    }
+
+                    foreach (var entry in legacy.Where(e => e != null))
+                    {
+                        SetAppHardMuted(entry.ExeName, true, entry.DisplayName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"AppSettings LegacyHardMutedAppsJson import failed: {ex.Message}");
+                }
             }
         }
 

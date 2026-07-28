@@ -231,6 +231,96 @@
   <data name="HardMuteAppMenuDisableText" xml:space="preserve">
     <value>Ne plus garder en sourdine</value>
   </data>
+  <data name="VolumeRuleAppButtonText" xml:space="preserve">
+    <value>Mémoriser le volume de cette application</value>
+  </data>
+  <data name="VolumeRuleMenuLaunchText" xml:space="preserve">
+    <value>Démarrer à</value>
+  </data>
+  <data name="VolumeRuleMenuLockText" xml:space="preserve">
+    <value>Verrouiller à</value>
+  </data>
+  <data name="VolumeRuleMenuNoneText" xml:space="preserve">
+    <value>Aucune règle de volume</value>
+  </data>
+  <data name="VolumeRulePercentFormatText" xml:space="preserve">
+    <value>{0} %</value>
+  </data>
+  <data name="VolumeRuleUseCurrentFormatText" xml:space="preserve">
+    <value>Volume actuel ({0} %)</value>
+  </data>
+  <data name="AppRulesSettingsPageText" xml:space="preserve">
+    <value>Règles par application</value>
+  </data>
+  <data name="AppRulesSettingsPageSubtitle" xml:space="preserve">
+    <value>Applications gardées en sourdine ou dont le volume est mémorisé</value>
+  </data>
+  <data name="AppRulesListHeaderText" xml:space="preserve">
+    <value>Règles enregistrées</value>
+  </data>
+  <data name="AppRulesListHeaderDesc" xml:space="preserve">
+    <value>Ces règles sont réappliquées à chaque lancement de l'application et survivent au redémarrage.</value>
+  </data>
+  <data name="AppRulesAddHeaderText" xml:space="preserve">
+    <value>Ajouter une application</value>
+  </data>
+  <data name="AppRulesAddHeaderDesc" xml:space="preserve">
+    <value>Saisissez un nom d'exécutable ou parcourez pour créer une règle sans que l'application soit lancée.</value>
+  </data>
+  <data name="AppRulesAddButtonText" xml:space="preserve">
+    <value>Ajouter</value>
+  </data>
+  <data name="AppRulesBrowseButtonText" xml:space="preserve">
+    <value>Parcourir…</value>
+  </data>
+  <data name="AppRulesBrowseDialogTitle" xml:space="preserve">
+    <value>Choisir une application</value>
+  </data>
+  <data name="AppRulesBrowseDialogFilter" xml:space="preserve">
+    <value>Applications (*.exe)|*.exe</value>
+  </data>
+  <data name="AppRulesAddPlaceholderText" xml:space="preserve">
+    <value>Nom de l'exécutable, par exemple steam.exe</value>
+  </data>
+  <data name="AppRulesEmptyText" xml:space="preserve">
+    <value>Aucune règle pour l'instant. Utilisez le menu d'une application dans le volet, ou ajoutez-en une ci-dessous.</value>
+  </data>
+  <data name="AppRulesHardMuteColumnText" xml:space="preserve">
+    <value>Garder en sourdine</value>
+  </data>
+  <data name="AppRulesVolumeColumnText" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="AppRulesModeNoneText" xml:space="preserve">
+    <value>Aucune règle</value>
+  </data>
+  <data name="AppRulesModeLaunchText" xml:space="preserve">
+    <value>Au lancement</value>
+  </data>
+  <data name="AppRulesModeLockText" xml:space="preserve">
+    <value>Verrouillé</value>
+  </data>
+  <data name="AppRulesStatusRunningText" xml:space="preserve">
+    <value>en cours</value>
+  </data>
+  <data name="AppRulesStatusNotRunningText" xml:space="preserve">
+    <value>arrêtée</value>
+  </data>
+  <data name="AppRulesRemoveButtonText" xml:space="preserve">
+    <value>Supprimer cette règle</value>
+  </data>
+  <data name="AppRulesClearAllButtonText" xml:space="preserve">
+    <value>Tout effacer</value>
+  </data>
+  <data name="AppRulesClearAllConfirmTitle" xml:space="preserve">
+    <value>Effacer toutes les règles</value>
+  </data>
+  <data name="AppRulesClearAllConfirmText" xml:space="preserve">
+    <value>Supprimer toutes les règles par application ? Les applications actuellement en sourdine le resteront jusqu'à ce que vous les réactiviez.</value>
+  </data>
+  <data name="AppRulesSharedExeWarningText" xml:space="preserve">
+    <value>Les règles sont liées au nom de l'exécutable : plusieurs fenêtres ou onglets d'une même application sont donc affectés ensemble.</value>
+  </data>
   <data name="SettingsOpenEarTrumpetText" xml:space="preserve">
     <value>Ouvrir le menu déroulant</value>
   </data>

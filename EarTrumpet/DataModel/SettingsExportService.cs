@@ -84,8 +84,8 @@ namespace EarTrumpet.DataModel
                 ["VolumeProfilesJson"] = settings.VolumeProfilesJson,
                 ["ShowQuickTrumpetConfirmation"] = settings.ShowQuickTrumpetConfirmation,
 
-                // Hard-muted apps
-                ["HardMutedAppsJson"] = settings.HardMutedAppsJson,
+                // Per-app rules (hard mute + volume rules)
+                ["AppRulesJson"] = settings.AppRulesJson,
             };
 
             return data;
@@ -254,8 +254,10 @@ namespace EarTrumpet.DataModel
             // Volume Profiles
             TrySet(data, "VolumeProfilesJson", (string v) => settings.VolumeProfilesJson = v);
 
-            // Hard-muted apps
-            TrySet(data, "HardMutedAppsJson", (string v) => settings.HardMutedAppsJson = v);
+            // Per-app rules. The legacy key is applied second so a pre-3.2.1 export still
+            // restores its hard mutes; it merges into the rule list rather than replacing it.
+            TrySet(data, "AppRulesJson", (string v) => settings.AppRulesJson = v);
+            TrySet(data, "HardMutedAppsJson", (string v) => settings.LegacyHardMutedAppsJson = v);
         }
 
         private static void TrySet<T>(Dictionary<string, object> data, string key, Action<T> setter)

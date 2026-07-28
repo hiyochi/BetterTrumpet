@@ -989,6 +989,186 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string VolumeRuleAppButtonText {
+            get {
+                return ResourceManager.GetString("VolumeRuleAppButtonText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRuleMenuLaunchText {
+            get {
+                return ResourceManager.GetString("VolumeRuleMenuLaunchText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRuleMenuLockText {
+            get {
+                return ResourceManager.GetString("VolumeRuleMenuLockText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRuleMenuNoneText {
+            get {
+                return ResourceManager.GetString("VolumeRuleMenuNoneText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRulePercentFormatText {
+            get {
+                return ResourceManager.GetString("VolumeRulePercentFormatText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRuleUseCurrentFormatText {
+            get {
+                return ResourceManager.GetString("VolumeRuleUseCurrentFormatText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesSettingsPageText {
+            get {
+                return ResourceManager.GetString("AppRulesSettingsPageText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesSettingsPageSubtitle {
+            get {
+                return ResourceManager.GetString("AppRulesSettingsPageSubtitle", resourceCulture);
+            }
+        }
+
+        public static string AppRulesListHeaderText {
+            get {
+                return ResourceManager.GetString("AppRulesListHeaderText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesListHeaderDesc {
+            get {
+                return ResourceManager.GetString("AppRulesListHeaderDesc", resourceCulture);
+            }
+        }
+
+        public static string AppRulesAddHeaderText {
+            get {
+                return ResourceManager.GetString("AppRulesAddHeaderText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesAddHeaderDesc {
+            get {
+                return ResourceManager.GetString("AppRulesAddHeaderDesc", resourceCulture);
+            }
+        }
+
+        public static string AppRulesAddPlaceholderText {
+            get {
+                return ResourceManager.GetString("AppRulesAddPlaceholderText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesAddButtonText {
+            get {
+                return ResourceManager.GetString("AppRulesAddButtonText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesBrowseButtonText {
+            get {
+                return ResourceManager.GetString("AppRulesBrowseButtonText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesBrowseDialogTitle {
+            get {
+                return ResourceManager.GetString("AppRulesBrowseDialogTitle", resourceCulture);
+            }
+        }
+
+        public static string AppRulesBrowseDialogFilter {
+            get {
+                return ResourceManager.GetString("AppRulesBrowseDialogFilter", resourceCulture);
+            }
+        }
+
+        public static string AppRulesClearAllButtonText {
+            get {
+                return ResourceManager.GetString("AppRulesClearAllButtonText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesClearAllConfirmTitle {
+            get {
+                return ResourceManager.GetString("AppRulesClearAllConfirmTitle", resourceCulture);
+            }
+        }
+
+        public static string AppRulesClearAllConfirmText {
+            get {
+                return ResourceManager.GetString("AppRulesClearAllConfirmText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesEmptyText {
+            get {
+                return ResourceManager.GetString("AppRulesEmptyText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesHardMuteColumnText {
+            get {
+                return ResourceManager.GetString("AppRulesHardMuteColumnText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesVolumeColumnText {
+            get {
+                return ResourceManager.GetString("AppRulesVolumeColumnText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesRemoveButtonText {
+            get {
+                return ResourceManager.GetString("AppRulesRemoveButtonText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesModeNoneText {
+            get {
+                return ResourceManager.GetString("AppRulesModeNoneText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesModeLaunchText {
+            get {
+                return ResourceManager.GetString("AppRulesModeLaunchText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesModeLockText {
+            get {
+                return ResourceManager.GetString("AppRulesModeLockText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesStatusRunningText {
+            get {
+                return ResourceManager.GetString("AppRulesStatusRunningText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesStatusNotRunningText {
+            get {
+                return ResourceManager.GetString("AppRulesStatusNotRunningText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesSharedExeWarningText {
+            get {
+                return ResourceManager.GetString("AppRulesSharedExeWarningText", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Hide this device.
         /// </summary>

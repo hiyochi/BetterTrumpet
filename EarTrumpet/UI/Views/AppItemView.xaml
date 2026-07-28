@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:Theme="clr-namespace:EarTrumpet.UI.Themes"
              xmlns:ctl="clr-namespace:EarTrumpet.UI.Controls"
+             xmlns:resx="clr-namespace:EarTrumpet.Properties"
              Height="{DynamicResource Mutable_AppItemCellHeight}"
              ClipToBounds="True"
              IsTabStop="False">
@@ -66,6 +67,34 @@
                     </Border>
                 </Grid>
             </Border>
+            <!-- Lock badge: a disabled slider on its own reads as a bug, so the reason
+                 for it has to be visible on the row. -->
+            <Border Width="10"
+                    Height="10"
+                    Margin="0,0,-1,-1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    CornerRadius="5"
+                    Theme:Brush.Background="SystemAccent"
+                    ToolTip="{x:Static resx:Resources.AppRulesModeLockText}"
+                    ToolTipService.InitialShowDelay="0">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsVolumeLocked}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Theme:Brush.Foreground="Text"
+                           FontFamily="Segoe MDL2 Assets"
+                           FontSize="6"
+                           Text="&#xE72E;" />
+            </Border>
             <Button Name="MuteButton"
                     Width="{DynamicResource Mutable_AppIconSize}"
                     Height="{DynamicResource Mutable_AppIconSize}"
@@ -105,6 +134,11 @@
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsMuted}" Value="True">
                             <Setter Property="Opacity" Value="{StaticResource MutedOpacity}" />
+                        </DataTrigger>
+                        <!-- A locked volume would snap straight back, so the slider is
+                             disabled rather than left to fight the rule under the cursor. -->
+                        <DataTrigger Binding="{Binding IsVolumeLocked}" Value="True">
+                            <Setter Property="IsEnabled" Value="False" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

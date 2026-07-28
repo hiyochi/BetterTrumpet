@@ -75,6 +75,8 @@ namespace EarTrumpet.UI.ViewModels
         public bool IsMovable { get; }
         public float PeakValue1 { get; }
         public float PeakValue2 { get; }
+        // A redirection placeholder has no real session to lock, so the slider stays live.
+        public bool IsVolumeLocked => false;
         public string PersistedOutputDevice => ((IAudioDeviceManagerWindowsAudio)_deviceManager).GetDefaultEndPoint(ProcessId);
         public int ProcessId { get; }
         public IDeviceViewModel Parent { get; }

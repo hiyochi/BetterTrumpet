@@ -52,6 +52,7 @@ namespace EarTrumpet.UI.ViewModels
         public bool IsHiding { get; set; }
         public bool IsExpanded => false;
         public bool IsMovable => false;
+        public bool IsVolumeLocked => false;
         public float PeakValue1 => 0;
         public float PeakValue2 => 0;
         public string PersistedOutputDevice => throw new NotImplementedException();

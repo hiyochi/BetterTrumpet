@@ -20,6 +20,11 @@ namespace EarTrumpet.UI.ViewModels
         bool IsHiding { get; set; }
         bool IsExpanded { get; }
         bool IsMovable { get; }
+        /// <summary>
+        /// True while a Lock volume rule holds this app's volume. The slider binds its
+        /// enabled state to this: fighting a locked slider mid-drag looks like a bug.
+        /// </summary>
+        bool IsVolumeLocked { get; }
         float PeakValue1 { get; }
         float PeakValue2 { get; }
         string PersistedOutputDevice { get; }
