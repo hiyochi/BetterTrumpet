@@ -395,6 +395,12 @@ namespace EarTrumpet
                     {
                         Dispatcher.Invoke((Action)(() =>
                         {
+                            if (HasIdentity)
+                            {
+                                Trace.WriteLine("Startup: Microsoft Store package detected, GitHub updater disabled");
+                                return;
+                            }
+
                             _updateService = new DataModel.UpdateService();
                             _updateService.Channel = Settings.UpdateNotifyChannel;
                             _flyoutViewModel.SetUpdateService(_updateService);
@@ -407,7 +413,10 @@ namespace EarTrumpet
                                 _updateService.Start();
                             }
                         }));
-                        Trace.WriteLine($"Startup: UpdateService initialized at {Duration.TotalMilliseconds:F0}ms");
+                        if (!HasIdentity)
+                        {
+                            Trace.WriteLine($"Startup: UpdateService initialized at {Duration.TotalMilliseconds:F0}ms");
+                        }
                     }
                     catch (Exception ex) { Trace.WriteLine($"Startup: UpdateService failed: {ex.Message}"); }
                 }));
@@ -762,10 +771,14 @@ namespace EarTrumpet
                 });
             }
 
+            ret.Add(new ContextMenuSeparator());
+            if (!HasIdentity)
+            {
+                ret.Add(new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.CheckForUpdatesText, Glyph = "\xE895", IconData = PhosphorIconData.ArrowsClockwise, IconScale = 0.98, Command = new RelayCommand(CheckForUpdatesFromTray) });
+            }
+
             ret.AddRange(new List<ContextMenuItem>
                 {
-                    new ContextMenuSeparator(),
-                    new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.CheckForUpdatesText, Glyph = "\xE895", IconData = PhosphorIconData.ArrowsClockwise, IconScale = 0.98, Command = new RelayCommand(CheckForUpdatesFromTray) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayWhatsNew, Glyph = "\xE8F1", IconData = PhosphorIconData.ListBullets, IconScale = 0.93, Command = new RelayCommand(ShowChangelogManually) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayShowOnboarding, Glyph = "\xE7BE", IconData = PhosphorIconData.Sparkle, IconScale = 0.92, Command = new RelayCommand(ShowOnboardingManually) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayStarProject, Glyph = "\xE734", IconData = PhosphorIconData.GitHubLogo, IconScale = 0.96, Command = new RelayCommand(OpenGitHubRepo) },
@@ -862,18 +875,23 @@ namespace EarTrumpet
                         new EarTrumpetAnimationSettingsPageViewModel(Settings)
                     });
 
+            // Store packages receive updates from Microsoft Store, so the GitHub
+            // update settings page is only relevant to unpackaged installations.
+            var applicationPages = new List<SettingsPageViewModel>();
+            if (!HasIdentity)
+            {
+                applicationPages.Add(CreateUpdatesPage());
+            }
+            applicationPages.Add(CreatePrivacyPage());
+            applicationPages.Add(CreateAboutPage());
+
             // Application — about the app itself: version, updates, privacy/data.
             var applicationCategory = new SettingsCategoryViewModel(
                 EarTrumpet.Properties.Resources.AppCategoryTitle,
                 "\xE946", // Info icon
                 EarTrumpet.Properties.Resources.AppCategoryDescription,
                 null,
-                new SettingsPageViewModel[]
-                    {
-                        CreateUpdatesPage(),
-                        CreatePrivacyPage(),
-                        CreateAboutPage()
-                    });
+                applicationPages);
 
             var allCategories = new List<SettingsCategoryViewModel>();
             allCategories.Add(generalCategory);
