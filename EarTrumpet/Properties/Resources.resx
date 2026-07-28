@@ -237,6 +237,96 @@
   <data name="HardMuteAppMenuDisableText" xml:space="preserve">
     <value>Stop keeping muted</value>
   </data>
+  <data name="VolumeRuleAppButtonText" xml:space="preserve">
+    <value>Remember this app's volume</value>
+  </data>
+  <data name="VolumeRuleMenuLaunchText" xml:space="preserve">
+    <value>Start at</value>
+  </data>
+  <data name="VolumeRuleMenuLockText" xml:space="preserve">
+    <value>Lock at</value>
+  </data>
+  <data name="VolumeRuleMenuNoneText" xml:space="preserve">
+    <value>No volume rule</value>
+  </data>
+  <data name="VolumeRulePercentFormatText" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="VolumeRuleUseCurrentFormatText" xml:space="preserve">
+    <value>Current volume ({0}%)</value>
+  </data>
+  <data name="AppRulesSettingsPageText" xml:space="preserve">
+    <value>App rules</value>
+  </data>
+  <data name="AppRulesSettingsPageSubtitle" xml:space="preserve">
+    <value>Apps kept muted or pinned to a volume, remembered across restarts</value>
+  </data>
+  <data name="AppRulesListHeaderText" xml:space="preserve">
+    <value>Saved rules</value>
+  </data>
+  <data name="AppRulesListHeaderDesc" xml:space="preserve">
+    <value>Rules are keyed on the executable, so every window of the same app shares one rule.</value>
+  </data>
+  <data name="AppRulesAddHeaderText" xml:space="preserve">
+    <value>Add an app</value>
+  </data>
+  <data name="AppRulesAddHeaderDesc" xml:space="preserve">
+    <value>Create a rule for an app that is not currently playing audio.</value>
+  </data>
+  <data name="AppRulesAddPlaceholderText" xml:space="preserve">
+    <value>Executable name, e.g. steam.exe</value>
+  </data>
+  <data name="AppRulesAddButtonText" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="AppRulesBrowseButtonText" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="AppRulesBrowseDialogTitle" xml:space="preserve">
+    <value>Pick an application</value>
+  </data>
+  <data name="AppRulesBrowseDialogFilter" xml:space="preserve">
+    <value>Applications (*.exe)|*.exe</value>
+  </data>
+  <data name="AppRulesClearAllButtonText" xml:space="preserve">
+    <value>Remove all</value>
+  </data>
+  <data name="AppRulesClearAllConfirmTitle" xml:space="preserve">
+    <value>Remove all app rules</value>
+  </data>
+  <data name="AppRulesClearAllConfirmText" xml:space="preserve">
+    <value>Remove every saved app rule? Muted apps stay muted until you unmute them.</value>
+  </data>
+  <data name="AppRulesEmptyText" xml:space="preserve">
+    <value>No rules yet. Use the volume or mute button on an app in the flyout, or add one below.</value>
+  </data>
+  <data name="AppRulesHardMuteColumnText" xml:space="preserve">
+    <value>Keep muted</value>
+  </data>
+  <data name="AppRulesVolumeColumnText" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="AppRulesRemoveButtonText" xml:space="preserve">
+    <value>Remove this rule</value>
+  </data>
+  <data name="AppRulesModeNoneText" xml:space="preserve">
+    <value>No volume rule</value>
+  </data>
+  <data name="AppRulesModeLaunchText" xml:space="preserve">
+    <value>Set at launch</value>
+  </data>
+  <data name="AppRulesModeLockText" xml:space="preserve">
+    <value>Lock</value>
+  </data>
+  <data name="AppRulesStatusRunningText" xml:space="preserve">
+    <value>running</value>
+  </data>
+  <data name="AppRulesStatusNotRunningText" xml:space="preserve">
+    <value>not running</value>
+  </data>
+  <data name="AppRulesSharedExeWarningText" xml:space="preserve">
+    <value>Rules are keyed on the executable name, so several windows or tabs of the same app are affected together.</value>
+  </data>
   <data name="SettingsOpenEarTrumpetText" xml:space="preserve">
     <value>Open Taskbar flyout</value>
   </data>

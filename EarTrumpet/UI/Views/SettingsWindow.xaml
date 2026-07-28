@@ -2164,6 +2164,181 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- App Rules Settings Page -->
+        <DataTemplate DataType="{x:Type vm:EarTrumpetAppRulesSettingsPageViewModel}">
+            <StackPanel Orientation="Vertical" Margin="0,0,16,0">
+
+                <!-- SECTION: Saved rules -->
+                <Border Style="{StaticResource SectionCardBorder}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Style="{StaticResource SectionIconBorder}">
+                                <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="White" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{x:Static resx:Resources.AppRulesListHeaderText}" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Static resx:Resources.AppRulesListHeaderDesc}"
+                                           Style="{StaticResource BodySubText}" FontSize="12" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="{x:Static resx:Resources.AppRulesEmptyText}"
+                                   Style="{StaticResource BodySubText}" FontSize="12" TextWrapping="Wrap"
+                                   Margin="0,4,0,0"
+                                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <ItemsControl ItemsSource="{Binding Rules}" Margin="0,8,0,0"
+                                      Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource SystemControlTransparentBrush}"
+                                            Padding="8,8" Margin="0,0,0,8"
+                                            BorderBrush="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                            BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- App title + status (row 0, col 0) -->
+                                            <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding Subtitle}" FontSize="11" Opacity="0.7" />
+                                                <TextBlock Text="{Binding StatusText}" FontSize="10" Opacity="0.6" Margin="0,2,0,0" />
+                                            </StackPanel>
+
+                                            <!-- Hard mute toggle (row 0, col 1) -->
+                                            <CheckBox Grid.Row="0" Grid.Column="1"
+                                                      Content="{x:Static resx:Resources.AppRulesHardMuteColumnText}"
+                                                      IsChecked="{Binding HardMuted}"
+                                                      FontSize="12" Margin="12,0,12,0" VerticalAlignment="Center" />
+
+                                            <!-- Volume mode picker (row 0, col 2) -->
+                                            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="{x:Static resx:Resources.AppRulesVolumeColumnText}" FontSize="12"
+                                                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <ComboBox ItemsSource="{Binding VolumeModeOptions}"
+                                                          SelectedIndex="{Binding VolumeModeIndex}"
+                                                          FontSize="12" MinWidth="110" />
+                                            </StackPanel>
+
+                                            <!-- Remove button (row 0, col 3) -->
+                                            <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource ActionButtonBorder}"
+                                                    ToolTip="{x:Static resx:Resources.AppRulesRemoveButtonText}"
+                                                    MouseLeftButtonDown="RemoveAppRule_Click" Tag="{Binding}">
+                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Theme:Brush.Foreground="Theme=GrayText, HighContrast=Text" />
+                                            </Border>
+
+                                            <!-- Volume slider (row 1, spans all cols) -->
+                                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal"
+                                                        Margin="0,8,0,0"
+                                                        Visibility="{Binding HasVolumeRule, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <Slider Width="200" Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
+                                                        TickFrequency="1" IsSnapToTickEnabled="True" VerticalAlignment="Center" />
+                                                <TextBlock Text="{Binding VolumePercent, StringFormat={}{0}%}" FontSize="12"
+                                                           Margin="12,0,0,0" MinWidth="40" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{x:Static resx:Resources.AppRulesSharedExeWarningText}"
+                                   Style="{StaticResource BodySubText}" FontSize="11" TextWrapping="Wrap"
+                                   Margin="0,4,0,0"
+                                   Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <Border Style="{StaticResource ActionButtonBorder}" HorizontalAlignment="Left" Margin="0,12,0,0"
+                                MouseLeftButtonDown="ClearAllAppRules_Click"
+                                Visibility="{Binding HasRules, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                           VerticalAlignment="Center" Margin="0,0,6,0"
+                                           Theme:Brush.Foreground="Theme=GrayText, HighContrast=Text" />
+                                <TextBlock Text="{x:Static resx:Resources.AppRulesClearAllButtonText}" FontSize="12" VerticalAlignment="Center"
+                                           Theme:Brush.Foreground="Theme=Text, HighContrast=Text" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION: Add an app -->
+                <Border Style="{StaticResource SectionCardBorder}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Style="{StaticResource SectionIconBorder}">
+                                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="White" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{x:Static resx:Resources.AppRulesAddHeaderText}" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Static resx:Resources.AppRulesAddHeaderDesc}"
+                                           Style="{StaticResource BodySubText}" FontSize="12" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding NewRuleExeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Padding="8,6" FontSize="13" VerticalContentAlignment="Center"
+                                     Theme:Brush.Foreground="Theme=Text, HighContrast=Text"
+                                     Theme:Brush.Background="Theme={Theme}ListLow, HighContrast=Window"
+                                     ToolTip="{x:Static resx:Resources.AppRulesAddPlaceholderText}">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="BorderBrush" Value="#30FFFFFF" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsFocused" Value="True">
+                                                <Setter Property="BorderBrush" Value="#60FFFFFF" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <Border Grid.Column="1" Style="{StaticResource ActionButtonBorder}" Margin="8,0,0,0"
+                                    MouseLeftButtonDown="AddAppRule_Click">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               VerticalAlignment="Center" Margin="0,0,6,0"
+                                               Theme:Brush.Foreground="Theme=GrayText, HighContrast=Text" />
+                                    <TextBlock Text="{x:Static resx:Resources.AppRulesAddButtonText}" FontSize="12" VerticalAlignment="Center"
+                                               Theme:Brush.Foreground="Theme=Text, HighContrast=Text" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource ActionButtonBorder}" Margin="8,0,0,0"
+                                    MouseLeftButtonDown="BrowseAppRuleExe_Click">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               VerticalAlignment="Center" Margin="0,0,6,0"
+                                               Theme:Brush.Foreground="Theme=GrayText, HighContrast=Text" />
+                                    <TextBlock Text="{x:Static resx:Resources.AppRulesBrowseButtonText}" FontSize="12" VerticalAlignment="Center"
+                                               Theme:Brush.Foreground="Theme=Text, HighContrast=Text" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:EarTrumpetAboutPageViewModel}">
             <StackPanel Margin="0,0,0,24">
                 <!-- App identity header -->

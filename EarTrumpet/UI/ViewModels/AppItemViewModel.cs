@@ -47,6 +47,21 @@ namespace EarTrumpet.UI.ViewModels
         }
         public bool IsExpanded { get; private set; }
         public int ProcessId => _session.ProcessId;
+
+        private bool _isVolumeLocked;
+        public bool IsVolumeLocked
+        {
+            get => _isVolumeLocked;
+            internal set
+            {
+                if (_isVolumeLocked != value)
+                {
+                    _isVolumeLocked = value;
+                    RaisePropertyChanged(nameof(IsVolumeLocked));
+                }
+            }
+        }
+
         public ObservableCollection<IAppItemViewModel> ChildApps { get; private set; }
 
         public bool IsMovable => !_session.IsSystemSoundsSession &&

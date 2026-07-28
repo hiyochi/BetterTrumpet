@@ -37,7 +37,7 @@ namespace EarTrumpet.UI.ViewModels
             _settings = settings;
             _settings.HiddenAppsChanged += OnHiddenAppsChanged;
             _settings.HiddenDevicesChanged += OnHiddenDevicesChanged;
-            _settings.HardMutedAppsChanged += OnHardMutedAppsChanged;
+            _settings.AppRulesChanged += OnAppRulesChanged;
             _deviceManager = deviceManager;
             _deviceManager.DefaultChanged += OnDefaultChanged;
             _deviceManager.Devices.CollectionChanged += OnCollectionChanged;
@@ -266,6 +266,11 @@ namespace EarTrumpet.UI.ViewModels
             return _settings != null && app != null && _settings.IsAppHardMuted(app.ExeName);
         }
 
+        public AppSettings.AppRuleEntry GetAppRule(IAppItemViewModel app)
+        {
+            return app == null ? null : _settings?.GetAppRule(app.ExeName);
+        }
+
         public void ToggleHardMuteApp(IAppItemViewModel app)
         {
             if (_settings == null || app == null || string.IsNullOrWhiteSpace(app.ExeName))
@@ -274,7 +279,7 @@ namespace EarTrumpet.UI.ViewModels
             }
 
             bool newState = !_settings.IsAppHardMuted(app.ExeName);
-            // SetAppHardMuted raises HardMutedAppsChanged, which reapplies the mute to live sessions.
+            // SetAppHardMuted raises AppRulesChanged, which reapplies the mute to live sessions.
             _settings.SetAppHardMuted(app.ExeName, newState, app.DisplayName);
 
             // Disabling hard mute unmutes the app the user is acting on, so it becomes audible again.
@@ -284,11 +289,35 @@ namespace EarTrumpet.UI.ViewModels
             }
         }
 
-        private void OnHardMutedAppsChanged()
+        /// <summary>
+        /// Sets the persistent volume rule for an app and applies it to the live session
+        /// immediately, so picking a value in the menu has a visible effect right away.
+        /// </summary>
+        public void SetAppVolumeRule(IAppItemViewModel app, AppSettings.VolumeRuleMode mode, int volumePercent)
+        {
+            if (_settings == null || app == null || string.IsNullOrWhiteSpace(app.ExeName))
+            {
+                return;
+            }
+
+            _settings.SetAppVolumeRule(app.ExeName, mode, volumePercent, app.DisplayName);
+
+            if (mode != AppSettings.VolumeRuleMode.None && app.Parent is DeviceViewModel device)
+            {
+                device.ApplyRuleToAppNow(app);
+            }
+        }
+
+        public void ClearAppVolumeRule(IAppItemViewModel app)
+        {
+            SetAppVolumeRule(app, AppSettings.VolumeRuleMode.None, 0);
+        }
+
+        private void OnAppRulesChanged()
         {
             foreach (var device in AllDevices)
             {
-                device.ApplyHardMuteState();
+                device.ApplyAppRules();
             }
         }
 

@@ -105,6 +105,41 @@ namespace EarTrumpet.UI.ViewModels
                         }
                     }
                 });
+
+                var rule = parent.GetAppRule(app);
+                var ruleMode = rule?.VolumeMode ?? AppSettings.VolumeRuleMode.None;
+                var rulePercent = rule?.VolumePercent ?? 0;
+
+                Toolbar.Insert(0, new ToolbarItemViewModel
+                {
+                    GlyphFontSize = 16,
+                    DisplayName = Properties.Resources.VolumeRuleAppButtonText,
+                    Glyph = "\uE767",
+                    Menu = new ObservableCollection<ContextMenuItem>
+                    {
+                        new ContextMenuItem
+                        {
+                            DisplayName = Properties.Resources.VolumeRuleMenuLaunchText,
+                            Children = BuildVolumeRuleItems(parent, app, AppSettings.VolumeRuleMode.Launch, ruleMode, rulePercent),
+                        },
+                        new ContextMenuItem
+                        {
+                            DisplayName = Properties.Resources.VolumeRuleMenuLockText,
+                            Children = BuildVolumeRuleItems(parent, app, AppSettings.VolumeRuleMode.Lock, ruleMode, rulePercent),
+                        },
+                        new ContextMenuSeparator(),
+                        new ContextMenuItem
+                        {
+                            DisplayName = Properties.Resources.VolumeRuleMenuNoneText,
+                            IsChecked = ruleMode == AppSettings.VolumeRuleMode.None,
+                            Command = new RelayCommand(() =>
+                            {
+                                parent.ClearAppVolumeRule(app);
+                                RequestClose.Invoke();
+                            }),
+                        },
+                    }
+                });
             }
 
             var contentItems = AddonManager.Host.AppContentItems;
@@ -123,6 +158,48 @@ namespace EarTrumpet.UI.ViewModels
                     });
                 }
             }
+        }
+
+        // Presets offered for both Launch and Lock, plus "use whatever the slider is at now",
+        // which is the natural gesture: set the volume, then pin it.
+        private static readonly int[] VolumeRulePresets = { 10, 20, 30, 50, 75 };
+
+        private ObservableCollection<ContextMenuItem> BuildVolumeRuleItems(
+            DeviceCollectionViewModel parent,
+            IAppItemViewModel app,
+            AppSettings.VolumeRuleMode mode,
+            AppSettings.VolumeRuleMode currentMode,
+            int currentPercent)
+        {
+            var items = new ObservableCollection<ContextMenuItem>();
+
+            foreach (var preset in VolumeRulePresets)
+            {
+                var value = preset;
+                items.Add(new ContextMenuItem
+                {
+                    DisplayName = string.Format(Properties.Resources.VolumeRulePercentFormatText, value),
+                    IsChecked = currentMode == mode && currentPercent == value,
+                    Command = new RelayCommand(() =>
+                    {
+                        parent.SetAppVolumeRule(app, mode, value);
+                        RequestClose.Invoke();
+                    }),
+                });
+            }
+
+            items.Add(new ContextMenuSeparator());
+            items.Add(new ContextMenuItem
+            {
+                DisplayName = string.Format(Properties.Resources.VolumeRuleUseCurrentFormatText, app.Volume),
+                Command = new RelayCommand(() =>
+                {
+                    parent.SetAppVolumeRule(app, mode, app.Volume);
+                    RequestClose.Invoke();
+                }),
+            });
+
+            return items;
         }
 
         public void Closing()

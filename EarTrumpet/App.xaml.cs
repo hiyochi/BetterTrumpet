@@ -858,7 +858,8 @@ namespace EarTrumpet
                         new EarTrumpetLegacySettingsPageViewModel(Settings),
                         new EarTrumpetMouseSettingsPageViewModel(Settings),
                         new EarTrumpetShortcutsPageViewModel(Settings),
-                        new EarTrumpetVolumeProfilesSettingsPageViewModel(Settings)
+                        new EarTrumpetVolumeProfilesSettingsPageViewModel(Settings),
+                        new EarTrumpetAppRulesSettingsPageViewModel(Settings)
                     });
 
             // Appearance — how BetterTrumpet looks and performs: colors/theme,

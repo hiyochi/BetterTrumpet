@@ -4,6 +4,7 @@ using EarTrumpet.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 
@@ -190,6 +191,7 @@ namespace EarTrumpet.UI.ViewModels
                     var existing = Apps.FirstOrDefault(x => x.Id == ((IAudioDeviceSession)e.OldItems[0]).Id);
                     if (existing != null)
                     {
+                        StopWatchingApp(existing);
                         Apps.Remove(existing);
                     }
                     break;
@@ -208,28 +210,33 @@ namespace EarTrumpet.UI.ViewModels
 
             var newSession = new AppItemViewModel(this, session, animateOnLoad: animateOnLoad);
 
-            // Hard-muted apps are forced muted whenever a session appears (launch, relaunch, reboot).
-            if (_settings != null && _settings.IsAppHardMuted(session.ExeName))
-            {
-                session.IsMuted = true;
-            }
-
             foreach (var app in Apps)
             {
                 if (app.DoesGroupWith(newSession))
                 {
                     newSession.Volume = app.Volume;
                     newSession.IsMuted = app.IsMuted;
+                    StopWatchingApp(app);
                     Apps.Remove(app);
                     break;
                 }
             }
 
+            // Rules are applied after the merge above, not before: the merge copies the
+            // existing group's volume and mute onto the new session and would overwrite them.
+            ApplyRuleToApp(newSession, isNewSession: true);
+
+            StartWatchingApp(newSession);
             Apps.AddSorted(newSession, AppItemViewModel.CompareByExeName);
         }
 
         private void RebuildAppsCollection()
         {
+            foreach (var app in Apps)
+            {
+                StopWatchingApp(app);
+            }
+
             Apps.Clear();
             foreach (var session in _device.Groups)
             {
@@ -248,6 +255,7 @@ namespace EarTrumpet.UI.ViewModels
                         temporaryApp.Expired -= OnAppExpired;
                     }
 
+                    StopWatchingApp(app);
                     Apps.Remove(app);
                 }
             }
@@ -283,19 +291,105 @@ namespace EarTrumpet.UI.ViewModels
             RefreshHiddenCount();
         }
 
-        internal void ApplyHardMuteState()
+        /// <summary>
+        /// Re-asserts the standing rules (hard mute, volume Lock) on the sessions that are
+        /// already live. Launch is deliberately not re-applied here: this runs on every rule
+        /// change, and re-running Launch would reset the volume of unrelated apps.
+        /// </summary>
+        internal void ApplyAppRules()
         {
-            if (_settings == null)
+            foreach (var app in Apps)
+            {
+                ApplyRuleToApp(app, isNewSession: false);
+            }
+        }
+
+        /// <summary>
+        /// Applies one app's rule right now, including Launch, and re-arms the launch
+        /// tracker so a freshly edited rule takes effect without waiting for a relaunch.
+        /// </summary>
+        internal void ApplyRuleToAppNow(IAppItemViewModel app)
+        {
+            LaunchVolumeTracker.Release(app.ProcessId);
+            ApplyRuleToApp(app, isNewSession: true);
+        }
+
+        private void ApplyRuleToApp(IAppItemViewModel app, bool isNewSession)
+        {
+            var rule = _settings?.GetAppRule(app.ExeName);
+            var isLocked = rule?.VolumeMode == AppSettings.VolumeRuleMode.Lock;
+
+            // Set unconditionally, including when the rule is gone: this is what re-enables
+            // the slider in the flyout after the user removes a Lock.
+            if (app is AppItemViewModel appItem)
+            {
+                appItem.IsVolumeLocked = isLocked;
+            }
+
+            if (rule == null)
             {
                 return;
             }
 
-            foreach (var app in Apps)
+            if (isLocked)
             {
-                if (!app.IsMuted && _settings.IsAppHardMuted(app.ExeName))
+                if (app.Volume != rule.VolumePercent)
                 {
-                    app.IsMuted = true;
+                    SetVolumeSilently(app, rule.VolumePercent);
                 }
+            }
+            else if (rule.VolumeMode == AppSettings.VolumeRuleMode.Launch &&
+                     isNewSession &&
+                     LaunchVolumeTracker.TryClaim(app.ProcessId))
+            {
+                SetVolumeSilently(app, rule.VolumePercent);
+            }
+
+            // Must come after the volume write: setting a non-zero volume clears the
+            // session's mute (AudioDeviceSession.Volume setter), which would undo a hard mute.
+            if (rule.HardMuted && !app.IsMuted)
+            {
+                app.IsMuted = true;
+            }
+        }
+
+        // Rule enforcement can fire repeatedly, so it must not record undo steps.
+        private static void SetVolumeSilently(IAppItemViewModel app, int volumePercent)
+        {
+            if (app is AudioSessionViewModel session)
+            {
+                session.SetVolumeWithoutUndo(volumePercent);
+            }
+            else
+            {
+                app.Volume = volumePercent;
+            }
+        }
+
+        private void StartWatchingApp(IAppItemViewModel app)
+        {
+            app.PropertyChanged += App_PropertyChanged;
+        }
+
+        private void StopWatchingApp(IAppItemViewModel app)
+        {
+            app.PropertyChanged -= App_PropertyChanged;
+        }
+
+        // Keeps Lock and hard mute honest against changes we didn't make (the app itself,
+        // the Windows mixer, another tool). Re-entrancy stops on its own: once the value
+        // matches the rule, the comparisons below are false and nothing is written.
+        private void App_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(IAppItemViewModel.Volume) &&
+                e.PropertyName != nameof(IAppItemViewModel.IsMuted))
+            {
+                return;
+            }
+
+            if (sender is IAppItemViewModel app)
+            {
+                ApplyRuleToApp(app, isNewSession: false);
             }
         }
 
@@ -331,6 +425,7 @@ namespace EarTrumpet.UI.ViewModels
             if (Apps.Contains(app))
             {
                 app.Expired -= OnAppExpired;
+                StopWatchingApp(app);
                 Apps.Remove(app);
             }
         }
@@ -339,6 +434,7 @@ namespace EarTrumpet.UI.ViewModels
         {
             if (app is TemporaryAppItemViewModel)
             {
+                StopWatchingApp(app);
                 Apps.Remove(app);
             }
         }
