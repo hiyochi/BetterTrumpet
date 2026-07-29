@@ -297,7 +297,15 @@ namespace EarTrumpet
             _mixerWindow = new WindowHolder(CreateMixerExperience);
             _settingsWindow = new WindowHolder(CreateSettingsExperience);
 
-            _trayIcon.PrimaryInvoke += (_, type) => _flyoutViewModel.OpenFlyout(type);
+            _trayIcon.PrimaryInvoke += (_, type) =>
+            {
+                // Close media popup before opening flyout to avoid conflicts
+                if (_mediaPopup != null && _mediaPopup.IsShowing)
+                {
+                    _mediaPopup.HidePopup();
+                }
+                _flyoutViewModel.OpenFlyout(type);
+            };
             _trayIcon.SecondaryInvoke += (_, args) => _trayIcon.ShowContextMenu(GetTrayContextMenuItems(), args.Point);
             _trayIcon.TertiaryInvoke += (_, __) => CollectionViewModel.Default?.ToggleMute.Execute(null);
             _trayIcon.Scrolled += trayIconScrolled;
@@ -495,6 +503,13 @@ namespace EarTrumpet
                         {
                             _mediaPopupDelayTimer.Stop();
 
+                            // Don't show popup if flyout is open - avoid conflicts
+                            if (_flyoutViewModel != null && _flyoutViewModel.State != FlyoutViewState.Hidden)
+                            {
+                                Trace.WriteLine("MediaPopup: Skipping show because flyout is open");
+                                return;
+                            }
+
                             var mediaService = DataModel.MediaSessionService.Instance;
                             if (Settings.MediaPopupShowOnlyWhenPlaying && !mediaService.IsMediaPlaying)
                             {
@@ -511,6 +526,12 @@ namespace EarTrumpet
                         };
 
                         Trace.WriteLine("MediaPopup: Timer created on first hover (lazy init)");
+                    }
+
+                    // Don't start timer if flyout is open
+                    if (_flyoutViewModel != null && _flyoutViewModel.State != FlyoutViewState.Hidden)
+                    {
+                        return;
                     }
 
                     if (_mediaPopup.IsShowing)

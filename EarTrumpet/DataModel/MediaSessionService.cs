@@ -230,6 +230,8 @@ namespace EarTrumpet.DataModel
         private void OnCurrentSessionChanged(GlobalSystemMediaTransportControlsSessionManager sender, CurrentSessionChangedEventArgs args)
         {
             Trace.WriteLine("MediaSessionService: Current session changed");
+            // Invalidate thumbnail cache when session changes
+            _thumbnailDirty = true;
             _dispatcher.BeginInvoke(new Action(() =>
             {
                 SubscribeToAllSessions();
@@ -378,13 +380,73 @@ namespace EarTrumpet.DataModel
         }
 
         /// <summary>
-        /// Gets the current media session (if any)
+        /// Gets the current media session (if any).
+        /// Prioritizes actively playing sessions over paused ones to avoid random selection.
         /// </summary>
         private GlobalSystemMediaTransportControlsSession GetCurrentSession()
         {
             try
             {
-                return _sessionManager?.GetCurrentSession();
+                // First, try to get the system's current session
+                var currentSession = _sessionManager?.GetCurrentSession();
+
+                // If current session is playing, use it
+                if (currentSession != null)
+                {
+                    try
+                    {
+                        var playbackInfo = currentSession.GetPlaybackInfo();
+                        if (playbackInfo?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
+                        {
+                            return currentSession;
+                        }
+                    }
+                    catch { /* Session may be invalid */ }
+                }
+
+                // Otherwise, search for any playing session (better than random paused session)
+                var sessionList = _sessionManager?.GetSessions();
+                if (sessionList != null && sessionList.Count > 0)
+                {
+                    GlobalSystemMediaTransportControlsSession[] sessions;
+                    try
+                    {
+                        sessions = new GlobalSystemMediaTransportControlsSession[sessionList.Count];
+                        for (int i = 0; i < sessionList.Count; i++)
+                            sessions[i] = sessionList[i];
+                    }
+                    catch { return currentSession; }
+
+                    // First pass: find any playing session
+                    foreach (var session in sessions)
+                    {
+                        try
+                        {
+                            var playbackInfo = session?.GetPlaybackInfo();
+                            if (playbackInfo?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
+                            {
+                                Trace.WriteLine($"MediaSessionService: Selected playing session - {session.SourceAppUserModelId}");
+                                return session;
+                            }
+                        }
+                        catch { /* Skip invalid session */ }
+                    }
+
+                    // Second pass: if no playing session, log all available sessions for debugging
+                    Trace.WriteLine($"MediaSessionService: No playing session found. Available sessions ({sessions.Length}):");
+                    foreach (var session in sessions)
+                    {
+                        try
+                        {
+                            var playbackInfo = session?.GetPlaybackInfo();
+                            Trace.WriteLine($"  - {session.SourceAppUserModelId}: {playbackInfo?.PlaybackStatus}");
+                        }
+                        catch { /* Skip */ }
+                    }
+                }
+
+                // Fallback to current session (may be paused)
+                return currentSession;
             }
             catch (Exception ex)
             {

@@ -30,6 +30,7 @@ namespace EarTrumpet.UI.Views
         private double _cachedTextWidth;
         private bool _isShowing;
         private bool _isMouseOverPopup;
+        private bool _isMouseNearPopup; // Track if mouse is in extended hit area
         private bool _isExpanded;
         private double _collapsedTop;
         private BitmapImage _cachedThumbnail;
@@ -79,8 +80,8 @@ namespace EarTrumpet.UI.Views
                 _isExpanded = _settings.MediaPopupIsExpanded;
             }
 
-            // Timer to hide popup after mouse leaves
-            _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            // Timer to hide popup after mouse leaves (increased from 300ms to 800ms for better stability)
+            _hideTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
             _hideTimer.Tick += HideTimer_Tick;
 
             // Timer for marquee animation (20fps is sufficient for text scrolling)
@@ -99,8 +100,21 @@ namespace EarTrumpet.UI.Views
             _delayedActionTimer.Tick += DelayedActionTimer_Tick;
 
             // Track mouse enter/leave on popup itself
-            MouseEnter += (s, e) => { _isMouseOverPopup = true; _hideTimer.Stop(); };
-            MouseLeave += (s, e) => { _isMouseOverPopup = false; StartHideTimer(); };
+            MouseEnter += (s, e) => { _isMouseOverPopup = true; _isMouseNearPopup = true; _hideTimer.Stop(); };
+            MouseLeave += (s, e) =>
+            {
+                _isMouseOverPopup = false;
+                // Check if mouse is still near the popup (tolerance zone)
+                CheckMouseProximityAndStartHideTimer();
+            };
+            MouseMove += (s, e) =>
+            {
+                // Keep popup alive while mouse is moving over it
+                if (_isMouseOverPopup && _hideTimer.IsEnabled)
+                {
+                    _hideTimer.Stop();
+                }
+            };
 
             // Subscribe to media changes
             MediaSessionService.Instance.MediaPlaybackChanged += OnMediaPlaybackChanged;
@@ -644,18 +658,57 @@ namespace EarTrumpet.UI.Views
 
         public void StartHideTimer()
         {
+            CheckMouseProximityAndStartHideTimer();
+        }
+
+        private void CheckMouseProximityAndStartHideTimer()
+        {
             if (!_isMouseOverPopup)
             {
-                _hideTimer.Start();
+                // Check if mouse is within tolerance zone (20px buffer around popup)
+                var mousePos = System.Windows.Forms.Cursor.Position;
+                var popupBounds = new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height);
+                var toleranceBounds = popupBounds;
+                toleranceBounds.Inflate(20, 20); // 20px tolerance zone
+
+                _isMouseNearPopup = toleranceBounds.Contains(mousePos);
+
+                if (!_isMouseNearPopup)
+                {
+                    _hideTimer.Start();
+                }
+                else
+                {
+                    // Mouse is still near, check again soon
+                    var proximityCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+                    proximityCheckTimer.Tick += (s, e) =>
+                    {
+                        proximityCheckTimer.Stop();
+                        CheckMouseProximityAndStartHideTimer();
+                    };
+                    proximityCheckTimer.Start();
+                }
             }
         }
 
         private void HideTimer_Tick(object sender, EventArgs e)
         {
             _hideTimer.Stop();
-            if (!_isMouseOverPopup)
+
+            // Double-check mouse position before hiding
+            var mousePos = System.Windows.Forms.Cursor.Position;
+            var popupBounds = new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height);
+            var toleranceBounds = popupBounds;
+            toleranceBounds.Inflate(20, 20);
+
+            if (!_isMouseOverPopup && !toleranceBounds.Contains(mousePos))
             {
                 HidePopup();
+            }
+            else
+            {
+                // Mouse returned to proximity, don't hide yet
+                _isMouseNearPopup = toleranceBounds.Contains(mousePos);
             }
         }
 
