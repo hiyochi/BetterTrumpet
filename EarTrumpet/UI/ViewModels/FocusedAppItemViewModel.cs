@@ -83,12 +83,17 @@ namespace EarTrumpet.UI.ViewModels
 
             if (!string.IsNullOrWhiteSpace(app.ExeName))
             {
+                var rule = parent.GetAppRule(app);
+                var ruleMode = rule?.VolumeMode ?? AppSettings.VolumeRuleMode.None;
+                var rulePercent = rule?.VolumePercent ?? 0;
                 bool isHardMuted = parent.IsAppHardMuted(app);
+
                 Toolbar.Insert(0, new ToolbarItemViewModel
                 {
                     GlyphFontSize = 16,
                     DisplayName = Properties.Resources.HardMuteAppButtonText,
                     Glyph = "\uE74F",
+                    IsActive = isHardMuted,
                     Menu = new ObservableCollection<ContextMenuItem>
                     {
                         new ContextMenuItem
@@ -106,39 +111,44 @@ namespace EarTrumpet.UI.ViewModels
                     }
                 });
 
-                var rule = parent.GetAppRule(app);
-                var ruleMode = rule?.VolumeMode ?? AppSettings.VolumeRuleMode.None;
-                var rulePercent = rule?.VolumePercent ?? 0;
-
+                // Launch volume remains a menu because choosing the target value is the
+                // action. Lock is intentionally direct: set the slider, then click Lock.
                 Toolbar.Insert(0, new ToolbarItemViewModel
                 {
                     GlyphFontSize = 16,
-                    DisplayName = Properties.Resources.VolumeRuleAppButtonText,
-                    Glyph = "\uE767",
-                    Menu = new ObservableCollection<ContextMenuItem>
+                    DisplayName = Properties.Resources.VolumeRuleLaunchButtonText,
+                    Glyph = "\uE768",
+                    IsActive = ruleMode == AppSettings.VolumeRuleMode.Launch,
+                    Menu = BuildVolumeRuleItems(
+                        parent,
+                        app,
+                        AppSettings.VolumeRuleMode.Launch,
+                        ruleMode,
+                        rulePercent)
+                });
+
+                bool isVolumeLocked = ruleMode == AppSettings.VolumeRuleMode.Lock;
+                Toolbar.Insert(0, new ToolbarItemViewModel
+                {
+                    GlyphFontSize = 16,
+                    DisplayName = isVolumeLocked
+                        ? Properties.Resources.VolumeRuleUnlockButtonText
+                        : Properties.Resources.VolumeRuleLockButtonText,
+                    Glyph = "\uE72E",
+                    IsActive = isVolumeLocked,
+                    Command = new RelayCommand(() =>
                     {
-                        new ContextMenuItem
+                        if (isVolumeLocked)
                         {
-                            DisplayName = Properties.Resources.VolumeRuleMenuLaunchText,
-                            Children = BuildVolumeRuleItems(parent, app, AppSettings.VolumeRuleMode.Launch, ruleMode, rulePercent),
-                        },
-                        new ContextMenuItem
+                            parent.ClearAppVolumeRule(app);
+                        }
+                        else
                         {
-                            DisplayName = Properties.Resources.VolumeRuleMenuLockText,
-                            Children = BuildVolumeRuleItems(parent, app, AppSettings.VolumeRuleMode.Lock, ruleMode, rulePercent),
-                        },
-                        new ContextMenuSeparator(),
-                        new ContextMenuItem
-                        {
-                            DisplayName = Properties.Resources.VolumeRuleMenuNoneText,
-                            IsChecked = ruleMode == AppSettings.VolumeRuleMode.None,
-                            Command = new RelayCommand(() =>
-                            {
-                                parent.ClearAppVolumeRule(app);
-                                RequestClose.Invoke();
-                            }),
-                        },
-                    }
+                            parent.SetAppVolumeRule(app, AppSettings.VolumeRuleMode.Lock, app.Volume);
+                        }
+
+                        RequestClose.Invoke();
+                    })
                 });
             }
 
@@ -195,6 +205,18 @@ namespace EarTrumpet.UI.ViewModels
                 Command = new RelayCommand(() =>
                 {
                     parent.SetAppVolumeRule(app, mode, app.Volume);
+                    RequestClose.Invoke();
+                }),
+            });
+
+            items.Add(new ContextMenuSeparator());
+            items.Add(new ContextMenuItem
+            {
+                DisplayName = Properties.Resources.VolumeRuleMenuNoneText,
+                IsChecked = currentMode == AppSettings.VolumeRuleMode.None,
+                Command = new RelayCommand(() =>
+                {
+                    parent.ClearAppVolumeRule(app);
                     RequestClose.Invoke();
                 }),
             });

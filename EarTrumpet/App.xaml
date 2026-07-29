@@ -2216,7 +2216,9 @@
                                 <DataTemplate DataType="{x:Type vm:ToolbarItemViewModel}">
                                     <Button b:ButtonEx.IsToolBarButton="True"
                                             AutomationProperties.Name="{Binding DisplayName}"
-                                            Command="{Binding Command}">
+                                            Command="{Binding Command}"
+                                            ToolTip="{Binding DisplayName}"
+                                            ToolTipService.InitialShowDelay="350">
                                         <Button.Template>
                                             <ControlTemplate TargetType="{x:Type Button}">
                                                 <Border Background="{TemplateBinding Background}">
@@ -2254,6 +2256,10 @@
                                                         <Setter Property="Theme:Brush.Background" Value="Light=LightBaseMediumLow/0.2, Dark=DarkBaseMediumLow/0.2, HighContrast=Highlight" />
                                                         <Setter Property="Theme:Brush.Foreground" Value="Theme=ApplicationText{Theme}Theme, HighContrast=HighlightText" />
                                                     </Trigger>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter Property="Theme:Brush.Background" Value="Theme=SystemAccent/0.22, HighContrast=Highlight" />
+                                                        <Setter Property="Theme:Brush.Foreground" Value="Theme=ApplicationText{Theme}Theme, HighContrast=HighlightText" />
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Button.Style>

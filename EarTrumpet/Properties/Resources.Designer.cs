@@ -995,6 +995,24 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string VolumeRuleLockButtonText {
+            get {
+                return ResourceManager.GetString("VolumeRuleLockButtonText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRuleUnlockButtonText {
+            get {
+                return ResourceManager.GetString("VolumeRuleUnlockButtonText", resourceCulture);
+            }
+        }
+
+        public static string VolumeRuleLaunchButtonText {
+            get {
+                return ResourceManager.GetString("VolumeRuleLaunchButtonText", resourceCulture);
+            }
+        }
+
         public static string VolumeRuleMenuLaunchText {
             get {
                 return ResourceManager.GetString("VolumeRuleMenuLaunchText", resourceCulture);
@@ -1052,6 +1070,12 @@ namespace EarTrumpet.Properties {
         public static string AppRulesAddHeaderText {
             get {
                 return ResourceManager.GetString("AppRulesAddHeaderText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesAddRuleButtonText {
+            get {
+                return ResourceManager.GetString("AppRulesAddRuleButtonText", resourceCulture);
             }
         }
 
@@ -1127,6 +1151,18 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string AppRulesVolumeBehaviorText {
+            get {
+                return ResourceManager.GetString("AppRulesVolumeBehaviorText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesTargetVolumeText {
+            get {
+                return ResourceManager.GetString("AppRulesTargetVolumeText", resourceCulture);
+            }
+        }
+
         public static string AppRulesRemoveButtonText {
             get {
                 return ResourceManager.GetString("AppRulesRemoveButtonText", resourceCulture);
@@ -1145,9 +1181,21 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string AppRulesModeLaunchDesc {
+            get {
+                return ResourceManager.GetString("AppRulesModeLaunchDesc", resourceCulture);
+            }
+        }
+
         public static string AppRulesModeLockText {
             get {
                 return ResourceManager.GetString("AppRulesModeLockText", resourceCulture);
+            }
+        }
+
+        public static string AppRulesModeLockDesc {
+            get {
+                return ResourceManager.GetString("AppRulesModeLockDesc", resourceCulture);
             }
         }
 

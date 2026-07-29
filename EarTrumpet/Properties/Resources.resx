@@ -240,6 +240,15 @@
   <data name="VolumeRuleAppButtonText" xml:space="preserve">
     <value>Remember this app's volume</value>
   </data>
+  <data name="VolumeRuleLockButtonText" xml:space="preserve">
+    <value>Lock volume at the current level</value>
+  </data>
+  <data name="VolumeRuleUnlockButtonText" xml:space="preserve">
+    <value>Unlock this app's volume</value>
+  </data>
+  <data name="VolumeRuleLaunchButtonText" xml:space="preserve">
+    <value>Set launch volume</value>
+  </data>
   <data name="VolumeRuleMenuLaunchText" xml:space="preserve">
     <value>Start at</value>
   </data>
@@ -269,6 +278,9 @@
   </data>
   <data name="AppRulesAddHeaderText" xml:space="preserve">
     <value>Add an app</value>
+  </data>
+  <data name="AppRulesAddRuleButtonText" xml:space="preserve">
+    <value>Add rule</value>
   </data>
   <data name="AppRulesAddHeaderDesc" xml:space="preserve">
     <value>Create a rule for an app that is not currently playing audio.</value>
@@ -306,6 +318,12 @@
   <data name="AppRulesVolumeColumnText" xml:space="preserve">
     <value>Volume</value>
   </data>
+  <data name="AppRulesVolumeBehaviorText" xml:space="preserve">
+    <value>Volume behavior</value>
+  </data>
+  <data name="AppRulesTargetVolumeText" xml:space="preserve">
+    <value>Target volume</value>
+  </data>
   <data name="AppRulesRemoveButtonText" xml:space="preserve">
     <value>Remove this rule</value>
   </data>
@@ -315,8 +333,14 @@
   <data name="AppRulesModeLaunchText" xml:space="preserve">
     <value>Set at launch</value>
   </data>
+  <data name="AppRulesModeLaunchDesc" xml:space="preserve">
+    <value>Apply the target volume once</value>
+  </data>
   <data name="AppRulesModeLockText" xml:space="preserve">
     <value>Lock</value>
+  </data>
+  <data name="AppRulesModeLockDesc" xml:space="preserve">
+    <value>Maintain the exact level</value>
   </data>
   <data name="AppRulesStatusRunningText" xml:space="preserve">
     <value>running</value>
