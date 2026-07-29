@@ -11,9 +11,10 @@ Update this file whenever a task adds a meaningful feature, fixes an important b
 ## Current Branch State
 
 - Branch: `master`
-- `master` contains the 3.2.1 release candidate. `origin/master` must be updated only after the release source and distribution metadata are finalized.
-- Latest public tag before this release: `v3.2.0`, pointing at the final 3.2.0 release-artifact commit `3ab038c1`.
-- Current version line: `3.2.1` (release preparation). Release builds must report `3.2.1` before assets are uploaded.
+- `master` and `origin/master` contain the released 3.2.1 source and distribution metadata.
+- Public tag: `v3.2.1`, pointing at release commit `2ae6ecf`.
+- Current version line: `3.2.1` (released). The x86 Release binary and public GitHub assets report `3.2.1`.
+- `migration/net8` is a historical ancestor at `7a6e8f9`; do not move or synchronize it as part of current releases.
 - Target framework: `net8.0-windows10.0.19041.0`
 - Language: C# / WPF
 - Assembly name: `BetterTrumpet`
@@ -151,7 +152,7 @@ Notes:
 
 Recent work in `master` includes:
 
-- 3.2.1 release candidate: persistent per-app volume rules support `Set at launch` and `Lock`, share one settings entry with hard mute, remain editable live from the flyout and Settings, and migrate/import legacy hard-mute data.
+- 3.2.1: persistent per-app volume rules support `Set at launch` and `Lock`, share one settings entry with hard mute, remain editable live from the flyout and Settings, and migrate/import legacy hard-mute data.
 - Media-popup stability improvements coordinate it with the main flyout, add a larger hover tolerance and hide delay, prefer actively playing media sessions, and invalidate stale thumbnails when the selected session changes.
 - CLI text is UTF-8 end to end, including named-pipe framing, attached-console output, redirected output, help text, device/app names, and JSON responses.
 - Microsoft Store/MSIX builds use Store-owned updates only; unpackaged GitHub, Chocolatey, and Winget builds retain the GitHub/Inno updater.
@@ -209,6 +210,18 @@ Recent work in `master` includes:
 - Chocolatey `bettertrumpet.3.2.0.nupkg` was pushed successfully and is awaiting automated checks/moderation.
 - Winget PR: `https://github.com/microsoft/winget-pkgs/pull/401693` (open, CLA passed, WinGetSvc checks running at submission time).
 - Microsoft Store Partner Center product `9PKBH40D32G8`, submission `1152921505701257832`, was submitted for certification on 2026-07-14 with `EarTrumpet.Package_3.2.0.0_x86_bundle.msixupload` (SHA256 `D39B5E25E1DE64F4BFC460A9614C2E7EF2EBA21324A2AC11983BEA6CF4383BB8`). Partner Center accepted package version `3.2.0.0`; preprocessing is in progress and publication is configured to start automatically after certification. The package carries the expected `runFullTrust` restricted-capability warning, which remains subject to Microsoft approval.
+
+3.2.1 was released on 2026-07-29:
+
+- GitHub Release: `https://github.com/xammen/BetterTrumpet/releases/tag/v3.2.1`
+- Tag `v3.2.1`: annotated tag on `2ae6ecf`
+- `master` was pushed with the complete release source. `migration/net8` remains intentionally unchanged at `7a6e8f9`.
+- GitHub assets:
+  - `BetterTrumpet-3.2.1-setup.exe` SHA256 `3C20BC45B6F07A2582165DB39BE85202CC7D3ABBB9C9BE5399BDF5331B70E7A9`
+  - `BetterTrumpet-3.2.1-portable.zip` SHA256 `22366AFD1BC7B8A7BC5D3BDADF9095397EA57C32DBE0ACDDD29A4E9ED94E3D75`
+- Chocolatey `bettertrumpet.3.2.1.nupkg` was pushed successfully and is visible from the community feed query; automated checks/moderation may still be pending.
+- Winget PR: `https://github.com/microsoft/winget-pkgs/pull/409308` (open, CLA passed, remaining checks pending at submission time).
+- Microsoft Store packaging was not part of the 3.2.1 release task; keep the existing Store submission path separate.
 
 If replacing same-version GitHub assets again, update hashes everywhere before or immediately after upload. Winget and Chocolatey verify the setup hash and will fail if the GitHub asset changes without their metadata changing.
 
@@ -343,7 +356,7 @@ The diagnostic zip can contain app names, device names, process IDs, endpoint ID
 
 ## Validation Status
 
-- `x86 Release` rebuild passes for the 3.2.1 release candidate. `BetterTrumpet.exe` reports `FileVersion=3.2.1` and `ProductVersion=3.2.1`; the output includes the x86 self-contained runtime.
+- `x86 Release` rebuild passes for the released 3.2.1 source. `BetterTrumpet.exe` reports `FileVersion=3.2.1` and `ProductVersion=3.2.1`; the output includes the x86 self-contained runtime.
 - `BetterTrumpet-3.2.1-setup.exe` and `BetterTrumpet-3.2.1-portable.zip` were generated on 2026-07-29. Setup SHA256: `3C20BC45B6F07A2582165DB39BE85202CC7D3ABBB9C9BE5399BDF5331B70E7A9`; portable SHA256: `22366AFD1BC7B8A7BC5D3BDADF9095397EA57C32DBE0ACDDD29A4E9ED94E3D75`. Public signing is still not configured.
 - Chocolatey `choco pack` produced `bettertrumpet.3.2.1.nupkg`, and the canonical three-file Winget manifest set validates successfully under `winget-manifest/manifests/x/xmn/BetterTrumpet/3.2.1`.
 - `x86 Release` build passes as of `2026-06-19` after the 3.1.1 startup hotfix
