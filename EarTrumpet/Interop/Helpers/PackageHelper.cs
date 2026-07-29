@@ -10,12 +10,22 @@ namespace EarTrumpet.Interop.Helpers
             if (isPackaged)
             {
                 var packageVer = Package.Current.Id.Version;
-                return new Version(packageVer.Major, packageVer.Minor, packageVer.Build, packageVer.Revision);
+                return new Version(packageVer.Major, packageVer.Minor, packageVer.Build);
             }
             else
             {
-                return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                return Normalize(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             }
+        }
+
+        /// <summary>
+        /// Drops the revision so versions are always Major.Minor.Patch. The MSIX manifest and
+        /// assembly metadata both carry a mandatory fourth field; we never surface it, which also
+        /// keeps comparisons against 3-part release tags (v3.2.1) consistent.
+        /// </summary>
+        public static Version Normalize(Version version)
+        {
+            return version == null ? null : new Version(version.Major, version.Minor, Math.Max(version.Build, 0));
         }
 
         public static string GetFamilyName(bool isPackaged)
