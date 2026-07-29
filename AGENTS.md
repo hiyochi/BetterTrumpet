@@ -343,6 +343,9 @@ The diagnostic zip can contain app names, device names, process IDs, endpoint ID
 
 ## Validation Status
 
+- `x86 Release` rebuild passes for the 3.2.1 release candidate. `BetterTrumpet.exe` reports `FileVersion=3.2.1` and `ProductVersion=3.2.1`; the output includes the x86 self-contained runtime.
+- `BetterTrumpet-3.2.1-setup.exe` and `BetterTrumpet-3.2.1-portable.zip` were generated on 2026-07-29. Setup SHA256: `3C20BC45B6F07A2582165DB39BE85202CC7D3ABBB9C9BE5399BDF5331B70E7A9`; portable SHA256: `22366AFD1BC7B8A7BC5D3BDADF9095397EA57C32DBE0ACDDD29A4E9ED94E3D75`. Public signing is still not configured.
+- Chocolatey `choco pack` produced `bettertrumpet.3.2.1.nupkg`, and the canonical three-file Winget manifest set validates successfully under `winget-manifest/manifests/x/xmn/BetterTrumpet/3.2.1`.
 - `x86 Release` build passes as of `2026-06-19` after the 3.1.1 startup hotfix
 - `Build\Release\BetterTrumpet.exe` reports `FileVersion=3.1.1` and `ProductVersion=3.1.1`
 - `build-portable.ps1` and `installer.iss` both succeeded for the 3.1.1 hotfix assets
