@@ -239,7 +239,9 @@ namespace EarTrumpet.CLI
         {
             try
             {
-                return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+                var version = EarTrumpet.Interop.Helpers.PackageHelper.Normalize(
+                    System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+                return version?.ToString() ?? "unknown";
             }
             catch
             {

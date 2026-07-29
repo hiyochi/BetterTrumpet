@@ -11,9 +11,9 @@ Update this file whenever a task adds a meaningful feature, fixes an important b
 ## Current Branch State
 
 - Branch: `master`
-- `master`, `origin/master`, `migration/net8`, and `origin/migration/net8` contain the released 3.2.0 source. A small post-release manifest/status commit may leave `master` ahead of tag `v3.2.0` without changing the shipped binary.
-- Public tag: `v3.2.0` points at the final release-artifact commit `3ab038c1`.
-- Current version line: `3.2.0` (released). The x86 Release binary and public release artifacts report `3.2.0`.
+- `master` contains the 3.2.1 release candidate. `origin/master` must be updated only after the release source and distribution metadata are finalized.
+- Latest public tag before this release: `v3.2.0`, pointing at the final 3.2.0 release-artifact commit `3ab038c1`.
+- Current version line: `3.2.1` (release preparation). Release builds must report `3.2.1` before assets are uploaded.
 - Target framework: `net8.0-windows10.0.19041.0`
 - Language: C# / WPF
 - Assembly name: `BetterTrumpet`
@@ -151,8 +151,11 @@ Notes:
 
 Recent work in `master` includes:
 
-- Microsoft Store/MSIX runs no longer initialize or expose the GitHub/Inno updater. The tray update actions and update settings page are hidden when `App.HasIdentity` is true so Store installations update exclusively through Microsoft Store.
-- CLI UTF-8 IPC fix (unreleased after 3.2.0): named-pipe messages are decoded as UTF-8 after byte-level line framing instead of casting each byte to a character. Device/app names and JSON responses now preserve non-ASCII characters such as German umlauts (`Kopfhörer`). Keep `PipeClient` and `PipeServer` on the shared `PipeTextProtocol.ReadLineUtf8` path.
+- 3.2.1 release candidate: persistent per-app volume rules support `Set at launch` and `Lock`, share one settings entry with hard mute, remain editable live from the flyout and Settings, and migrate/import legacy hard-mute data.
+- Media-popup stability improvements coordinate it with the main flyout, add a larger hover tolerance and hide delay, prefer actively playing media sessions, and invalidate stale thumbnails when the selected session changes.
+- CLI text is UTF-8 end to end, including named-pipe framing, attached-console output, redirected output, help text, device/app names, and JSON responses.
+- Microsoft Store/MSIX builds use Store-owned updates only; unpackaged GitHub, Chocolatey, and Winget builds retain the GitHub/Inno updater.
+- Single-bar peak-meter styles are vertically centered instead of inheriting the negative offset used by the two-bar Classic style.
 
 - Public 3.1.0 release on GitHub with setup exe, portable zip, and checksum file
 - 3.1.0 hotfix: when custom slider colors are disabled, volume bars and peak meters now reapply theme brushes instead of falling back to white WPF defaults

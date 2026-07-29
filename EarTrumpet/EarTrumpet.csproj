@@ -129,13 +129,12 @@
   </ItemGroup>
 
   <!-- Versioning: stamp the MSIX manifest with the resolved version before build,
-       mirroring the legacy BeforeBuild/prebuild.ps1 behavior. -->
+       mirroring the legacy BeforeBuild/prebuild.ps1 behavior.
+       The manifest schema requires four parts, so the revision is pinned to 0 and
+       the version we actually ship is Major.Minor.Patch. -->
   <Target Name="StampPackageVersion" BeforeTargets="BeforeBuild" DependsOnTargets="GetVersion">
-    <PropertyGroup Condition=" '$(Channel)' == 'Store' ">
+    <PropertyGroup>
       <ChannelVersion>$(GitVersion_MajorMinorPatch).0</ChannelVersion>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(ChannelVersion)' == '' ">
-      <ChannelVersion>$(GitVersion_MajorMinorPatch).$(GitVersion_CommitsSinceVersionSource)</ChannelVersion>
     </PropertyGroup>
     <Message Importance="high" Text="GitVersion_InformationalVersion: $(GitVersion_InformationalVersion)" />
     <Exec Command="powershell -executionpolicy Bypass -noprofile &quot;&amp; '$(ProjectDir)prebuild.ps1'&quot; $(ChannelVersion)" />
