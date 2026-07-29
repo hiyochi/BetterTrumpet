@@ -234,6 +234,15 @@
   <data name="VolumeRuleAppButtonText" xml:space="preserve">
     <value>Mémoriser le volume de cette application</value>
   </data>
+  <data name="VolumeRuleLockButtonText" xml:space="preserve">
+    <value>Verrouiller le volume au niveau actuel</value>
+  </data>
+  <data name="VolumeRuleUnlockButtonText" xml:space="preserve">
+    <value>Déverrouiller le volume de cette application</value>
+  </data>
+  <data name="VolumeRuleLaunchButtonText" xml:space="preserve">
+    <value>Définir le volume au lancement</value>
+  </data>
   <data name="VolumeRuleMenuLaunchText" xml:space="preserve">
     <value>Démarrer à</value>
   </data>
@@ -264,6 +273,9 @@
   <data name="AppRulesAddHeaderText" xml:space="preserve">
     <value>Ajouter une application</value>
   </data>
+  <data name="AppRulesAddRuleButtonText" xml:space="preserve">
+    <value>Ajouter une règle</value>
+  </data>
   <data name="AppRulesAddHeaderDesc" xml:space="preserve">
     <value>Saisissez un nom d'exécutable ou parcourez pour créer une règle sans que l'application soit lancée.</value>
   </data>
@@ -291,14 +303,26 @@
   <data name="AppRulesVolumeColumnText" xml:space="preserve">
     <value>Volume</value>
   </data>
+  <data name="AppRulesVolumeBehaviorText" xml:space="preserve">
+    <value>Comportement du volume</value>
+  </data>
+  <data name="AppRulesTargetVolumeText" xml:space="preserve">
+    <value>Volume cible</value>
+  </data>
   <data name="AppRulesModeNoneText" xml:space="preserve">
     <value>Aucune règle</value>
   </data>
   <data name="AppRulesModeLaunchText" xml:space="preserve">
     <value>Au lancement</value>
   </data>
+  <data name="AppRulesModeLaunchDesc" xml:space="preserve">
+    <value>Appliquer le volume cible</value>
+  </data>
   <data name="AppRulesModeLockText" xml:space="preserve">
     <value>Verrouillé</value>
+  </data>
+  <data name="AppRulesModeLockDesc" xml:space="preserve">
+    <value>Maintenir le niveau exact</value>
   </data>
   <data name="AppRulesStatusRunningText" xml:space="preserve">
     <value>en cours</value>

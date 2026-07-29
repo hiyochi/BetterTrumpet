@@ -280,7 +280,12 @@ namespace EarTrumpet.UI.ViewModels
 
             bool newState = !_settings.IsAppHardMuted(app.ExeName);
             // SetAppHardMuted raises AppRulesChanged, which reapplies the mute to live sessions.
-            _settings.SetAppHardMuted(app.ExeName, newState, app.DisplayName);
+            _settings.SetAppHardMuted(
+                app.ExeName,
+                newState,
+                app.DisplayName,
+                app.IconPath,
+                app.IsDesktopApp);
 
             // Disabling hard mute unmutes the app the user is acting on, so it becomes audible again.
             if (!newState && app.IsMuted)
@@ -300,7 +305,13 @@ namespace EarTrumpet.UI.ViewModels
                 return;
             }
 
-            _settings.SetAppVolumeRule(app.ExeName, mode, volumePercent, app.DisplayName);
+            _settings.SetAppVolumeRule(
+                app.ExeName,
+                mode,
+                volumePercent,
+                app.DisplayName,
+                app.IconPath,
+                app.IsDesktopApp);
 
             if (mode != AppSettings.VolumeRuleMode.None && app.Parent is DeviceViewModel device)
             {

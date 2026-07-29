@@ -1,10 +1,12 @@
 using EarTrumpet.UI.Helpers;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace EarTrumpet.UI.ViewModels
 {
@@ -16,6 +18,9 @@ namespace EarTrumpet.UI.ViewModels
     public class EarTrumpetAppRulesSettingsPageViewModel : SettingsPageViewModel
     {
         private readonly AppSettings _settings;
+        private bool _isSubscribed;
+        private bool _syncPending;
+        private bool _isAddRulePanelOpen;
 
         public ObservableCollection<AppRuleItemViewModel> Rules { get; } = new ObservableCollection<AppRuleItemViewModel>();
 
@@ -30,6 +35,22 @@ namespace EarTrumpet.UI.ViewModels
             {
                 _newRuleExeName = value;
                 RaisePropertyChanged(nameof(NewRuleExeName));
+                RaisePropertyChanged(nameof(CanAddRule));
+            }
+        }
+
+        public bool CanAddRule => !string.IsNullOrWhiteSpace(NewRuleExeName);
+
+        public bool IsAddRulePanelOpen
+        {
+            get => _isAddRulePanelOpen;
+            set
+            {
+                if (_isAddRulePanelOpen != value)
+                {
+                    _isAddRulePanelOpen = value;
+                    RaisePropertyChanged(nameof(IsAddRulePanelOpen));
+                }
             }
         }
 
@@ -37,6 +58,7 @@ namespace EarTrumpet.UI.ViewModels
         public ICommand BrowseForExeCommand { get; }
         public ICommand RemoveRuleCommand { get; }
         public ICommand ClearAllRulesCommand { get; }
+        public ICommand ToggleAddRulePanelCommand { get; }
 
         public EarTrumpetAppRulesSettingsPageViewModel(AppSettings settings) : base(null)
         {
@@ -49,53 +71,122 @@ namespace EarTrumpet.UI.ViewModels
             BrowseForExeCommand = new RelayCommand(BrowseForExe);
             RemoveRuleCommand = new RelayCommand<AppRuleItemViewModel>(RemoveRule);
             ClearAllRulesCommand = new RelayCommand(ClearAllRules);
+            ToggleAddRulePanelCommand = new RelayCommand(() => IsAddRulePanelOpen = !IsAddRulePanelOpen);
 
-            Reload();
+            SyncRules();
         }
 
         /// <summary>
-        /// Refreshed on navigation rather than by subscribing to AppRulesChanged. The
-        /// settings window is recreated on every open (App.CreateSettingsExperience via
-        /// WindowHolder), so a constructor subscription would outlive the page and pile up
-        /// one dead listener per open. Rules changed from the flyout are picked up the next
-        /// time this page is shown; edits made here refresh through the explicit Reload calls.
+        /// Subscribe only while this page is visible. This keeps flyout edits live without
+        /// letting the long-lived settings object retain closed settings page instances.
         /// </summary>
         public override void NavigatedTo()
         {
-            Reload();
+            if (!_isSubscribed)
+            {
+                _settings.AppRulesChanged += OnAppRulesChanged;
+                _isSubscribed = true;
+            }
+
+            SyncRules();
         }
 
-        private void Reload()
+        public override bool NavigatingFrom(NavigationCookie cookie)
+        {
+            if (_isSubscribed)
+            {
+                _settings.AppRulesChanged -= OnAppRulesChanged;
+                _isSubscribed = false;
+            }
+
+            foreach (var row in Rules)
+            {
+                row.Detach();
+            }
+
+            Rules.Clear();
+            RaiseRuleCollectionStateChanged();
+            return base.NavigatingFrom(cookie);
+        }
+
+        private void OnAppRulesChanged()
+        {
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || _syncPending)
+            {
+                return;
+            }
+
+            _syncPending = true;
+            dispatcher.BeginInvoke(DispatcherPriority.DataBind, new Action(() =>
+            {
+                _syncPending = false;
+                if (_isSubscribed)
+                {
+                    SyncRules();
+                }
+            }));
+        }
+
+        private void SyncRules()
         {
             try
             {
-                var runningExeNames = GetRunningExeNames();
+                var runningApps = GetRunningApps();
+                var storedRules = _settings.GetAppRules();
+                var rowsByExeName = Rules.ToDictionary(row => row.ExeName, StringComparer.OrdinalIgnoreCase);
+                var retainedExeNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                // Detach first: a row whose debounced volume write hasn't fired yet
-                // flushes it here, so the value the user just dragged to isn't lost.
-                foreach (var row in Rules)
+                for (int index = 0; index < storedRules.Count; index++)
                 {
-                    row.Detach();
+                    var rule = storedRules[index];
+                    retainedExeNames.Add(rule.ExeName);
+                    runningApps.TryGetValue(rule.ExeName, out var liveApp);
+
+                    if (!rowsByExeName.TryGetValue(rule.ExeName, out var row))
+                    {
+                        row = new AppRuleItemViewModel(_settings, rule, liveApp);
+                        Rules.Insert(Math.Min(index, Rules.Count), row);
+                        rowsByExeName.Add(rule.ExeName, row);
+                    }
+                    else
+                    {
+                        row.Apply(rule, liveApp);
+                        var currentIndex = Rules.IndexOf(row);
+                        if (currentIndex != index)
+                        {
+                            Rules.Move(currentIndex, index);
+                        }
+                    }
                 }
-                Rules.Clear();
 
-                foreach (var rule in _settings.GetAppRules())
+                for (int index = Rules.Count - 1; index >= 0; index--)
                 {
-                    Rules.Add(new AppRuleItemViewModel(_settings, rule, runningExeNames.Contains(rule.ExeName)));
+                    var row = Rules[index];
+                    if (!retainedExeNames.Contains(row.ExeName))
+                    {
+                        row.Detach();
+                        Rules.RemoveAt(index);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"AppRulesVM Reload failed: {ex.Message}");
+                Trace.WriteLine($"AppRulesVM SyncRules failed: {ex.Message}");
             }
 
+            RaiseRuleCollectionStateChanged();
+        }
+
+        private void RaiseRuleCollectionStateChanged()
+        {
             RaisePropertyChanged(nameof(HasRules));
             RaisePropertyChanged(nameof(IsEmpty));
         }
 
-        private System.Collections.Generic.HashSet<string> GetRunningExeNames()
+        private Dictionary<string, IAppItemViewModel> GetRunningApps()
         {
-            var running = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var running = new Dictionary<string, IAppItemViewModel>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
@@ -111,14 +202,17 @@ namespace EarTrumpet.UI.ViewModels
                     {
                         if (!string.IsNullOrWhiteSpace(app.ExeName))
                         {
-                            running.Add(app.ExeName);
+                            if (!running.ContainsKey(app.ExeName))
+                            {
+                                running.Add(app.ExeName, app);
+                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"AppRulesVM GetRunningExeNames failed: {ex.Message}");
+                Trace.WriteLine($"AppRulesVM GetRunningApps failed: {ex.Message}");
             }
 
             return running;
@@ -136,7 +230,8 @@ namespace EarTrumpet.UI.ViewModels
 
             _settings.SetAppHardMuted(exeName, true, exeName);
             NewRuleExeName = "";
-            Reload();
+            IsAddRulePanelOpen = false;
+            SyncRules();
         }
 
         /// <summary>
@@ -182,8 +277,11 @@ namespace EarTrumpet.UI.ViewModels
 
                 if (dlg.ShowDialog() == true)
                 {
-                    NewRuleExeName = System.IO.Path.GetFileName(dlg.FileName);
-                    AddRuleFromExeName();
+                    var exeName = NormalizeTypedExeName(dlg.FileName);
+                    _settings.SetAppHardMuted(exeName, true, exeName, dlg.FileName, true);
+                    NewRuleExeName = "";
+                    IsAddRulePanelOpen = false;
+                    SyncRules();
                 }
             }
             catch (Exception ex)
@@ -200,7 +298,7 @@ namespace EarTrumpet.UI.ViewModels
             }
 
             _settings.RemoveAppRule(row.ExeName);
-            Reload();
+            SyncRules();
         }
 
         private void ClearAllRules()
@@ -219,7 +317,7 @@ namespace EarTrumpet.UI.ViewModels
             if (result == MessageBoxResult.Yes)
             {
                 _settings.ClearAppRules();
-                Reload();
+                SyncRules();
             }
         }
     }

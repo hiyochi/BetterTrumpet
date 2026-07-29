@@ -282,43 +282,6 @@ namespace EarTrumpet.UI.Views
             e.Handled = true;
         }
 
-        // ═══════════════════════════════════
-        // App rules handlers
-        // ═══════════════════════════════════
-
-        private EarTrumpetAppRulesSettingsPageViewModel AppRulesViewModel =>
-            (DataContext as SettingsViewModel)?.Selected?.Selected as EarTrumpetAppRulesSettingsPageViewModel;
-
-        private void AddAppRule_Click(object sender, MouseButtonEventArgs e)
-        {
-            AppRulesViewModel?.AddRuleCommand?.Execute(null);
-            e.Handled = true;
-        }
-
-        private void BrowseAppRuleExe_Click(object sender, MouseButtonEventArgs e)
-        {
-            AppRulesViewModel?.BrowseForExeCommand?.Execute(null);
-            e.Handled = true;
-        }
-
-        private void RemoveAppRule_Click(object sender, MouseButtonEventArgs e)
-        {
-            // The row view model rides along in Tag: the click comes from inside the
-            // ItemsControl template, so the page view model is not the DataContext here.
-            if (sender is FrameworkElement element && element.Tag is AppRuleItemViewModel row)
-            {
-                AppRulesViewModel?.RemoveRuleCommand?.Execute(row);
-            }
-            e.Handled = true;
-        }
-
-        private void ClearAllAppRules_Click(object sender, MouseButtonEventArgs e)
-        {
-            AppRulesViewModel?.ClearAllRulesCommand?.Execute(null);
-            e.Handled = true;
-        }
-
-        // ═══════════════════════════════════
         // Appearance tab switching
         // ═══════════════════════════════════
 

@@ -95,6 +95,8 @@ namespace EarTrumpet
         {
             public string ExeName { get; set; }
             public string DisplayName { get; set; }
+            public string IconPath { get; set; }
+            public bool IsDesktopApp { get; set; }
             public bool HardMuted { get; set; }
             public VolumeRuleMode VolumeMode { get; set; }
             public int VolumePercent { get; set; }
@@ -655,9 +657,14 @@ namespace EarTrumpet
             }
         }
 
-        public void SetAppHardMuted(string exeName, bool hardMuted, string displayName = null)
+        public void SetAppHardMuted(
+            string exeName,
+            bool hardMuted,
+            string displayName = null,
+            string iconPath = null,
+            bool? isDesktopApp = null)
         {
-            UpdateRule(exeName, displayName, rule =>
+            UpdateRule(exeName, displayName, iconPath, isDesktopApp, rule =>
             {
                 if (rule.HardMuted == hardMuted)
                 {
@@ -669,11 +676,17 @@ namespace EarTrumpet
             });
         }
 
-        public void SetAppVolumeRule(string exeName, VolumeRuleMode mode, int volumePercent, string displayName = null)
+        public void SetAppVolumeRule(
+            string exeName,
+            VolumeRuleMode mode,
+            int volumePercent,
+            string displayName = null,
+            string iconPath = null,
+            bool? isDesktopApp = null)
         {
             var boundedVolume = Math.Max(0, Math.Min(100, volumePercent));
 
-            UpdateRule(exeName, displayName, rule =>
+            UpdateRule(exeName, displayName, iconPath, isDesktopApp, rule =>
             {
                 if (rule.VolumeMode == mode && (mode == VolumeRuleMode.None || rule.VolumePercent == boundedVolume))
                 {
@@ -688,7 +701,12 @@ namespace EarTrumpet
 
         // Applies a mutation to one app's rule, creating it if needed and dropping it
         // once nothing is left to remember. Returns without notifying if nothing changed.
-        private void UpdateRule(string exeName, string displayName, Func<AppRuleEntry, bool> mutate)
+        private void UpdateRule(
+            string exeName,
+            string displayName,
+            string iconPath,
+            bool? isDesktopApp,
+            Func<AppRuleEntry, bool> mutate)
         {
             var normalizedExeName = NormalizeHiddenKeyValue(exeName);
             if (string.IsNullOrEmpty(normalizedExeName))
@@ -697,6 +715,7 @@ namespace EarTrumpet
             }
 
             var safeDisplayName = string.IsNullOrWhiteSpace(displayName) ? string.Empty : displayName.Trim();
+            var safeIconPath = string.IsNullOrWhiteSpace(iconPath) ? string.Empty : iconPath.Trim();
             bool changed;
 
             lock (_appRulesSync)
@@ -707,22 +726,42 @@ namespace EarTrumpet
                 {
                     ExeName = normalizedExeName,
                     DisplayName = safeDisplayName,
+                    IconPath = safeIconPath,
+                    IsDesktopApp = isDesktopApp ?? false,
                     CreatedAtUtc = DateTime.UtcNow,
                 };
 
                 changed = mutate(rule);
-                if (!changed)
-                {
-                    return;
-                }
 
                 if (existing == null)
                 {
+                    if (rule.IsEmpty)
+                    {
+                        return;
+                    }
+
                     _appRuleEntries.Add(rule);
                 }
-                else if (!string.IsNullOrEmpty(safeDisplayName))
+                else
                 {
-                    rule.DisplayName = safeDisplayName;
+                    if (!string.IsNullOrEmpty(safeDisplayName) && rule.DisplayName != safeDisplayName)
+                    {
+                        rule.DisplayName = safeDisplayName;
+                        changed = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(safeIconPath) &&
+                        (rule.IconPath != safeIconPath || (isDesktopApp.HasValue && rule.IsDesktopApp != isDesktopApp.Value)))
+                    {
+                        rule.IconPath = safeIconPath;
+                        rule.IsDesktopApp = isDesktopApp ?? rule.IsDesktopApp;
+                        changed = true;
+                    }
+
+                    if (!changed)
+                    {
+                        return;
+                    }
                 }
 
                 // An entry with no mute and no volume rule carries no information.
@@ -884,6 +923,8 @@ namespace EarTrumpet
                 {
                     ExeName = normalizedExeName,
                     DisplayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? string.Empty : entry.DisplayName.Trim(),
+                    IconPath = string.IsNullOrWhiteSpace(entry.IconPath) ? string.Empty : entry.IconPath.Trim(),
+                    IsDesktopApp = entry.IsDesktopApp,
                     HardMuted = entry.HardMuted,
                     VolumeMode = mode,
                     VolumePercent = percent,
@@ -902,6 +943,8 @@ namespace EarTrumpet
             {
                 ExeName = entry.ExeName,
                 DisplayName = entry.DisplayName,
+                IconPath = entry.IconPath,
+                IsDesktopApp = entry.IsDesktopApp,
                 HardMuted = entry.HardMuted,
                 VolumeMode = entry.VolumeMode,
                 VolumePercent = entry.VolumePercent,
