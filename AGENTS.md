@@ -361,5 +361,5 @@ The diagnostic zip can contain app names, device names, process IDs, endpoint ID
 GitHub release notes must be:
 
 - In English
-- Professional tone
+- Human-written with a lightly conversational, casual tone; avoid generic AI or marketing copy
 - Format: `## BetterTrumpet vX.Y.Z`, then `### Section`, then `- **Feature** - description`
