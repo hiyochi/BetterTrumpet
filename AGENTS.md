@@ -153,6 +153,7 @@ Notes:
 Recent work in `master` includes:
 
 - CLI `set-default` now switches and verifies both Windows `Console` and `Multimedia` playback roles. COM failures or unchanged endpoints return an error instead of a false `ok: true`; `GetDefaultDevice(role)` must query the requested role rather than always reading `Multimedia`.
+- The flyout uses tray icon bounds only to select the target monitor; its position remains anchored to that monitor's taskbar edge. It enters the topmost band before opening animations begin so another always-on-top window cannot cover it mid-animation.
 - 3.2.1: persistent per-app volume rules support `Set at launch` and `Lock`, share one settings entry with hard mute, remain editable live from the flyout and Settings, and migrate/import legacy hard-mute data.
 - Media-popup stability improvements coordinate it with the main flyout, add a larger hover tolerance and hide delay, prefer actively playing media sessions, and invalidate stale thumbnails when the selected session changes.
 - CLI text is UTF-8 end to end, including named-pipe framing, attached-console output, redirected output, help text, device/app names, and JSON responses.
