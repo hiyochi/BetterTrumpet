@@ -264,30 +264,6 @@
   <data name="AppRulesSettingsPageSubtitle" xml:space="preserve">
     <value>Applications gardées en sourdine ou dont le volume est mémorisé</value>
   </data>
-  <data name="FolderVolumeRulesHeaderText" xml:space="preserve">
-    <value>Volumes par dossier</value>
-  </data>
-  <data name="FolderVolumeRulesAddButtonText" xml:space="preserve">
-    <value>Ajouter un dossier</value>
-  </data>
-  <data name="FolderVolumeRulesEmptyText" xml:space="preserve">
-    <value>Aucun dossier personnalisé.</value>
-  </data>
-  <data name="FolderVolumeRulesFolderText" xml:space="preserve">
-    <value>Dossier</value>
-  </data>
-  <data name="FolderVolumeRulesBrowseButtonText" xml:space="preserve">
-    <value>Choisir un dossier</value>
-  </data>
-  <data name="FolderVolumeRulesRemoveButtonText" xml:space="preserve">
-    <value>Supprimer cette règle de dossier</value>
-  </data>
-  <data name="FolderVolumeRulesBrowseDialogTitle" xml:space="preserve">
-    <value>Choisir un dossier</value>
-  </data>
-  <data name="FolderVolumeRulesVolumeText" xml:space="preserve">
-    <value>Volume de départ</value>
-  </data>
   <data name="AppRulesListHeaderText" xml:space="preserve">
     <value>Règles enregistrées</value>
   </data>
