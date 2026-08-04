@@ -186,9 +186,11 @@
         <!-- Section card style. Includes the themed background so every section
              card is declared in one place. -->
         <Style x:Key="SectionCardBorder" TargetType="Border">
-            <Setter Property="Margin" Value="0,0,0,20"/>
-            <Setter Property="Padding" Value="20"/>
-            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
             <Setter Property="Theme:Brush.Background" Value="Theme={Theme}ListLow, HighContrast=Window"/>
         </Style>
 
@@ -802,6 +804,30 @@
                         </Grid>
                     </Border>
 
+                    <Border Margin="0,0,0,16" Padding="16,12" CornerRadius="8"
+                            Background="{StaticResource ListItemBackgroundBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"
+                            IsEnabled="{Binding UseCustomSliderColors}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="56" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{x:Static resx:Resources.SettingsWindowOpacity}" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Static resx:Resources.SettingsWindowOpacityDesc}"
+                                           Style="{StaticResource BodySubText}" FontSize="11" Margin="0,2,0,8" />
+                                <Slider Minimum="0.05" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                        PreviewMouseLeftButtonUp="WindowBackgroundOpacitySlider_PreviewMouseLeftButtonUp"
+                                        PreviewKeyUp="WindowBackgroundOpacitySlider_PreviewKeyUp"
+                                        Value="{Binding PendingWindowBackgroundOpacity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding PendingWindowBackgroundOpacity, StringFormat={}{0:P0}}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"
+                                       Theme:Brush.Foreground="Theme=Text, HighContrast=Text" />
+                        </Grid>
+                    </Border>
+
                     <!-- ═══════════════════════════════════════════════════ -->
                     <!-- SEGMENTED TAB BAR: [Dynamic] [Presets] [Custom]     -->
                     <!-- ═══════════════════════════════════════════════════ -->
@@ -1399,8 +1425,8 @@
                                                 BorderThickness="3" BorderBrush="#30FFFFFF" RenderTransformOrigin="0.5,0.5">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter Property="Effect">
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1416,6 +1442,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelThumb}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding SliderThumbColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
@@ -1425,7 +1453,7 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1441,6 +1469,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelFill}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding SliderTrackFillColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
@@ -1450,7 +1480,7 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1466,6 +1496,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelTrackBg}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding SliderTrackBackgroundColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="3" HorizontalAlignment="Center">
@@ -1475,7 +1507,7 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1491,6 +1523,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelPeakMeter}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding PeakMeterColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
                                 </Grid>
 
@@ -1512,7 +1546,7 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1528,6 +1562,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelWindowBg}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding WindowBackgroundColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
@@ -1537,7 +1573,7 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1553,6 +1589,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelText}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding TextColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
@@ -1562,7 +1600,7 @@
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Effect">
-                                                        <Setter.Value><DropShadowEffect ShadowDepth="2" BlurRadius="8" Opacity="0.3" /></Setter.Value>
+                                                        <Setter.Value><DropShadowEffect ShadowDepth="0" BlurRadius="2" Opacity="0.12" /></Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -1578,6 +1616,8 @@
                                         </Border>
                                         <TextBlock Text="{x:Static resx:Resources.ColorLabelGlow}" FontSize="11" Margin="0,6,0,0" FontWeight="Medium"
                                                    HorizontalAlignment="Center" Style="{StaticResource BodySubText}" />
+                                        <TextBlock Text="{Binding AccentGlowColorHex}" FontSize="10" Margin="0,2,0,0"
+                                                   HorizontalAlignment="Center" Opacity="0.65" />
                                     </StackPanel>
                                 </Grid>
 

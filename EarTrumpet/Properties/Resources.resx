@@ -939,6 +939,12 @@ Open [https://eartrumpet.app/jmp/fixfonts] now?</value>
   <data name="SettingsCustomColorsDesc" xml:space="preserve">
     <value>Personalize volume slider appearance</value>
   </data>
+  <data name="SettingsWindowOpacity" xml:space="preserve">
+    <value>Window background opacity</value>
+  </data>
+  <data name="SettingsWindowOpacityDesc" xml:space="preserve">
+    <value>Lower values keep more of the acrylic blur visible</value>
+  </data>
   <data name="SettingsTabDynamic" xml:space="preserve">
     <value>Dynamic</value>
   </data>

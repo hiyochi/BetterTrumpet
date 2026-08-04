@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -22,10 +23,10 @@ namespace EarTrumpet.UI.ViewModels
         private readonly Dictionary<string, object> _originalRefs = new Dictionary<string, object>();
         private bool _refsBackedUp = false;
 
-        // Opacity of the custom color when used as the flyout's ACRYLIC tint. High enough
-        // that the tint reads clearly over the blur, low enough to stay translucent
-        // (0.85 was fully opaque; 0.4 was too faint to see).
-        private const string FlyoutAcrylicTintOpacity = "0.7";
+        // Keep the content layer visibly themed without covering the DWM acrylic
+        // material. The final /1 value supplies an accessible solid fallback when
+        // system transparency is disabled.
+        private const string FlyoutContentTintOpacity = "0.2";
 
         // Default colors from shared registry
         private static readonly Color DefaultAccentColor = ThemeRegistry.DefaultAccentColor;
@@ -153,6 +154,36 @@ namespace EarTrumpet.UI.ViewModels
                     RestoreOriginalThemeRefs();
                 }
             }
+        }
+
+        private double? _pendingWindowBackgroundOpacity;
+
+        public double PendingWindowBackgroundOpacity
+        {
+            get => _pendingWindowBackgroundOpacity ?? WindowBackgroundOpacity;
+            set
+            {
+                _pendingWindowBackgroundOpacity = System.Math.Max(0.05, System.Math.Min(1.0, value));
+                RaisePropertyChanged(nameof(PendingWindowBackgroundOpacity));
+            }
+        }
+
+        public double WindowBackgroundOpacity
+        {
+            get => _settings.WindowBackgroundOpacity;
+            set
+            {
+                _settings.WindowBackgroundOpacity = value;
+                _pendingWindowBackgroundOpacity = _settings.WindowBackgroundOpacity;
+                RaisePropertyChanged(nameof(WindowBackgroundOpacity));
+                RaisePropertyChanged(nameof(PendingWindowBackgroundOpacity));
+                ApplyExtendedThemeColors();
+            }
+        }
+
+        public void CommitWindowBackgroundOpacity()
+        {
+            WindowBackgroundOpacity = PendingWindowBackgroundOpacity;
         }
 
         // Dynamic album art theme
@@ -822,10 +853,14 @@ namespace EarTrumpet.UI.ViewModels
 
             // Clear extended color settings
             _settings.WindowBackgroundColor = Colors.Transparent;
+            _settings.WindowBackgroundOpacity = 0.7;
             _settings.TextColor = Colors.Transparent;
             _settings.AccentGlowColor = Colors.Transparent;
             RaisePropertyChanged(nameof(WindowBackgroundColor));
             RaisePropertyChanged(nameof(WindowBackgroundColorHex));
+            RaisePropertyChanged(nameof(WindowBackgroundOpacity));
+            _pendingWindowBackgroundOpacity = null;
+            RaisePropertyChanged(nameof(PendingWindowBackgroundOpacity));
             RaisePropertyChanged(nameof(TextColorValue));
             RaisePropertyChanged(nameof(TextColorHex));
             RaisePropertyChanged(nameof(AccentGlowColor));
@@ -888,11 +923,17 @@ namespace EarTrumpet.UI.ViewModels
                 if (hasWindowBg)
                 {
                     var bgHex = $"#{windowBg.R:X2}{windowBg.G:X2}{windowBg.B:X2}";
+                    var acrylicOpacity = WindowBackgroundOpacity.ToString("0.##", CultureInfo.InvariantCulture);
 
-                    // FlyoutBackground (the CONTENT layer) is intentionally left untouched:
-                    // overriding it paints an opaque pane OVER the acrylic and kills the blur.
-                    // The flyout tint is applied via AcrylicColor_Flyout below instead, so the
-                    // custom color tints the acrylic material itself while staying translucent.
+                    // The flyout content layer has its own brush and otherwise keeps the
+                    // Windows accent color on top of the acrylic tint. Keep this layer
+                    // translucent so the DWM acrylic material remains visible through it.
+                    var flyoutBgRef = refs.FirstOrDefault(r => r.Key == "FlyoutBackground");
+                    if (flyoutBgRef != null)
+                    {
+                        flyoutBgRef.Value = $"{bgHex}/{FlyoutContentTintOpacity}/1";
+                        flyoutBgRef.Rules.Clear();
+                    }
 
                     // Override Background
                     var bgRef = refs.FirstOrDefault(r => r.Key == "Background");
@@ -916,7 +957,7 @@ namespace EarTrumpet.UI.ViewModels
                     var acrylicFlyoutRef = refs.FirstOrDefault(r => r.Key == "AcrylicColor_Flyout");
                     if (acrylicFlyoutRef != null)
                     {
-                        acrylicFlyoutRef.Value = $"{bgHex}/{FlyoutAcrylicTintOpacity}/1";
+                        acrylicFlyoutRef.Value = $"{bgHex}/{acrylicOpacity}/1";
                         acrylicFlyoutRef.Rules.Clear();
                     }
 
