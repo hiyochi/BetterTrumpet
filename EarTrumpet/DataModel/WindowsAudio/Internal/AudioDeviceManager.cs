@@ -116,7 +116,7 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
             }
         }
 
-        public void SetDefaultDevice(IAudioDevice device, ERole role = ERole.eMultimedia)
+        public bool SetDefaultDevice(IAudioDevice device, ERole role = ERole.eMultimedia)
         {
             TraceLine($"SetDefaultDevice {device.Id}");
 
@@ -129,10 +129,12 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
             try
             {
                 s_PolicyConfigClient.SetDefaultEndpoint(device.Id, role);
+                return true;
             }
             catch (Exception ex)
             {
                 TraceLine($"{ex}");
+                return false;
             }
         }
 
@@ -140,7 +142,7 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
         {
             try
             {
-                var rawDevice = _enumerator.GetDefaultAudioEndpoint(Flow, ERole.eMultimedia);
+                var rawDevice = _enumerator.GetDefaultAudioEndpoint(Flow, eRole);
                 TryFind(rawDevice.GetId(), out var device);
                 return device;
             }

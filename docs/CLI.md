@@ -401,7 +401,7 @@ BetterTrumpet.exe --get-default
 
 ### `--set-default`
 
-Change the system default playback device. Partial name matching is supported.
+Change the system default playback device for both normal Windows output roles (`Console` and `Multimedia`). Partial name matching is supported, and the command reports an error if Windows does not apply the selected endpoint.
 
 ```
 BetterTrumpet.exe --set-default "Headphones (BEACN Mic)"
