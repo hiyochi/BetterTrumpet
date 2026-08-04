@@ -1055,6 +1055,54 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string FolderVolumeRulesHeaderText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesHeaderText", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesAddButtonText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesAddButtonText", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesEmptyText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesEmptyText", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesFolderText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesFolderText", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesBrowseButtonText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesBrowseButtonText", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesRemoveButtonText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesRemoveButtonText", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesBrowseDialogTitle {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesBrowseDialogTitle", resourceCulture);
+            }
+        }
+
+        public static string FolderVolumeRulesVolumeText {
+            get {
+                return ResourceManager.GetString("FolderVolumeRulesVolumeText", resourceCulture);
+            }
+        }
+
         public static string AppRulesListHeaderText {
             get {
                 return ResourceManager.GetString("AppRulesListHeaderText", resourceCulture);
