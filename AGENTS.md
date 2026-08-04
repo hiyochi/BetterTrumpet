@@ -152,7 +152,6 @@ Notes:
 
 Recent work in `master` includes:
 
-- Folder launch-volume defaults: App rules now include custom folder defaults that apply a chosen starting volume to desktop sessions whose executable path is under the configured folder, recursively. The deepest matching folder wins. Explicit app `Set at launch` and `Lock` volume rules remain higher priority; hard mute still composes with a folder default. Folder-default settings export and import with the rest of the profile.
 - CLI `set-default` now switches and verifies both Windows `Console` and `Multimedia` playback roles. COM failures or unchanged endpoints return an error instead of a false `ok: true`; `GetDefaultDevice(role)` must query the requested role rather than always reading `Multimedia`.
 - The flyout uses tray icon bounds only to select the target monitor; its position remains anchored to that monitor's taskbar edge. It enters the topmost band before opening animations begin so another always-on-top window cannot cover it mid-animation.
 - 3.2.1: persistent per-app volume rules support `Set at launch` and `Lock`, share one settings entry with hard mute, remain editable live from the flyout and Settings, and migrate/import legacy hard-mute data.

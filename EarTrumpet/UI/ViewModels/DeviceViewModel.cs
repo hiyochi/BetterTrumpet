@@ -306,29 +306,6 @@ namespace EarTrumpet.UI.ViewModels
         }
 
         /// <summary>
-        /// Applies folder defaults immediately to matching live sessions that do not have their
-        /// own volume rule. This is intentionally separate from ApplyAppRules so changing a
-        /// folder setting cannot reset unrelated launch rules.
-        /// </summary>
-        internal void ApplyFolderVolumeDefaults()
-        {
-            foreach (var app in Apps)
-            {
-                var explicitRule = _settings?.GetAppRule(app.ExeName);
-                if (explicitRule?.HasVolumeRule == true || !TryGetFolderDefaultVolume(app, out var volumePercent))
-                {
-                    continue;
-                }
-
-                LaunchVolumeTracker.Release(app.ProcessId);
-                if (LaunchVolumeTracker.TryClaim(app.ProcessId) && app.Volume != volumePercent)
-                {
-                    SetVolumeSilently(app, volumePercent);
-                }
-            }
-        }
-
-        /// <summary>
         /// Applies one app's rule right now, including Launch, and re-arms the launch
         /// tracker so a freshly edited rule takes effect without waiting for a relaunch.
         /// </summary>
@@ -350,6 +327,11 @@ namespace EarTrumpet.UI.ViewModels
                 appItem.IsVolumeLocked = isLocked;
             }
 
+            if (rule == null)
+            {
+                return;
+            }
+
             if (isLocked)
             {
                 if (app.Volume != rule.VolumePercent)
@@ -357,33 +339,19 @@ namespace EarTrumpet.UI.ViewModels
                     SetVolumeSilently(app, rule.VolumePercent);
                 }
             }
-            else if (rule?.VolumeMode == AppSettings.VolumeRuleMode.Launch &&
+            else if (rule.VolumeMode == AppSettings.VolumeRuleMode.Launch &&
                      isNewSession &&
                      LaunchVolumeTracker.TryClaim(app.ProcessId))
             {
                 SetVolumeSilently(app, rule.VolumePercent);
             }
-            else if ((rule == null || !rule.HasVolumeRule) &&
-                     isNewSession &&
-                     TryGetFolderDefaultVolume(app, out var folderVolumePercent) &&
-                     LaunchVolumeTracker.TryClaim(app.ProcessId))
-            {
-                SetVolumeSilently(app, folderVolumePercent);
-            }
 
             // Must come after the volume write: setting a non-zero volume clears the
             // session's mute (AudioDeviceSession.Volume setter), which would undo a hard mute.
-            if (rule?.HardMuted == true && !app.IsMuted)
+            if (rule.HardMuted && !app.IsMuted)
             {
                 app.IsMuted = true;
             }
-        }
-
-        private bool TryGetFolderDefaultVolume(IAppItemViewModel app, out int volumePercent)
-        {
-            volumePercent = 0;
-            return _settings != null &&
-                   _settings.TryGetFolderVolume(app.AppId, out volumePercent);
         }
 
         // Rule enforcement can fire repeatedly, so it must not record undo steps.

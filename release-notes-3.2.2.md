@@ -6,13 +6,13 @@ surreal that we are past 8,000 downloads. Thanks for keeping the reports coming.
 
 ### Better positioning
 
-- **The flyout stays attached to the taskbar edge** - The tray icon now picks the right monitor without pulling the flyout away from its proper taskbar position. It also enters the topmost band before its opening animation, so other always-on-top windows cannot jump in front of it.
-- **Custom display scaling behaves properly** - The flyout and media popup convert Windows' physical tray and monitor coordinates to WPF DIPs, then react to DPI changes instead of slowly drifting or overflowing after a scaling change.
-- **The media popup catches missed track updates** - A lightweight visible-state check refreshes the title and artwork cache when a media provider skips a track-change event.
+- **The flyout stays attached to the taskbar edge** - The tray icon now picks the right monitor without pulling the flyout away from its proper taskbar position. It also enters the topmost band before its opening animation, so other always-on-top windows cannot jump in front of it. This fixes the positioning and z-order report in [issue #35](https://github.com/xammen/BetterTrumpet/issues/35).
+- **Custom display scaling behaves properly** - The flyout and media popup convert Windows' physical tray and monitor coordinates to WPF DIPs, then react to DPI changes instead of slowly drifting or overflowing after a scaling change. This is the placement part of [issue #32](https://github.com/xammen/BetterTrumpet/issues/32).
+- **The media popup catches missed track updates** - A lightweight visible-state check refreshes the title and artwork cache when a media provider skips a track-change event, covering the stale-track behavior from [issue #32](https://github.com/xammen/BetterTrumpet/issues/32).
 
 ### CLI reliability
 
-- **`set-default` now means it** - The CLI sets both the `Console` and `Multimedia` playback roles, then verifies that Windows actually accepted the selected device. A failed or ignored COM call now returns an error instead of a very confident but wrong `ok: true`.
+- **`set-default` now means it** - The CLI sets both the `Console` and `Multimedia` playback roles, then verifies that Windows actually accepted the selected device. A failed or ignored COM call now returns an error instead of a very confident but wrong `ok: true`. This resolves [issue #34](https://github.com/xammen/BetterTrumpet/issues/34).
 
 ### Appearance
 
