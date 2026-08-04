@@ -23,9 +23,12 @@ namespace EarTrumpet.UI.ViewModels
         private bool _isAddRulePanelOpen;
 
         public ObservableCollection<AppRuleItemViewModel> Rules { get; } = new ObservableCollection<AppRuleItemViewModel>();
+        public ObservableCollection<FolderVolumeRuleItemViewModel> FolderVolumeRules { get; } = new ObservableCollection<FolderVolumeRuleItemViewModel>();
 
         public bool HasRules => Rules.Count > 0;
         public bool IsEmpty => Rules.Count == 0;
+        public bool HasFolderVolumeRules => FolderVolumeRules.Count > 0;
+        public bool HasNoFolderVolumeRules => FolderVolumeRules.Count == 0;
 
         private string _newRuleExeName = "";
         public string NewRuleExeName
@@ -59,6 +62,9 @@ namespace EarTrumpet.UI.ViewModels
         public ICommand RemoveRuleCommand { get; }
         public ICommand ClearAllRulesCommand { get; }
         public ICommand ToggleAddRulePanelCommand { get; }
+        public ICommand AddFolderVolumeRuleCommand { get; }
+        public ICommand BrowseForFolderVolumeRuleCommand { get; }
+        public ICommand RemoveFolderVolumeRuleCommand { get; }
 
         public EarTrumpetAppRulesSettingsPageViewModel(AppSettings settings) : base(null)
         {
@@ -72,8 +78,12 @@ namespace EarTrumpet.UI.ViewModels
             RemoveRuleCommand = new RelayCommand<AppRuleItemViewModel>(RemoveRule);
             ClearAllRulesCommand = new RelayCommand(ClearAllRules);
             ToggleAddRulePanelCommand = new RelayCommand(() => IsAddRulePanelOpen = !IsAddRulePanelOpen);
+            AddFolderVolumeRuleCommand = new RelayCommand(AddFolderVolumeRule);
+            BrowseForFolderVolumeRuleCommand = new RelayCommand<FolderVolumeRuleItemViewModel>(BrowseForFolderVolumeRule);
+            RemoveFolderVolumeRuleCommand = new RelayCommand<FolderVolumeRuleItemViewModel>(RemoveFolderVolumeRule);
 
             SyncRules();
+            SyncFolderVolumeRules();
         }
 
         /// <summary>
@@ -89,6 +99,7 @@ namespace EarTrumpet.UI.ViewModels
             }
 
             SyncRules();
+            SyncFolderVolumeRules();
         }
 
         public override bool NavigatingFrom(NavigationCookie cookie)
@@ -105,6 +116,7 @@ namespace EarTrumpet.UI.ViewModels
             }
 
             Rules.Clear();
+            FolderVolumeRules.Clear();
             RaiseRuleCollectionStateChanged();
             return base.NavigatingFrom(cookie);
         }
@@ -182,6 +194,19 @@ namespace EarTrumpet.UI.ViewModels
         {
             RaisePropertyChanged(nameof(HasRules));
             RaisePropertyChanged(nameof(IsEmpty));
+            RaisePropertyChanged(nameof(HasFolderVolumeRules));
+            RaisePropertyChanged(nameof(HasNoFolderVolumeRules));
+        }
+
+        private void SyncFolderVolumeRules()
+        {
+            FolderVolumeRules.Clear();
+            foreach (var rule in _settings.GetFolderVolumeRules())
+            {
+                FolderVolumeRules.Add(new FolderVolumeRuleItemViewModel(_settings, rule));
+            }
+
+            RaiseRuleCollectionStateChanged();
         }
 
         private Dictionary<string, IAppItemViewModel> GetRunningApps()
@@ -290,6 +315,65 @@ namespace EarTrumpet.UI.ViewModels
             }
         }
 
+        private void AddFolderVolumeRule()
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFolderDialog
+                {
+                    Title = Properties.Resources.FolderVolumeRulesBrowseDialogTitle,
+                };
+
+                if (dlg.ShowDialog() == true)
+                {
+                    _settings.AddFolderVolumeRule(dlg.FolderName);
+                    SyncFolderVolumeRules();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"AppRulesVM AddFolderVolumeRule failed: {ex.Message}");
+            }
+        }
+
+        private void BrowseForFolderVolumeRule(FolderVolumeRuleItemViewModel rule)
+        {
+            if (rule == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFolderDialog
+                {
+                    Title = Properties.Resources.FolderVolumeRulesBrowseDialogTitle,
+                    FolderName = rule.FolderPath,
+                };
+
+                if (dlg.ShowDialog() == true)
+                {
+                    rule.FolderPath = dlg.FolderName;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"AppRulesVM BrowseForFolderVolumeRule failed: {ex.Message}");
+            }
+        }
+
+        private void RemoveFolderVolumeRule(FolderVolumeRuleItemViewModel rule)
+        {
+            if (rule == null)
+            {
+                return;
+            }
+
+            _settings.RemoveFolderVolumeRule(rule.Id);
+            FolderVolumeRules.Remove(rule);
+            RaiseRuleCollectionStateChanged();
+        }
+
         private void RemoveRule(AppRuleItemViewModel row)
         {
             if (row == null)
@@ -319,6 +403,58 @@ namespace EarTrumpet.UI.ViewModels
                 _settings.ClearAppRules();
                 SyncRules();
             }
+        }
+    }
+
+    public class FolderVolumeRuleItemViewModel : BindableBase
+    {
+        private readonly AppSettings _settings;
+        private string _folderPath;
+        private int _volumePercent;
+
+        public string Id { get; }
+
+        public string FolderPath
+        {
+            get => _folderPath;
+            set
+            {
+                if (string.Equals(_folderPath, value, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                _folderPath = value;
+                _settings.UpdateFolderVolumeRule(Id, _folderPath, _volumePercent);
+                RaisePropertyChanged(nameof(FolderPath));
+            }
+        }
+
+        public int VolumePercent
+        {
+            get => _volumePercent;
+            set
+            {
+                if (_volumePercent == value)
+                {
+                    return;
+                }
+
+                _volumePercent = value;
+                _settings.UpdateFolderVolumeRule(Id, _folderPath, _volumePercent);
+                RaisePropertyChanged(nameof(VolumePercent));
+                RaisePropertyChanged(nameof(VolumePercentText));
+            }
+        }
+
+        public string VolumePercentText => VolumePercent + "%";
+
+        public FolderVolumeRuleItemViewModel(AppSettings settings, AppSettings.FolderVolumeRuleEntry rule)
+        {
+            _settings = settings;
+            Id = rule.Id;
+            _folderPath = rule.FolderPath;
+            _volumePercent = rule.VolumePercent;
         }
     }
 }

@@ -87,6 +87,7 @@ namespace EarTrumpet.DataModel
 
                 // Per-app rules (hard mute + volume rules)
                 ["AppRulesJson"] = settings.AppRulesJson,
+                ["FolderVolumeRulesJson"] = settings.FolderVolumeRulesJson,
             };
 
             return data;
@@ -260,6 +261,7 @@ namespace EarTrumpet.DataModel
             // restores its hard mutes; it merges into the rule list rather than replacing it.
             TrySet(data, "AppRulesJson", (string v) => settings.AppRulesJson = v);
             TrySet(data, "HardMutedAppsJson", (string v) => settings.LegacyHardMutedAppsJson = v);
+            TrySet(data, "FolderVolumeRulesJson", (string v) => settings.FolderVolumeRulesJson = v);
         }
 
         private static void TrySet<T>(Dictionary<string, object> data, string key, Action<T> setter)
