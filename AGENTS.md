@@ -159,6 +159,7 @@ Recent work in `master` includes:
 - CLI text is UTF-8 end to end, including named-pipe framing, attached-console output, redirected output, help text, device/app names, and JSON responses.
 - Microsoft Store/MSIX builds use Store-owned updates only; unpackaged GitHub, Chocolatey, and Winget builds retain the GitHub/Inno updater.
 - Single-bar peak-meter styles are vertically centered instead of inheriting the negative offset used by the two-bar Classic style.
+- Custom Appearance colors now override the `FlyoutBackground` theme reference as a translucent content tint, as well as the acrylic tint, so `Window BG` is visible in the live flyout instead of being replaced by the Windows accent without losing the blur. `Window background opacity` controls the Acrylic tint from 5% to 100%, persists in settings, is included in settings export/import, and applies only when the slider is released to avoid repeated DWM acrylic reconfiguration during dragging. The Appearance palette shows live hex values, uses flatter swatches, and includes three restrained BetterTrumpet house presets (`Midnight Studio`, `Graphite`, `Night Shift`).
 
 - Public 3.1.0 release on GitHub with setup exe, portable zip, and checksum file
 - 3.1.0 hotfix: when custom slider colors are disabled, volume bars and peak meters now reapply theme brushes instead of falling back to white WPF defaults
@@ -359,6 +360,7 @@ The diagnostic zip can contain app names, device names, process IDs, endpoint ID
 9. `VolumeSlider.ResetVisualElementColors()` must not rely on `ClearValue` alone after `Theme:Brush` has written local values.
 10. For startup/run entries on .NET 8, do not use `Assembly.GetExecutingAssembly().Location`; it points to `BetterTrumpet.dll`. Use `Environment.ProcessPath` for `BetterTrumpet.exe`.
 11. SMTC's manager-level `GetCurrentSession()` can switch between Spotify and browser tabs between calls. This remains a known baseline limitation after the experimental fix was reverted; isolate any future behavioral fix from visual redesign work.
+12. A custom window background must update both `Background` and `FlyoutBackground` refs. Keep `FlyoutBackground` translucent (`color/opacity/1`) so changing only `AcrylicColor_Flyout` does not leave the content painted with the system accent or remove the acrylic blur.
 
 ## Validation Status
 

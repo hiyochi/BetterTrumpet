@@ -1409,6 +1409,16 @@ namespace EarTrumpet
             }
         }
 
+        public double WindowBackgroundOpacity
+        {
+            get => System.Math.Max(0.05, System.Math.Min(1.0, _settings.Get("WindowBackgroundOpacity", 0.7)));
+            set
+            {
+                _settings.Set("WindowBackgroundOpacity", System.Math.Max(0.05, System.Math.Min(1.0, value)));
+                if (!_batchMode) CustomSliderColorsChanged?.Invoke();
+            }
+        }
+
         public System.Windows.Media.Color TextColor
         {
             get => ParseColorSetting("TextColor");

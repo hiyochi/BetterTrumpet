@@ -43,6 +43,23 @@ namespace EarTrumpet.UI.ViewModels
                 DefaultAccentColor, DefaultAccentColor, DefaultTrackBackground, DefaultPeakMeter,
                 Color.FromRgb(32, 32, 32), Color.FromRgb(255, 255, 255), DefaultAccentColor),
 
+            // BetterTrumpet house palettes: restrained accents with enough separation
+            // between the slider fill, peak meter, and window surface.
+            new ColorTheme("Midnight Studio", CatDefault,
+                Color.FromRgb(92, 145, 238), Color.FromRgb(58, 111, 206), Color.FromRgb(28, 31, 39),
+                Color.FromRgb(242, 181, 86), Color.FromRgb(16, 18, 24), Color.FromRgb(242, 244, 248),
+                Color.FromRgb(104, 158, 248)),
+
+            new ColorTheme("Graphite", CatDefault,
+                Color.FromRgb(222, 174, 112), Color.FromRgb(174, 123, 76), Color.FromRgb(39, 40, 45),
+                Color.FromRgb(111, 194, 165), Color.FromRgb(22, 23, 27), Color.FromRgb(238, 239, 234),
+                Color.FromRgb(231, 181, 117)),
+
+            new ColorTheme("Night Shift", CatDefault,
+                Color.FromRgb(131, 147, 243), Color.FromRgb(102, 111, 207), Color.FromRgb(30, 30, 39),
+                Color.FromRgb(123, 211, 188), Color.FromRgb(17, 18, 26), Color.FromRgb(241, 240, 248),
+                Color.FromRgb(157, 169, 255)),
+
             // True black + cyan accent, warm amber peak for contrast
             new ColorTheme("OLED Pure", CatDefault,
                 Color.FromRgb(0, 210, 210),    // thumb: bright cyan

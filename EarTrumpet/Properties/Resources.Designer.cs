@@ -2342,6 +2342,12 @@ namespace EarTrumpet.Properties {
         public static string SettingsCustomColorsDesc {
             get { return ResourceManager.GetString("SettingsCustomColorsDesc", resourceCulture); }
         }
+        public static string SettingsWindowOpacity {
+            get { return ResourceManager.GetString("SettingsWindowOpacity", resourceCulture); }
+        }
+        public static string SettingsWindowOpacityDesc {
+            get { return ResourceManager.GetString("SettingsWindowOpacityDesc", resourceCulture); }
+        }
         public static string SettingsTabDynamic {
             get { return ResourceManager.GetString("SettingsTabDynamic", resourceCulture); }
         }

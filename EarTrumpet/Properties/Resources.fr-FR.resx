@@ -918,6 +918,12 @@ Voulez-vous ouvrir [https://eartrumpet.app/jmp/fixfonts] maintenant?</value>
   <data name="SettingsCustomColorsDesc" xml:space="preserve">
     <value>Personnaliser l'apparence des curseurs</value>
   </data>
+  <data name="SettingsWindowOpacity" xml:space="preserve">
+    <value>Opacite du fond de la fenetre</value>
+  </data>
+  <data name="SettingsWindowOpacityDesc" xml:space="preserve">
+    <value>Une valeur basse laisse davantage apparaitre le flou Acrylic</value>
+  </data>
   <data name="SettingsTabDynamic" xml:space="preserve">
     <value>Dynamique</value>
   </data>

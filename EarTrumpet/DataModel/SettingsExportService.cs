@@ -55,6 +55,7 @@ namespace EarTrumpet.DataModel
                 ["SliderTrackBackgroundColor"] = settings.SliderTrackBackgroundColor.ToString(),
                 ["PeakMeterColor"] = settings.PeakMeterColor.ToString(),
                 ["WindowBackgroundColor"] = settings.WindowBackgroundColor.ToString(),
+                ["WindowBackgroundOpacity"] = settings.WindowBackgroundOpacity,
                 ["TextColor"] = settings.TextColor.ToString(),
                 ["AccentGlowColor"] = settings.AccentGlowColor.ToString(),
                 ["CustomThemesJson"] = settings.CustomThemesJson,
@@ -225,6 +226,7 @@ namespace EarTrumpet.DataModel
             TrySetColor(data, "SliderTrackBackgroundColor", c => settings.SliderTrackBackgroundColor = c);
             TrySetColor(data, "PeakMeterColor", c => settings.PeakMeterColor = c);
             TrySetColor(data, "WindowBackgroundColor", c => settings.WindowBackgroundColor = c);
+            TrySet(data, "WindowBackgroundOpacity", (double v) => settings.WindowBackgroundOpacity = v);
             TrySetColor(data, "TextColor", c => settings.TextColor = c);
             TrySetColor(data, "AccentGlowColor", c => settings.AccentGlowColor = c);
             TrySet(data, "CustomThemesJson", (string v) => settings.CustomThemesJson = v);

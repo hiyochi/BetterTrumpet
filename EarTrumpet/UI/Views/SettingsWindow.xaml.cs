@@ -101,6 +101,25 @@ namespace EarTrumpet.UI.Views
             }
         }
 
+        private void WindowBackgroundOpacitySlider_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            CommitWindowBackgroundOpacity();
+        }
+
+        private void WindowBackgroundOpacitySlider_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            CommitWindowBackgroundOpacity();
+        }
+
+        private void CommitWindowBackgroundOpacity()
+        {
+            var viewModel = DataContext as SettingsViewModel;
+            if (viewModel?.Selected?.Selected is EarTrumpetColorsSettingsPageViewModel colorsVm)
+            {
+                colorsVm.CommitWindowBackgroundOpacity();
+            }
+        }
+
         /// <summary>
         /// Handle click on theme cards to apply the theme
         /// </summary>
