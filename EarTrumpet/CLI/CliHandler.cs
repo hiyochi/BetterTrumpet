@@ -463,8 +463,18 @@ namespace EarTrumpet.CLI
 
             if (device == null) return Error($"device not found: {deviceName}");
 
-            // Use MakeDefaultDevice which sets the device manager's Default property
-            device.MakeDefaultDevice();
+            // Windows tracks the normal default output separately for console and multimedia apps.
+            // Set and verify both roles so the CLI cannot report success for a no-op COM call.
+            var roles = new[] { ERole.eConsole, ERole.eMultimedia };
+            foreach (var role in roles)
+            {
+                if (!device.TryMakeDefaultDevice(role))
+                    return Error($"failed to set default device for {role}: {device.DisplayName}");
+
+                var defaultDevice = mgr.GetDefaultDevice(role);
+                if (!string.Equals(defaultDevice?.Id, device.Id, StringComparison.OrdinalIgnoreCase))
+                    return Error($"Windows did not apply the default device for {role}: {device.DisplayName}");
+            }
 
             return JsonConvert.SerializeObject(new { ok = true, name = device.DisplayName, id = device.Id });
         }

@@ -1,6 +1,7 @@
 using EarTrumpet.DataModel.Audio;
 using EarTrumpet.DataModel.WindowsAudio;
 using EarTrumpet.Extensions;
+using EarTrumpet.Interop.MMDeviceAPI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -440,6 +441,8 @@ namespace EarTrumpet.UI.ViewModels
         }
 
         public void MakeDefaultDevice() => _deviceManager.Default = _device;
+        public bool TryMakeDefaultDevice(ERole role) =>
+            _deviceManager is IAudioDeviceManagerWindowsAudio manager && manager.SetDefaultDevice(_device, role);
         public void IncrementVolume(int delta) => Volume += delta;
         public override string ToString() => AccessibleName;
     }
