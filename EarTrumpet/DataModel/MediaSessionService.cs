@@ -48,7 +48,8 @@ namespace EarTrumpet.DataModel
         // Thumbnail cache — prevents redundant SMTC stream reads when multiple consumers
         // request the thumbnail on the same track (MediaPopup, AlbumArt theme, PreloadThumbnail).
         private BitmapImage _cachedThumbnail;
-        private bool _thumbnailDirty = true;
+        private volatile bool _thumbnailDirty = true;
+        private int _thumbnailCacheVersion;
         private readonly object _thumbnailLock = new object();
 
         /// <summary>
@@ -139,7 +140,7 @@ namespace EarTrumpet.DataModel
             // Only use legacy if SMTC has no playing session
             if (!CheckIfAnyMediaPlaying())
             {
-                _thumbnailDirty = true;
+                InvalidateThumbnailCache();
                 _dispatcher.BeginInvoke(new Action(() =>
                 {
                     MediaTrackChanged?.Invoke();
@@ -231,7 +232,7 @@ namespace EarTrumpet.DataModel
         {
             Trace.WriteLine("MediaSessionService: Current session changed");
             // Invalidate thumbnail cache when session changes
-            _thumbnailDirty = true;
+            InvalidateThumbnailCache();
             _dispatcher.BeginInvoke(new Action(() =>
             {
                 SubscribeToAllSessions();
@@ -306,7 +307,7 @@ namespace EarTrumpet.DataModel
         {
             Trace.WriteLine("MediaSessionService: Media properties changed (track change)");
             // Invalidate thumbnail cache so next request fetches fresh art
-            _thumbnailDirty = true;
+            InvalidateThumbnailCache();
             _dispatcher.BeginInvoke(new Action(() =>
             {
                 MediaTrackChanged?.Invoke();
@@ -628,11 +629,23 @@ namespace EarTrumpet.DataModel
                 if (!_thumbnailDirty && _cachedThumbnail != null)
                     return _cachedThumbnail;
 
+                var cacheVersion = System.Threading.Volatile.Read(ref _thumbnailCacheVersion);
                 var result = FetchThumbnailCore();
                 _cachedThumbnail = result;
-                _thumbnailDirty = false;
+                _thumbnailDirty = cacheVersion != System.Threading.Volatile.Read(ref _thumbnailCacheVersion);
                 return result;
             }
+        }
+
+        /// <summary>
+        /// Forces the next thumbnail request to read the current media session.
+        /// This is used when a provider changes tracks without raising its media
+        /// properties event.
+        /// </summary>
+        public void InvalidateThumbnailCache()
+        {
+            System.Threading.Interlocked.Increment(ref _thumbnailCacheVersion);
+            _thumbnailDirty = true;
         }
 
         /// <summary>
