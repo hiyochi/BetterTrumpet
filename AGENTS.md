@@ -261,6 +261,8 @@ Treat `docs/CLI.md` as the user-facing syntax reference when in doubt.
 
 ## Media Popup (minimal Acrylic background pass)
 
+- Media popup placement now converts the physical tray icon and monitor work area to WPF DIPs, keeping hover placement correct at custom Windows scaling values. While visible, a lightweight fallback check detects media providers that miss track-change events and refreshes the title and thumbnail cache.
+
 The experimental 2026-07-10 popup redesign was reverted completely. A new isolated visual pass now changes only the popup surface while keeping `MediaSessionService.cs` and all session behavior at the `HEAD` baseline.
 
 - `MediaPopupWindow` no longer paints album art across the full popup or applies the old dark gradient, dominant-color glow, or shimmer animation.
@@ -299,6 +301,8 @@ The experimental 2026-07-10 popup redesign was reverted completely. A new isolat
 - Intune/enterprise deployment can reuse Inno silent switches: `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`.
 
 ## Tray And Startup Hardening
+
+- Flyout positioning uses the HWND's native DPI and repositions after `WM_DPICHANGED`, preventing stale WPF DPI transforms from making the flyout content overflow after repeated Windows scaling changes.
 
 Important recent fixes:
 

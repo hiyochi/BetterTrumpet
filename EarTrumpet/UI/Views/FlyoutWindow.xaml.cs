@@ -8,14 +8,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using Forms = System.Windows.Forms;
 
 namespace EarTrumpet.UI.Views
 {
     public partial class FlyoutWindow
     {
+        private const int WM_DPICHANGED = 0x02E0;
+
         private readonly IFlyoutViewModel _viewModel;
         private readonly Func<Rect?> _trayIconBoundsProvider;
+        private HwndSource _windowSource;
 
         public FlyoutWindow(IFlyoutViewModel viewModel, Func<Rect?> trayIconBoundsProvider = null)
         {
@@ -42,6 +46,8 @@ namespace EarTrumpet.UI.Views
 
             SourceInitialized += (_, __) =>
             {
+                _windowSource = PresentationSource.FromVisual(this) as HwndSource;
+                _windowSource?.AddHook(OnWindowMessage);
                 this.Cloak();
                 this.EnableRoundedCornersIfApplicable();
             };
@@ -161,6 +167,25 @@ else
             }
         }
 
+        private IntPtr OnWindowMessage(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (message == WM_DPICHANGED)
+            {
+                // WPF's TransformToDevice can lag behind the native DPI after a
+                // display-scale change. Reposition after Windows has applied the
+                // new monitor DPI to the HWND.
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    if (_viewModel.State == FlyoutViewState.Open || _viewModel.State == FlyoutViewState.Opening)
+                    {
+                        PositionWindowRelativeToTaskbar(WindowsTaskbar.Current);
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+
+            return IntPtr.Zero;
+        }
+
         private void PositionWindowRelativeToTaskbar(WindowsTaskbar.State taskbar)
         {
             var trayIconBounds = GetTrayIconBoundsForPositioning();
@@ -218,15 +243,18 @@ else
                 }
             }
 
-            double flyoutWidth = Width * this.DpiX();
-            double flyoutHeight = (LayoutRoot.DesiredSize.Height) * this.DpiY();
+            uint nativeDpi = User32.GetDpiForWindow(new WindowInteropHelper(this).Handle);
+            double dpiX = nativeDpi > 0 ? nativeDpi / (double)96 : this.DpiX();
+            double dpiY = nativeDpi > 0 ? nativeDpi / (double)96 : this.DpiY();
+            double flyoutWidth = Width * dpiX;
+            double flyoutHeight = LayoutRoot.DesiredSize.Height * dpiY;
 
             double yOffset = 0;
             double xOffset = 0;
             if(Environment.OSVersion.IsAtLeast(OSVersions.Windows11))
             {
-                xOffset += 12 * this.DpiX();
-                yOffset += 12 * this.DpiY();
+                xOffset += 12 * dpiX;
+                yOffset += 12 * dpiY;
             }
 
             var workingAreaHeight = Math.Abs(adjustedWorkingAreaTop - adjustedWorkingAreaBottom) - (yOffset * 2);
@@ -271,7 +299,7 @@ else
             // knows the actual available space and can scroll properly (GitHub #3).
             // SetWindowPos bypasses WPF, so without this WPF may think it has more
             // space than it actually does → content renders past the window → blank.
-            Height = flyoutHeight / this.DpiY();
+            Height = flyoutHeight / dpiY;
 
             _viewModel.UpdateWindowPos(top, left, flyoutHeight, flyoutWidth);
         }

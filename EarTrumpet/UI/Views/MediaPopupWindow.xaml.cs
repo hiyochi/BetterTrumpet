@@ -24,6 +24,7 @@ namespace EarTrumpet.UI.Views
         private readonly DispatcherTimer _hideTimer;
         private readonly DispatcherTimer _marqueeTimer;
         private readonly DispatcherTimer _progressTimer;
+        private readonly DispatcherTimer _mediaRefreshTimer;
         private readonly DispatcherTimer _delayedActionTimer;
 
         private double _marqueePosition;
@@ -55,6 +56,8 @@ namespace EarTrumpet.UI.Views
         private bool _hasProgressAnchor;
         private TimeSpan? _pendingSeekPosition;
         private DateTime _pendingSeekExpiresAt;
+        private bool _trackRefreshInProgress;
+        private int _mediaInfoRefreshInProgress;
 
         private const double CollapsedHeight = 185;
         private const double ExpandedHeight = 405;
@@ -94,6 +97,10 @@ namespace EarTrumpet.UI.Views
                 Interval = TimeSpan.FromMilliseconds(100)
             };
             _progressTimer.Tick += ProgressTimer_Tick;
+
+            // SMTC providers can occasionally miss MediaPropertiesChanged while a popup is open.
+            _mediaRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _mediaRefreshTimer.Tick += MediaRefreshTimer_Tick;
 
             // Reusable timer for delayed actions
             _delayedActionTimer = new DispatcherTimer();
@@ -143,6 +150,7 @@ namespace EarTrumpet.UI.Views
             _hideTimer.Stop();
             _marqueeTimer.Stop();
             _progressTimer.Stop();
+            _mediaRefreshTimer.Stop();
             _delayedActionTimer.Stop();
 
             // Cancel and dispose any pending operations
@@ -251,6 +259,41 @@ namespace EarTrumpet.UI.Views
             }));
         }
 
+        private void MediaRefreshTimer_Tick(object sender, EventArgs e)
+        {
+            if (!_isShowing || _trackRefreshInProgress || Interlocked.Exchange(ref _mediaInfoRefreshInProgress, 1) != 0)
+            {
+                return;
+            }
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    string title = MediaSessionService.Instance.GetCurrentMediaInfo();
+                    if (string.IsNullOrEmpty(title)) return;
+
+                    Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        if (_isShowing && !_trackRefreshInProgress &&
+                            !string.Equals(_cachedTitle, title, StringComparison.Ordinal))
+                        {
+                            MediaSessionService.Instance.InvalidateThumbnailCache();
+                            PlayTrackChangeAnimation();
+                        }
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"MediaPopupWindow: Media refresh check failed - {ex.Message}");
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _mediaInfoRefreshInProgress, 0);
+                }
+            });
+        }
+
         private void UpdateAllContent()
         {
             UpdateTitle();
@@ -264,6 +307,7 @@ namespace EarTrumpet.UI.Views
 
         private void PlayTrackChangeAnimation()
         {
+            _trackRefreshInProgress = true;
             _trackChangeCts?.Cancel();
             _trackChangeCts?.Dispose();
             _trackChangeCts = new CancellationTokenSource();
@@ -294,6 +338,7 @@ namespace EarTrumpet.UI.Views
                 {
                     if (token.IsCancellationRequested) return;
                     ApplyTitle(title);
+                    _trackRefreshInProgress = false;
                     _trackChangeInStoryboard.Begin(this, true);
                 }));
 
@@ -319,6 +364,7 @@ namespace EarTrumpet.UI.Views
                 {
                     if (!token.IsCancellationRequested)
                     {
+                        _trackRefreshInProgress = false;
                         _trackChangeInStoryboard.Begin(this, true);
                     }
                 }));
@@ -615,6 +661,13 @@ namespace EarTrumpet.UI.Views
             ContentGrid.Opacity = 1;
             MarqueeText.Opacity = 1;
 
+            // The popup may have been hidden while the track changed. Refresh both
+            // caches so a new hover cannot resurrect the previous track's content.
+            _cachedTitle = null;
+            _cachedThumbnail = null;
+            _thumbnailCts?.Cancel();
+            MediaSessionService.Instance.InvalidateThumbnailCache();
+
             UpdateAllContent();
 
             if (_isExpanded)
@@ -633,14 +686,27 @@ namespace EarTrumpet.UI.Views
                 SetExpandArrowState(false);
             }
 
-            Left = iconBounds.Left + (iconBounds.Width / 2) - (Width / 2);
-            Top = iconBounds.Top - Height - 5;
-            _collapsedTop = iconBounds.Top - CollapsedHeight - 5;
+            // Shell_NotifyIconGetRect and Screen.WorkingArea are physical pixels,
+            // while WPF Window coordinates are DIPs under PerMonitorV2.
+            var iconCenter = new System.Drawing.Point(
+                (int)Math.Round(iconBounds.Left + iconBounds.Width / 2),
+                (int)Math.Round(iconBounds.Top + iconBounds.Height / 2));
+            var screen = System.Windows.Forms.Screen.FromPoint(iconCenter);
+            var dpiScale = Math.Max(1, WindowsTaskbar.Dpi / (double)96);
+            var iconLeft = iconBounds.Left / dpiScale;
+            var iconTop = iconBounds.Top / dpiScale;
+            var iconWidth = iconBounds.Width / dpiScale;
+            var workAreaLeft = screen.WorkingArea.Left / dpiScale;
+            var workAreaTop = screen.WorkingArea.Top / dpiScale;
+            var workAreaRight = screen.WorkingArea.Right / dpiScale;
 
-            var screen = SystemParameters.WorkArea;
-            if (Left < screen.Left) Left = screen.Left + 10;
-            if (Left + Width > screen.Right) Left = screen.Right - Width - 10;
-            if (Top < screen.Top) Top = screen.Top + 10;
+            Left = iconLeft + (iconWidth / 2) - (Width / 2);
+            Top = iconTop - Height - 5;
+            _collapsedTop = iconTop - CollapsedHeight - 5;
+
+            if (Left < workAreaLeft) Left = workAreaLeft + 10;
+            if (Left + Width > workAreaRight) Left = workAreaRight - Width - 10;
+            if (Top < workAreaTop) Top = workAreaTop + 10;
 
             _isShowing = true;
             Show();
@@ -654,6 +720,8 @@ namespace EarTrumpet.UI.Views
             {
                 _progressTimer.Start();
             }
+
+            _mediaRefreshTimer.Start();
         }
 
         public void StartHideTimer()
@@ -667,7 +735,7 @@ namespace EarTrumpet.UI.Views
             {
                 // Check if mouse is within tolerance zone (20px buffer around popup)
                 var mousePos = System.Windows.Forms.Cursor.Position;
-                var popupBounds = new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height);
+                var popupBounds = GetPopupBoundsInPhysicalPixels();
                 var toleranceBounds = popupBounds;
                 toleranceBounds.Inflate(20, 20); // 20px tolerance zone
 
@@ -697,7 +765,7 @@ namespace EarTrumpet.UI.Views
 
             // Double-check mouse position before hiding
             var mousePos = System.Windows.Forms.Cursor.Position;
-            var popupBounds = new System.Drawing.Rectangle((int)Left, (int)Top, (int)Width, (int)Height);
+            var popupBounds = GetPopupBoundsInPhysicalPixels();
             var toleranceBounds = popupBounds;
             toleranceBounds.Inflate(20, 20);
 
@@ -712,12 +780,23 @@ namespace EarTrumpet.UI.Views
             }
         }
 
+        private System.Drawing.Rectangle GetPopupBoundsInPhysicalPixels()
+        {
+            var dpiScale = Math.Max(1, WindowsTaskbar.Dpi / (double)96);
+            return new System.Drawing.Rectangle(
+                (int)Math.Round(Left * dpiScale),
+                (int)Math.Round(Top * dpiScale),
+                (int)Math.Round(Width * dpiScale),
+                (int)Math.Round(Height * dpiScale));
+        }
+
         public void HidePopup()
         {
             if (!_isShowing) return;
 
             _marqueeTimer.Stop();
             _progressTimer.Stop();
+            _mediaRefreshTimer.Stop();
             _delayedActionTimer.Stop();
 
             BeginAnimation(TopProperty, null);
