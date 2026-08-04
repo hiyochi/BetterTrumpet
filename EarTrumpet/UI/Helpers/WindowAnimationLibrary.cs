@@ -36,12 +36,11 @@ namespace EarTrumpet.UI.Helpers
         /// </summary>
         public static void BeginFlyoutInstantShow(Window window, WindowsTaskbar.State taskbar, Action completed)
         {
-            window.Topmost = false;
+            window.Topmost = true;
             window.Activate();
             BringTaskbarToFront();
             window.Opacity = 1;
             window.Cloak(false);
-            window.Topmost = true;
             window.Focus();
             User32.SetForegroundWindow(window.GetHandle());
             completed();
@@ -120,7 +119,7 @@ namespace EarTrumpet.UI.Helpers
                 completed();
             });
 
-            window.Topmost = false;
+            window.Topmost = true;
             window.Activate();
             BringTaskbarToFront();
 
@@ -201,7 +200,7 @@ namespace EarTrumpet.UI.Helpers
                 completed();
             });
 
-            window.Topmost = false;
+            window.Topmost = true;
             window.Activate();
             BringTaskbarToFront();
 

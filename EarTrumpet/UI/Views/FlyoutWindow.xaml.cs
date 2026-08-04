@@ -243,24 +243,23 @@ else
 
             double top = 0;
             double left = 0;
-            var isIconAnchored = trayIconBounds.HasValue;
             switch (taskbar.Location)
             {
                 case WindowsTaskbar.Position.Left:
-                    top = isIconAnchored ? trayIconBounds.Value.Top + (trayIconBounds.Value.Height / 2) - (flyoutHeight / 2) : adjustedWorkingAreaBottom - flyoutHeight;
+                    top = adjustedWorkingAreaBottom - flyoutHeight;
                     left = adjustedWorkingAreaLeft;
                     break;
                 case WindowsTaskbar.Position.Right:
-                    top = isIconAnchored ? trayIconBounds.Value.Top + (trayIconBounds.Value.Height / 2) - (flyoutHeight / 2) : adjustedWorkingAreaBottom - flyoutHeight;
+                    top = adjustedWorkingAreaBottom - flyoutHeight;
                     left = adjustedWorkingAreaRight - flyoutWidth;
                     break;
                 case WindowsTaskbar.Position.Top:
                     top = adjustedWorkingAreaTop + xOffset;
-                    left = isIconAnchored ? trayIconBounds.Value.Left + (trayIconBounds.Value.Width / 2) - (flyoutWidth / 2) : FlowDirection == FlowDirection.LeftToRight ? adjustedWorkingAreaRight - flyoutWidth - xOffset : adjustedWorkingAreaLeft + xOffset;
+                    left = FlowDirection == FlowDirection.LeftToRight ? adjustedWorkingAreaRight - flyoutWidth - xOffset : adjustedWorkingAreaLeft + xOffset;
                     break;
                 case WindowsTaskbar.Position.Bottom:
                     top = adjustedWorkingAreaBottom - flyoutHeight - yOffset;
-                    left = isIconAnchored ? trayIconBounds.Value.Left + (trayIconBounds.Value.Width / 2) - (flyoutWidth / 2) : FlowDirection == FlowDirection.LeftToRight ? adjustedWorkingAreaRight - flyoutWidth - xOffset : adjustedWorkingAreaLeft + xOffset;
+                    left = FlowDirection == FlowDirection.LeftToRight ? adjustedWorkingAreaRight - flyoutWidth - xOffset : adjustedWorkingAreaLeft + xOffset;
                     break;
             }
 
