@@ -11,9 +11,9 @@ Update this file whenever a task adds a meaningful feature, fixes an important b
 ## Current Branch State
 
 - Branch: `master`
-- `master` and `origin/master` contain the released 3.2.1 source and distribution metadata.
-- Public tag: `v3.2.1`, pointing at release commit `2ae6ecf`.
-- Current version line: `3.2.1` (released). The x86 Release binary and public GitHub assets report `3.2.1`.
+- `master` and `origin/master` contain the released 3.2.3 source and distribution metadata.
+- Public tag: `v3.2.3`, pointing at release commit `69a3012`.
+- Current version line: `3.2.3` (released). The x86 Release binary and public GitHub assets report `3.2.3`.
 - `migration/net8` is a historical ancestor at `7a6e8f9`; do not move or synchronize it as part of current releases.
 - Target framework: `net8.0-windows10.0.19041.0`
 - Language: C# / WPF
@@ -227,6 +227,17 @@ Recent work in `master` includes:
 - Winget PR: `https://github.com/microsoft/winget-pkgs/pull/409308` (open, CLA passed, remaining checks pending at submission time).
 - Microsoft Store packaging was not part of the 3.2.1 release task; keep the existing Store submission path separate.
 
+3.2.3 was released on 2026-08-04:
+
+- GitHub Release: `https://github.com/xammen/BetterTrumpet/releases/tag/v3.2.3`
+- Tag `v3.2.3`: annotated tag on `69a3012`; `master` was pushed with the complete source and distribution metadata. `migration/net8` remains intentionally unchanged at `7a6e8f9`.
+- GitHub assets:
+  - `BetterTrumpet-3.2.3-setup.exe` SHA256 `1E06CEDDE3BFA04CAD7771CF9E4B2359F91BD26DFC03256FAA9800125FA2A42C`
+  - `BetterTrumpet-3.2.3-portable.zip` SHA256 `AC89F51CB14CBB81CFDC8784D228CC0A4E9B1243BFF15F9AC42748B9DE2D337A`
+- Chocolatey `bettertrumpet.3.2.3.nupkg` was pushed successfully; catalog visibility and moderation remain pending.
+- Winget PR is open: `https://github.com/microsoft/winget-pkgs/pull/411985` (CLA passed; remaining checks pending at submission time).
+- Microsoft Store packaging was not part of the 3.2.3 release task.
+
 If replacing same-version GitHub assets again, update hashes everywhere before or immediately after upload. Winget and Chocolatey verify the setup hash and will fail if the GitHub asset changes without their metadata changing.
 
 ## CLI
@@ -365,6 +376,9 @@ The diagnostic zip can contain app names, device names, process IDs, endpoint ID
 
 ## Validation Status
 
+- `x86 Release` rebuild passes for 3.2.3. `BetterTrumpet.exe` reports `FileVersion=3.2.3` and `ProductVersion=3.2.3`; the output includes `coreclr.dll`, `hostfxr.dll`, and `hostpolicy.dll` for the x86 self-contained runtime.
+- `BetterTrumpet-3.2.3-setup.exe` and `BetterTrumpet-3.2.3-portable.zip` were generated on 2026-08-04. Setup SHA256: `1E06CEDDE3BFA04CAD7771CF9E4B2359F91BD26DFC03256FAA9800125FA2A42C`; portable SHA256: `AC89F51CB14CBB81CFDC8784D228CC0A4E9B1243BFF15F9AC42748B9DE2D337A`. The ZIP contains `portable.marker`, excludes PDBs, and includes the self-contained runtime. Public signing is still not configured.
+- Chocolatey `choco pack` produced `bettertrumpet.3.2.3.nupkg`, and the canonical three-file Winget manifest set validates successfully under `winget-manifest/manifests/x/xmn/BetterTrumpet/3.2.3`.
 - `x86 Release` rebuild passes for the released 3.2.1 source. `BetterTrumpet.exe` reports `FileVersion=3.2.1` and `ProductVersion=3.2.1`; the output includes the x86 self-contained runtime.
 - `BetterTrumpet-3.2.1-setup.exe` and `BetterTrumpet-3.2.1-portable.zip` were generated on 2026-07-29. Setup SHA256: `3C20BC45B6F07A2582165DB39BE85202CC7D3ABBB9C9BE5399BDF5331B70E7A9`; portable SHA256: `22366AFD1BC7B8A7BC5D3BDADF9095397EA57C32DBE0ACDDD29A4E9ED94E3D75`. Public signing is still not configured.
 - Chocolatey `choco pack` produced `bettertrumpet.3.2.1.nupkg`, and the canonical three-file Winget manifest set validates successfully under `winget-manifest/manifests/x/xmn/BetterTrumpet/3.2.1`.
