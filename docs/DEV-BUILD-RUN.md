@@ -63,12 +63,12 @@ Dans ce worktree, GitVersion échouait sur une référence `upstream/master` don
     --runtime win-x86 `
     -p:Platform=x86 `
     -p:DisableGitVersionTask=true `
-    -p:GitVersion_MajorMinorPatch=3.2.1 `
-    -p:GitVersion_InformationalVersion=3.2.1-dev `
-    -p:Version=3.2.1-dev `
-    -p:FileVersion=3.2.1.0 `
-    -p:AssemblyVersion=3.2.1.0 `
-    -p:InformationalVersion=3.2.1-dev `
+    -p:GitVersion_MajorMinorPatch=3.2.2 `
+    -p:GitVersion_InformationalVersion=3.2.2-dev `
+    -p:Version=3.2.2-dev `
+    -p:FileVersion=3.2.2.0 `
+    -p:AssemblyVersion=3.2.2.0 `
+    -p:InformationalVersion=3.2.2-dev `
     -p:GenerateAssemblyInfo=true `
     -p:GenerateAssemblyTitleAttribute=false `
     -p:GenerateAssemblyCompanyAttribute=false `
@@ -77,7 +77,7 @@ Dans ce worktree, GitVersion échouait sur une référence `upstream/master` don
     --verbosity minimal
 ```
 
-Les propriétés `GenerateAssemblyInfo` sont importantes dans ce mode. Sans elles, WPF peut chercher `BetterTrumpet, Version=3.2.1.0` alors que l'assembly généré n'a pas cette version, puis quitter avec une `FileNotFoundException` pendant `App.InitializeComponent()`.
+Les propriétés `GenerateAssemblyInfo` sont importantes dans ce mode. Sans elles, WPF peut chercher `BetterTrumpet, Version=3.2.2.0` alors que l'assembly généré n'a pas cette version, puis quitter avec une `FileNotFoundException` pendant `App.InitializeComponent()`.
 
 Ce contournement ne doit pas être utilisé pour produire une release publique. Les builds de release doivent continuer à utiliser GitVersion et la procédure décrite dans `AGENTS.md`.
 
