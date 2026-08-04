@@ -4,7 +4,9 @@ using EarTrumpet.Interop.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using Microsoft.Win32;
 using static EarTrumpet.Interop.User32;
 
 namespace EarTrumpet
@@ -37,25 +39,30 @@ namespace EarTrumpet
         public event Action HiddenAppsChanged;
         public event Action HiddenDevicesChanged;
         public event Action AppRulesChanged;
+        public event Action FolderVolumeRulesChanged;
 
         private ISettingsBag _settings = StorageFactory.GetSettings();
         private const string HiddenAppEntriesJsonKey = "HiddenAppEntriesJson";
         private const string HiddenDeviceEntriesJsonKey = "HiddenDeviceEntriesJson";
         private const string AppRuleEntriesJsonKey = "AppRuleEntriesJson";
+        private const string FolderVolumeRuleEntriesJsonKey = "FolderVolumeRuleEntriesJson";
         // Pre-3.2.1 key, still read once to migrate hard mutes into AppRuleEntriesJson.
         private const string LegacyHardMutedAppEntriesJsonKey = "HardMutedAppEntriesJson";
         private readonly object _hiddenAppsSync = new object();
         private readonly object _hiddenDevicesSync = new object();
         private readonly object _appRulesSync = new object();
+        private readonly object _folderVolumeRulesSync = new object();
         private bool _hiddenAppsLoaded;
         private bool _hiddenDevicesLoaded;
         private bool _appRulesLoaded;
+        private bool _folderVolumeRulesLoaded;
         private bool _hotkeyPressHandlerRegistered;
         private DateTime _lastQuickTrumpetHotkeyAt = DateTime.MinValue;
         private string _lastQuickTrumpetHotkey;
         private List<HiddenAppEntry> _hiddenAppEntries = new List<HiddenAppEntry>();
         private List<HiddenDeviceEntry> _hiddenDeviceEntries = new List<HiddenDeviceEntry>();
         private List<AppRuleEntry> _appRuleEntries = new List<AppRuleEntry>();
+        private List<FolderVolumeRuleEntry> _folderVolumeRules = new List<FolderVolumeRuleEntry>();
         private List<HotkeyData> _quickTrumpetHotkeys = new List<HotkeyData>();
 
         public class HiddenAppEntry
@@ -1470,6 +1477,293 @@ namespace EarTrumpet
                     _appRulesLoaded = false;
                 }
                 AppRulesChanged?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// A launch-volume default for every desktop application whose executable is below a
+        /// folder. App rules remain more specific and therefore always take precedence.
+        /// </summary>
+        public class FolderVolumeRuleEntry
+        {
+            public string Id { get; set; }
+            public string FolderPath { get; set; }
+            public int VolumePercent { get; set; }
+            public DateTime CreatedAtUtc { get; set; }
+        }
+
+        // Folder defaults are kept separately from app rules: their match key is a full path,
+        // while an app rule intentionally continues to use the stable executable name.
+        public string FolderVolumeRulesJson
+        {
+            get
+            {
+                lock (_folderVolumeRulesSync)
+                {
+                    EnsureFolderVolumeRulesLoaded();
+                    return Newtonsoft.Json.JsonConvert.SerializeObject(_folderVolumeRules);
+                }
+            }
+            set
+            {
+                lock (_folderVolumeRulesSync)
+                {
+                    _settings.Set(FolderVolumeRuleEntriesJsonKey, string.IsNullOrWhiteSpace(value) ? "[]" : value);
+                    _folderVolumeRulesLoaded = false;
+                }
+                FolderVolumeRulesChanged?.Invoke();
+            }
+        }
+
+        public List<FolderVolumeRuleEntry> GetFolderVolumeRules()
+        {
+            lock (_folderVolumeRulesSync)
+            {
+                EnsureFolderVolumeRulesLoaded();
+                return _folderVolumeRules
+                    .OrderBy(entry => entry.CreatedAtUtc)
+                    .Select(CloneFolderVolumeRule)
+                    .ToList();
+            }
+        }
+
+        public void AddFolderVolumeRule(string folderPath, int volumePercent = 5)
+        {
+            var normalizedFolder = NormalizeFolderPath(folderPath);
+            if (string.IsNullOrEmpty(normalizedFolder))
+            {
+                return;
+            }
+
+            var boundedVolume = Math.Max(0, Math.Min(100, volumePercent));
+            bool changed = false;
+            lock (_folderVolumeRulesSync)
+            {
+                EnsureFolderVolumeRulesLoaded();
+                var existing = _folderVolumeRules.FirstOrDefault(entry =>
+                    string.Equals(entry.FolderPath, normalizedFolder, StringComparison.OrdinalIgnoreCase));
+
+                if (existing == null)
+                {
+                    _folderVolumeRules.Add(new FolderVolumeRuleEntry
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        FolderPath = normalizedFolder,
+                        VolumePercent = boundedVolume,
+                        CreatedAtUtc = DateTime.UtcNow,
+                    });
+                    changed = true;
+                }
+                else if (existing.VolumePercent != boundedVolume)
+                {
+                    existing.VolumePercent = boundedVolume;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    SaveFolderVolumeRulesUnsafe();
+                }
+            }
+
+            if (changed)
+            {
+                FolderVolumeRulesChanged?.Invoke();
+            }
+        }
+
+        public void UpdateFolderVolumeRule(string id, string folderPath, int volumePercent)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return;
+            }
+
+            var normalizedFolder = NormalizeFolderPath(folderPath);
+            if (string.IsNullOrEmpty(normalizedFolder))
+            {
+                return;
+            }
+
+            var boundedVolume = Math.Max(0, Math.Min(100, volumePercent));
+            bool changed = false;
+            lock (_folderVolumeRulesSync)
+            {
+                EnsureFolderVolumeRulesLoaded();
+                var rule = _folderVolumeRules.FirstOrDefault(entry => entry.Id == id);
+                if (rule == null)
+                {
+                    return;
+                }
+
+                if (!string.Equals(rule.FolderPath, normalizedFolder, StringComparison.OrdinalIgnoreCase) ||
+                    rule.VolumePercent != boundedVolume)
+                {
+                    rule.FolderPath = normalizedFolder;
+                    rule.VolumePercent = boundedVolume;
+                    SaveFolderVolumeRulesUnsafe();
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                FolderVolumeRulesChanged?.Invoke();
+            }
+        }
+
+        public void RemoveFolderVolumeRule(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return;
+            }
+
+            bool changed = false;
+            lock (_folderVolumeRulesSync)
+            {
+                EnsureFolderVolumeRulesLoaded();
+                if (_folderVolumeRules.RemoveAll(entry => entry.Id == id) > 0)
+                {
+                    SaveFolderVolumeRulesUnsafe();
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                FolderVolumeRulesChanged?.Invoke();
+            }
+        }
+
+        public bool TryGetFolderVolume(string executablePath, out int volumePercent)
+        {
+            volumePercent = 0;
+            if (string.IsNullOrWhiteSpace(executablePath) || !Path.IsPathFullyQualified(executablePath))
+            {
+                return false;
+            }
+
+            lock (_folderVolumeRulesSync)
+            {
+                EnsureFolderVolumeRulesLoaded();
+                var matchingRule = _folderVolumeRules
+                    .Where(entry => IsExecutableUnderFolder(executablePath, entry.FolderPath))
+                    .OrderByDescending(entry => entry.FolderPath.Length)
+                    .ThenBy(entry => entry.CreatedAtUtc)
+                    .FirstOrDefault();
+
+                if (matchingRule == null)
+                {
+                    return false;
+                }
+
+                volumePercent = matchingRule.VolumePercent;
+                return true;
+            }
+        }
+
+        private void EnsureFolderVolumeRulesLoaded()
+        {
+            if (_folderVolumeRulesLoaded)
+            {
+                return;
+            }
+
+            try
+            {
+                var json = _settings.Get(FolderVolumeRuleEntriesJsonKey, "[]");
+                var loaded = Newtonsoft.Json.JsonConvert.DeserializeObject<List<FolderVolumeRuleEntry>>(json) ?? new List<FolderVolumeRuleEntry>();
+                _folderVolumeRules = NormalizeFolderVolumeRules(loaded);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"AppSettings EnsureFolderVolumeRulesLoaded failed: {ex.Message}");
+                _folderVolumeRules = new List<FolderVolumeRuleEntry>();
+            }
+
+            _folderVolumeRulesLoaded = true;
+        }
+
+        private void SaveFolderVolumeRulesUnsafe()
+        {
+            _settings.Set(FolderVolumeRuleEntriesJsonKey, Newtonsoft.Json.JsonConvert.SerializeObject(_folderVolumeRules));
+        }
+
+        private static List<FolderVolumeRuleEntry> NormalizeFolderVolumeRules(List<FolderVolumeRuleEntry> entries)
+        {
+            var knownFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var normalizedEntries = new List<FolderVolumeRuleEntry>();
+
+            foreach (var entry in entries.Where(entry => entry != null))
+            {
+                var normalizedFolder = NormalizeFolderPath(entry.FolderPath);
+                if (string.IsNullOrEmpty(normalizedFolder) || !knownFolders.Add(normalizedFolder))
+                {
+                    continue;
+                }
+
+                normalizedEntries.Add(new FolderVolumeRuleEntry
+                {
+                    Id = string.IsNullOrWhiteSpace(entry.Id) ? Guid.NewGuid().ToString("N") : entry.Id,
+                    FolderPath = normalizedFolder,
+                    VolumePercent = Math.Max(0, Math.Min(100, entry.VolumePercent)),
+                    CreatedAtUtc = entry.CreatedAtUtc == default ? DateTime.UtcNow : entry.CreatedAtUtc,
+                });
+            }
+
+            return normalizedEntries;
+        }
+
+        private static FolderVolumeRuleEntry CloneFolderVolumeRule(FolderVolumeRuleEntry entry)
+        {
+            return new FolderVolumeRuleEntry
+            {
+                Id = entry.Id,
+                FolderPath = entry.FolderPath,
+                VolumePercent = entry.VolumePercent,
+                CreatedAtUtc = entry.CreatedAtUtc,
+            };
+        }
+
+        private static bool IsExecutableUnderFolder(string executablePath, string folderPath)
+        {
+            try
+            {
+                var folder = NormalizeFolderPath(folderPath);
+                var executable = Path.GetFullPath(executablePath);
+                if (string.IsNullOrEmpty(folder) || string.IsNullOrEmpty(executable))
+                {
+                    return false;
+                }
+
+                var folderPrefix = Path.EndsInDirectorySeparator(folder)
+                    ? folder
+                    : folder + Path.DirectorySeparatorChar;
+                return executable.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException)
+            {
+                Trace.WriteLine($"AppSettings folder match failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static string NormalizeFolderPath(string folder)
+        {
+            if (string.IsNullOrWhiteSpace(folder))
+            {
+                return "";
+            }
+
+            try
+            {
+                return Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder.Trim().Trim('"')));
+            }
+            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException)
+            {
+                Trace.WriteLine($"AppSettings folder normalization failed: {ex.Message}");
+                return "";
             }
         }
 

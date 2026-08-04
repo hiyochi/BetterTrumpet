@@ -38,6 +38,7 @@ namespace EarTrumpet.UI.ViewModels
             _settings.HiddenAppsChanged += OnHiddenAppsChanged;
             _settings.HiddenDevicesChanged += OnHiddenDevicesChanged;
             _settings.AppRulesChanged += OnAppRulesChanged;
+            _settings.FolderVolumeRulesChanged += OnFolderVolumeDefaultsChanged;
             _deviceManager = deviceManager;
             _deviceManager.DefaultChanged += OnDefaultChanged;
             _deviceManager.Devices.CollectionChanged += OnCollectionChanged;
@@ -329,6 +330,14 @@ namespace EarTrumpet.UI.ViewModels
             foreach (var device in AllDevices)
             {
                 device.ApplyAppRules();
+            }
+        }
+
+        private void OnFolderVolumeDefaultsChanged()
+        {
+            foreach (var device in AllDevices)
+            {
+                device.ApplyFolderVolumeDefaults();
             }
         }
 

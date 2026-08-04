@@ -270,6 +270,30 @@
   <data name="AppRulesSettingsPageSubtitle" xml:space="preserve">
     <value>Apps kept muted or pinned to a volume, remembered across restarts</value>
   </data>
+  <data name="FolderVolumeRulesHeaderText" xml:space="preserve">
+    <value>Folder defaults</value>
+  </data>
+  <data name="FolderVolumeRulesAddButtonText" xml:space="preserve">
+    <value>Add folder</value>
+  </data>
+  <data name="FolderVolumeRulesEmptyText" xml:space="preserve">
+    <value>No custom folders yet.</value>
+  </data>
+  <data name="FolderVolumeRulesFolderText" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="FolderVolumeRulesBrowseButtonText" xml:space="preserve">
+    <value>Choose folder</value>
+  </data>
+  <data name="FolderVolumeRulesRemoveButtonText" xml:space="preserve">
+    <value>Remove folder rule</value>
+  </data>
+  <data name="FolderVolumeRulesBrowseDialogTitle" xml:space="preserve">
+    <value>Choose a folder</value>
+  </data>
+  <data name="FolderVolumeRulesVolumeText" xml:space="preserve">
+    <value>Starting volume</value>
+  </data>
   <data name="AppRulesListHeaderText" xml:space="preserve">
     <value>Saved rules</value>
   </data>
