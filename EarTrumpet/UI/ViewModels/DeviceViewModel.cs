@@ -197,8 +197,15 @@ namespace EarTrumpet.UI.ViewModels
                     }
                     break;
 
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Reset:
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Replace:
+                    RebuildAppsCollection();
+                    break;
+
                 default:
-                    throw new NotImplementedException();
+                    Trace.WriteLine($"DeviceViewModel OnCollectionChanged ignored action {e.Action}");
+                    break;
             }
         }
 

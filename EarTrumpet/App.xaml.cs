@@ -418,7 +418,7 @@ namespace EarTrumpet
                             };
                             if (Settings.AutoCheckForUpdates && Settings.UpdateNotifyChannel != DataModel.UpdateChannel.None)
                             {
-                                _updateService.Start();
+                                TryStartUpdateService();
                             }
                         }));
                         if (!HasIdentity)
@@ -571,17 +571,42 @@ namespace EarTrumpet
 
         private void DisplayFirstRunExperience()
         {
-            if (!Settings.HasShownFirstRun
-                || Keyboard.IsKeyDown(Key.LeftCtrl)
-                )
+            var forceShow = Keyboard.IsKeyDown(Key.LeftCtrl);
+            if (!Settings.HasShownFirstRun || forceShow)
             {
                 Trace.WriteLine($"App DisplayFirstRunExperience Showing onboarding");
-                Settings.HasShownFirstRun = true;
 
                 var vm = new OnboardingViewModel(Settings, _deviceManager);
                 var window = new OnboardingWindow { DataContext = vm };
-                vm.Completed += (s, e) => window.Close();
+                vm.Completed += (s, e) =>
+                {
+                    if (!Settings.HasShownFirstRun)
+                    {
+                        Settings.HasShownFirstRun = true;
+                    }
+                    window.Close();
+                    TryStartUpdateService();
+                };
                 window.Show();
+            }
+        }
+
+        private void TryStartUpdateService()
+        {
+            if (HasIdentity || _updateService == null)
+            {
+                return;
+            }
+
+            if (!Settings.HasShownFirstRun)
+            {
+                Trace.WriteLine("Startup: UpdateService delayed until first-run onboarding completes");
+                return;
+            }
+
+            if (Settings.AutoCheckForUpdates && Settings.UpdateNotifyChannel != DataModel.UpdateChannel.None)
+            {
+                _updateService.Start();
             }
         }
 

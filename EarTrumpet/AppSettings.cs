@@ -1182,6 +1182,8 @@ namespace EarTrumpet
 
         public event Action TelemetryConsentChanged;
 
+        public bool HasStoredTelemetryConsent => _settings.HasKey("IsTelemetryEnabled");
+
         public bool IsTelemetryEnabled
         {
             get
