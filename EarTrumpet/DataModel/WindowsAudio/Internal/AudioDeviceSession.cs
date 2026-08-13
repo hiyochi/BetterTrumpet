@@ -9,7 +9,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
@@ -372,7 +371,7 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
 
         private void DisconnectSession()
         {
-            if (Interlocked.Exchange(ref _disconnectIssued, 1) != 0)
+            if (!SessionDisconnectGate.TryBeginDisconnect(ref _disconnectIssued))
             {
                 return;
             }

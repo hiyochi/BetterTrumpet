@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BetterTrumpet.LinuxSelfTest</RootNamespace>
+    <AssemblyName>BetterTrumpet.LinuxSelfTest</AssemblyName>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\EarTrumpet\Diagnosis\PathSanitizer.cs" Link="PathSanitizer.cs" />
+    <Compile Include="..\..\EarTrumpet\DataModel\WindowsAudio\Internal\SessionDisconnectGate.cs" Link="SessionDisconnectGate.cs" />
+  </ItemGroup>
+</Project>

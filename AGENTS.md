@@ -65,6 +65,8 @@ Use `python tools/bettertrumpet_workbench.py` for repo-aware routing and validat
 - `build`, `web`, and `package` run explicit heavy actions.
 - `learn --area ... --symptom ... --rule ...` records recurring traps.
 
+On the Linux cloud-agent VM, run `bash tools/run-linux-self-test.sh` (needs the .NET 8 SDK). It executes PathSanitizer tests, the session disconnect race gate, and source contracts that lock the .NET 8 HSTRING marshalling fix. It does not run WASAPI, WPF, or the tray.
+
 ## Repo Map
 
 ```
@@ -152,6 +154,7 @@ Notes:
 
 Recent work in `master` includes:
 
+- Linux cloud-agent self-test: `bash tools/run-linux-self-test.sh` covers PathSanitizer, the session disconnect race gate, and source contracts for the .NET 8 HSTRING marshalling fix. It cannot exercise WASAPI, the flyout, or combase.dll.
 - GitHub #37 / #41 / #43 hardening: per-app device switching now uses manual HSTRING / IInspectable interop for .NET 8 (`Combase.GetActivationFactory`), so `SetPersistedDefaultAudioEndpoint` actually reaches Windows instead of throwing `MarshalDirectiveException` and cloning the app row. Session teardown is idempotent, icon-path callbacks marshal to the dispatcher, and collection `Reset`/`Move`/`Replace` rebuild instead of throwing. Manual diagnostic export warns first, stages files for review, sanitizes user-folder paths, and Sentry/GitHub update checks wait for first-run consent. Telemetry opt-out still does not disable update checks; they are independent.
 - Folder launch-volume defaults: App rules now include custom folder defaults that apply a chosen starting volume to desktop sessions whose executable path is under the configured folder, recursively. The deepest matching folder wins. Explicit app `Set at launch` and `Lock` volume rules remain higher priority; hard mute still composes with a folder default. Folder-default settings export and import with the rest of the profile.
 - CLI `set-default` now switches and verifies both Windows `Console` and `Multimedia` playback roles. COM failures or unchanged endpoints return an error instead of a false `ok: true`; `GetDefaultDevice(role)` must query the requested role rather than always reading `Multimedia`.
