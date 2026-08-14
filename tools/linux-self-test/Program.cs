@@ -2,11 +2,13 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using EarTrumpet.DataModel.WindowsAudio.Internal;
 using EarTrumpet.Diagnosis;
+using EarTrumpet.Logic;
 
 namespace BetterTrumpet.LinuxSelfTest;
 
 /// <summary>
-/// Runs on the Linux cloud-agent VM. Covers the portable parts of GitHub #37 / #41 / #43.
+/// Runs on the Linux cloud-agent VM. Covers portable engines for GitHub
+/// #7 / #30 / #33 / #36 / #37 / #39 / #40 / #41 / #43.
 /// Real WASAPI / flyout / tray behavior still needs a Windows box.
 /// </summary>
 internal static class Program
@@ -29,6 +31,12 @@ internal static class Program
 
         RunPathSanitizerTests();
         RunDisconnectGateTests();
+        RunAppIdentityTests();
+        RunFolderVolumeTests();
+        RunWindowSizeTests();
+        RunDeviceChangeNotifyTests();
+        RunRemoteDesktopTests();
+        RunFocusLostTests();
         RunSourceContractTests(repoRoot);
 
         Console.WriteLine();
@@ -199,6 +207,30 @@ internal static class Program
         Assert(
             app.Contains("Settings.HasShownFirstRun = true") && app.Contains("vm.Completed +="),
             "hasShownFirstRun is written when onboarding completes");
+        Assert(app.Contains("OnDefaultPlaybackDeviceChanged"), "device-change toast is wired");
+        Assert(app.Contains("FocusLostService"), "focus-lost service starts with the tray");
+
+        var colors = Read(repoRoot, "EarTrumpet/UI/ViewModels/EarTrumpetColorsSettingsPageViewModel.cs");
+        Assert(colors.Contains("public bool UseLegacyIcon"), "legacy tray icon lives on Appearance");
+        var general = Read(repoRoot, "EarTrumpet/UI/ViewModels/EarTrumpetLegacySettingsPageViewModel.cs");
+        Assert(!Regex.IsMatch(general, @"public bool UseLegacyIcon"), "General page no longer owns UseLegacyIcon");
+
+        var settingsXaml = Read(repoRoot, "EarTrumpet/UI/Views/SettingsWindow.xaml");
+        var appearanceStart = settingsXaml.IndexOf("EarTrumpetColorsSettingsPageViewModel", StringComparison.Ordinal);
+        var generalStart = settingsXaml.IndexOf("EarTrumpetLegacySettingsPageViewModel", StringComparison.Ordinal);
+        var iconBinding = settingsXaml.IndexOf("IsChecked=\"{Binding UseLegacyIcon", StringComparison.Ordinal);
+        Assert(appearanceStart >= 0 && generalStart > appearanceStart && iconBinding > appearanceStart && iconBinding < generalStart,
+            "legacy icon checkbox is in the Appearance template");
+        Assert(settingsXaml.Contains("ShowAppRulesEmptyHint"), "folder-only rules hide the empty app-rules hint");
+
+        var mixer = Read(repoRoot, "EarTrumpet/UI/Views/FullWindow.xaml.cs");
+        Assert(mixer.Contains("WindowSizePolicy.ShouldRestoreUserSize"), "mixer restores size only in many-devices mode");
+        Assert(mixer.Contains("MixerWindowWidth"), "mixer persists width/height");
+
+        var deviceVm = Read(repoRoot, "EarTrumpet/UI/ViewModels/DeviceViewModel.cs");
+        Assert(deviceVm.Contains("RemoteDesktopIdentity.IsRemoteDesktopExe"), "RDP reconnect restores last volume");
+        Assert(deviceVm.Contains("FolderVolumeRuleMatcher") || Read(repoRoot, "EarTrumpet/AppSettings.cs").Contains("FolderVolumeRuleMatcher.TryMatch"),
+            "folder defaults use the portable matcher");
     }
 
     private static string Read(string repoRoot, string relative)
@@ -231,5 +263,138 @@ internal static class Program
         }
 
         return null;
+    }
+
+    private static void RunAppIdentityTests()
+    {
+        Console.WriteLine();
+        Console.WriteLine("== CLI / app identity ==");
+        Assert(AppIdentity.NormalizeExeName(@"C:\Games\steam.exe") == "steam", "full path becomes exe name");
+        Assert(AppIdentity.NormalizeExeName("steam.exe") == "steam", "steam.exe becomes steam");
+        Assert(AppIdentity.NormalizeExeName("  \"Spotify.exe\"  ") == "Spotify", "quoted name is trimmed");
+        Assert(AppIdentity.MatchesExact("spotify.exe", "Spotify", "spotify"), "exact match ignores extension");
+        Assert(AppIdentity.MatchesPartial("chrome.exe", "Google Chrome", "chrom"), "partial exe match");
+        Assert(AppIdentity.MatchesDevice("Speakers (Realtek)", "realtek"), "device match is partial");
+        Assert(!AppIdentity.MatchesDevice("Headphones", "speaker"), "unrelated device does not match");
+        Assert(AppIdentity.Score("spotify.exe", "Spotify", "C:\\Spotify\\Spotify.exe", "spotify") == 100, "exact score is 100");
+        Assert(AppIdentity.Score("spotify.exe", "Spotify", "", "spot") == 80, "prefix score is 80");
+        Assert(AppIdentity.Score("spotify.exe", "Spotify", "", "ify") == 60, "contains score is 60");
+        Assert(AppIdentity.Score("spotify.exe", "Spotify", "", "zzz") == 0, "miss scores 0");
+    }
+
+    private static void RunFolderVolumeTests()
+    {
+        Console.WriteLine();
+        Console.WriteLine("== #30 folder volume matcher ==");
+        var steam = new FolderVolumeRule(@"C:\Program Files\Steam", 10, DateTime.UtcNow.AddMinutes(-2));
+        var game = new FolderVolumeRule(@"C:\Program Files\Steam\steamapps\common\Game", 5, DateTime.UtcNow);
+        var rules = new[] { steam, game };
+
+        Assert(FolderVolumeRuleMatcher.IsUsableExecutablePath(@"C:\Program Files\Steam\steam.exe"), "Windows exe path is usable on Linux");
+        Assert(FolderVolumeRuleMatcher.IsExecutableUnderFolder(
+                @"C:\Program Files\Steam\steamapps\common\Game\game.exe",
+                @"C:\Program Files\Steam"),
+            "nested exe matches parent folder");
+        Assert(!FolderVolumeRuleMatcher.IsExecutableUnderFolder(
+                @"C:\Games\other\game.exe",
+                @"C:\Program Files\Steam"),
+            "unrelated folder does not match");
+
+        int volume;
+        Assert(FolderVolumeRuleMatcher.TryMatch(@"C:\Program Files\Steam\steamapps\common\Game\game.exe", rules, out volume) && volume == 5,
+            "deepest folder wins", "volume=" + volume);
+        Assert(FolderVolumeRuleMatcher.TryMatch(@"C:\Program Files\Steam\steam.exe", rules, out volume) && volume == 10,
+            "parent folder matches steam.exe", "volume=" + volume);
+        Assert(!FolderVolumeRuleMatcher.TryMatch("steam", rules, out volume), "bare exe name is not a folder path");
+
+        var unixRules = new[] { new FolderVolumeRule("/opt/games/steam", 25, DateTime.UtcNow) };
+        Assert(FolderVolumeRuleMatcher.TryMatch("/opt/games/steam/steamapps/game.exe", unixRules, out volume) && volume == 25,
+            "unix folder prefix matches", "volume=" + volume);
+    }
+
+    private static void RunWindowSizeTests()
+    {
+        Console.WriteLine();
+        Console.WriteLine("== #40 mixer window size ==");
+        Assert(!WindowSizePolicy.ShouldRestoreUserSize(1), "1 device stays auto-sized");
+        Assert(!WindowSizePolicy.ShouldRestoreUserSize(3), "3 devices stay auto-sized");
+        Assert(WindowSizePolicy.ShouldRestoreUserSize(4), "4+ devices restore user size");
+        Assert(!WindowSizePolicy.TryNormalize(0, 800, out _, out _), "zero width is rejected");
+        Assert(!WindowSizePolicy.TryNormalize(800, double.NaN, out _, out _), "NaN is rejected");
+        double width, height;
+        Assert(WindowSizePolicy.TryNormalize(100, 50, out width, out height) && width == WindowSizePolicy.MinWidth && height == WindowSizePolicy.MinHeight,
+            "tiny size clamps to minimum", $"w={width} h={height}");
+        Assert(WindowSizePolicy.TryNormalize(99999, 99999, out width, out height) && width == WindowSizePolicy.MaxWidth && height == WindowSizePolicy.MaxHeight,
+            "huge size clamps to maximum", $"w={width} h={height}");
+        Assert(WindowSizePolicy.TryNormalize(1280, 720, out width, out height) && width == 1280 && height == 720,
+            "normal size is kept");
+    }
+
+    private static void RunDeviceChangeNotifyTests()
+    {
+        Console.WriteLine();
+        Console.WriteLine("== #36 device-change notify ==");
+        Assert(!DefaultDeviceChangePolicy.ShouldNotify(null, "dev-1", true), "first observation is silent");
+        Assert(!DefaultDeviceChangePolicy.ShouldNotify("", "dev-1", true), "empty previous id is silent");
+        Assert(!DefaultDeviceChangePolicy.ShouldNotify("dev-1", "dev-2", false), "disabled setting never notifies");
+        Assert(!DefaultDeviceChangePolicy.ShouldNotify("dev-1", "dev-1", true), "same device does not notify");
+        Assert(DefaultDeviceChangePolicy.ShouldNotify("dev-1", "dev-2", true), "real switch notifies");
+        Assert(!DefaultDeviceChangePolicy.ShouldNotify("dev-1", null, true), "null new device is ignored");
+    }
+
+    private static void RunRemoteDesktopTests()
+    {
+        Console.WriteLine();
+        Console.WriteLine("== #7 RDP volume identity ==");
+        Assert(RemoteDesktopIdentity.IsRemoteDesktopExe("mstsc"), "mstsc is RDP");
+        Assert(RemoteDesktopIdentity.IsRemoteDesktopExe("mstsc.exe"), "mstsc.exe is RDP");
+        Assert(RemoteDesktopIdentity.IsRemoteDesktopExe(@"C:\Windows\System32\mstsc.exe"), "full mstsc path is RDP");
+        Assert(RemoteDesktopIdentity.IsRemoteDesktopExe("msrdc"), "Store RDP client is RDP");
+        Assert(!RemoteDesktopIdentity.IsRemoteDesktopExe("spotify"), "spotify is not RDP");
+        int volume;
+        Assert(!RemoteDesktopIdentity.TryGetRememberedVolume(-1, out volume), "unset sentinel is not a volume");
+        Assert(RemoteDesktopIdentity.TryGetRememberedVolume(37, out volume) && volume == 37, "stored RDP volume is returned");
+        Assert(RemoteDesktopIdentity.ClampStoredVolume(-8) == -1, "negative stays unset");
+        Assert(RemoteDesktopIdentity.ClampStoredVolume(140) == 100, "over-max clamps to 100");
+    }
+
+    private static void RunFocusLostTests()
+    {
+        Console.WriteLine();
+        Console.WriteLine("== #33 focus-lost policy ==");
+        Assert(FocusLostVolumePolicy.ResolveMode(false, 0) == FocusLostMode.Off, "disabled is Off");
+        Assert(FocusLostVolumePolicy.ResolveMode(true, 0) == FocusLostMode.Mute, "0% is mute");
+        Assert(FocusLostVolumePolicy.ResolveMode(true, 20) == FocusLostMode.Attenuate, "20% is attenuate");
+
+        var muted = FocusLostVolumePolicy.ApplyBackground(80, false, FocusLostMode.Mute, 0);
+        Assert(muted.IsMuted && muted.Volume == 80, "mute keeps slider volume");
+        var quiet = FocusLostVolumePolicy.ApplyBackground(80, false, FocusLostMode.Attenuate, 20);
+        Assert(!quiet.IsMuted && quiet.Volume == 20, "attenuate sets background volume");
+
+        var supervisor = new FocusLostSupervisor();
+        var game = new FocusLostSession("game", 1001, 80, false, true);
+        var music = new FocusLostSession("music", 2002, 50, false, true);
+        var locked = new FocusLostSession("locked", 3003, 40, false, false);
+
+        var first = supervisor.OnForegroundChanged(1001, new[] { game, music, locked }, FocusLostMode.Mute, 0);
+        Assert(first.Count == 0, "first foreground observation does not touch volumes");
+
+        var backgrounded = supervisor.OnForegroundChanged(2002, new[] { game, music, locked }, FocusLostMode.Mute, 0);
+        Assert(backgrounded.Count == 1 && backgrounded[0].Key == "game" && backgrounded[0].IsMuted,
+            "leaving a game mutes it");
+        Assert(backgrounded.All(a => a.Key != "locked"), "locked sessions are skipped");
+
+        var restored = supervisor.OnForegroundChanged(1001, new[] { game, music, locked }, FocusLostMode.Mute, 0);
+        Assert(restored.Any(a => a.Key == "game" && !a.IsMuted && a.Volume == 80), "returning focus restores the game");
+        Assert(restored.Any(a => a.Key == "music" && a.IsMuted), "the previous app is muted");
+
+        var off = supervisor.OnForegroundChanged(1001, new[] { game, music, locked }, FocusLostMode.Off, 0);
+        Assert(off.Any(a => a.Key == "music" && !a.IsMuted && a.Volume == 50), "disabling the feature restores leftovers");
+
+        using (VolumeWriteScope.Begin())
+        {
+            Assert(VolumeWriteScope.IsActive, "volume write scope is active inside using");
+        }
+        Assert(!VolumeWriteScope.IsActive, "volume write scope clears after dispose");
     }
 }

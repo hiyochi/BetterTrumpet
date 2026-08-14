@@ -7,6 +7,7 @@ using EarTrumpet.Extensibility.Hosting;
 using EarTrumpet.Extensions;
 using EarTrumpet.Interop;
 using EarTrumpet.Interop.Helpers;
+using EarTrumpet.Logic;
 using EarTrumpet.UI.Helpers;
 using EarTrumpet.UI.ViewModels;
 using EarTrumpet.UI.Views;
@@ -44,6 +45,8 @@ namespace EarTrumpet
 
         private ShellNotifyIcon _trayIcon;
         private TaskbarIconSource _trayIconSource;
+        private FocusLostService _focusLostService;
+        private string _lastNotifiedDeviceId;
         private WindowHolder _mixerWindow;
         private WindowHolder _settingsWindow;
         private ErrorReporter _errorReporter;
@@ -310,6 +313,11 @@ namespace EarTrumpet
             _trayIcon.TertiaryInvoke += (_, __) => CollectionViewModel.Default?.ToggleMute.Execute(null);
             _trayIcon.Scrolled += trayIconScrolled;
             // Tray icon is already visible from ContinueStartup
+
+            CollectionViewModel.DefaultChanged += OnDefaultPlaybackDeviceChanged;
+            _focusLostService = new FocusLostService(CollectionViewModel, Settings);
+            _focusLostService.Start();
+            Exit += (_, __) => _focusLostService.Stop();
 
             Trace.WriteLine($"Startup: UI components ready at {Duration.TotalMilliseconds:F0}ms");
 
@@ -1027,6 +1035,22 @@ namespace EarTrumpet
             var next = list[(idx + 1) % list.Count];
             _deviceManager.Default = next;
             Trace.WriteLine($"CycleDefaultDevice: switched to '{next.DisplayName}'");
+        }
+
+        private void OnDefaultPlaybackDeviceChanged(object sender, DeviceViewModel device)
+        {
+            var newId = device?.Id;
+            if (DefaultDeviceChangePolicy.ShouldNotify(_lastNotifiedDeviceId, newId, Settings.NotifyOnDefaultDeviceChange))
+            {
+                _trayIcon?.ShowNotification(
+                    EarTrumpet.Properties.Resources.DefaultDeviceChangedNotificationTitle,
+                    string.Format(EarTrumpet.Properties.Resources.DefaultDeviceChangedNotificationFormat, device.DisplayName));
+            }
+
+            if (!string.IsNullOrEmpty(newId))
+            {
+                _lastNotifiedDeviceId = newId;
+            }
         }
 
         private Rect? TryGetTrayIconBounds()

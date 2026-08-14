@@ -1827,4 +1827,34 @@ Details: {0}</value>
   <data name="SettingsMoreOptions" xml:space="preserve">
     <value>More options</value>
   </data>
+  <data name="SettingsDeviceChangeNotify" xml:space="preserve">
+    <value>Device change</value>
+  </data>
+  <data name="SettingsDeviceChangeNotifyDesc" xml:space="preserve">
+    <value>Toast when the default playback device switches</value>
+  </data>
+  <data name="SettingsNotifyOnDeviceChange" xml:space="preserve">
+    <value>Show a notification when the default device changes</value>
+  </data>
+  <data name="DefaultDeviceChangedNotificationTitle" xml:space="preserve">
+    <value>Playback device</value>
+  </data>
+  <data name="DefaultDeviceChangedNotificationFormat" xml:space="preserve">
+    <value>Now using {0}</value>
+  </data>
+  <data name="SettingsFocusLostVolume" xml:space="preserve">
+    <value>Focus lost</value>
+  </data>
+  <data name="SettingsFocusLostVolumeDesc" xml:space="preserve">
+    <value>Mute or reduce apps when another window is in front</value>
+  </data>
+  <data name="SettingsUseFocusLostVolume" xml:space="preserve">
+    <value>Lower volume of apps that lose focus</value>
+  </data>
+  <data name="SettingsFocusLostAttenuate" xml:space="preserve">
+    <value>Background volume (0% mutes)</value>
+  </data>
+  <data name="SettingsFocusLostAttenuateHint" xml:space="preserve">
+    <value>Locked and keep-muted rules are left alone. The original volume comes back when the app is focused again.</value>
+  </data>
 </root>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Portable BetterTrumpet checks for the Linux cloud-agent VM.
-# Covers GitHub #37 marshalling contracts, #41 path sanitizing, and #43 disconnect gating.
+# Covers GitHub #7 / #30 / #33 / #36 / #37 / #39 / #40 / #41 / #43 engines and source contracts.
 # Does not run WASAPI, WPF, or the tray.
 set -euo pipefail
 

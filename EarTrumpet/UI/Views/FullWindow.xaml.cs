@@ -1,5 +1,6 @@
 using EarTrumpet.Extensions;
 using EarTrumpet.Interop;
+using EarTrumpet.Logic;
 using EarTrumpet.UI.ViewModels;
 using System.Diagnostics;
 using System.Windows;
@@ -37,6 +38,9 @@ namespace EarTrumpet.UI.Views
                 {
                     App.Settings.FullMixerWindowPlacement = placement;
                 }
+
+                App.Settings.MixerWindowWidth = Width;
+                App.Settings.MixerWindowHeight = Height;
             };
 
             // Auto-size on the first layout pass.
@@ -77,6 +81,13 @@ namespace EarTrumpet.UI.Views
             SizeToContent = ViewModel.IsManyDevicesMode ? SizeToContent.Manual : SizeToContent.WidthAndHeight;
             ResizeMode = ViewModel.IsManyDevicesMode ? ResizeMode.CanResize : ResizeMode.NoResize;
             this.RemoveWindowStyle(User32.WS_MAXIMIZEBOX);
+
+            if (WindowSizePolicy.ShouldRestoreUserSize(ViewModel.AllDevices.Count) &&
+                WindowSizePolicy.TryNormalize(App.Settings.MixerWindowWidth, App.Settings.MixerWindowHeight, out var width, out var height))
+            {
+                Width = width;
+                Height = height;
+            }
         }
     }
 }

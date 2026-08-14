@@ -8,8 +8,16 @@
     <AssemblyName>BetterTrumpet.LinuxSelfTest</AssemblyName>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="..\..\EarTrumpet\Diagnosis\PathSanitizer.cs" Link="PathSanitizer.cs" />
-    <Compile Include="..\..\EarTrumpet\DataModel\WindowsAudio\Internal\SessionDisconnectGate.cs" Link="SessionDisconnectGate.cs" />
-  </ItemGroup>
+    <ItemGroup>
+      <Compile Include="..\..\EarTrumpet\Diagnosis\PathSanitizer.cs" Link="PathSanitizer.cs" />
+      <Compile Include="..\..\EarTrumpet\DataModel\WindowsAudio\Internal\SessionDisconnectGate.cs" Link="SessionDisconnectGate.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\AppIdentity.cs" Link="AppIdentity.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\FolderVolumeRuleMatcher.cs" Link="FolderVolumeRuleMatcher.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\WindowSizePolicy.cs" Link="WindowSizePolicy.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\DefaultDeviceChangePolicy.cs" Link="DefaultDeviceChangePolicy.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\RemoteDesktopIdentity.cs" Link="RemoteDesktopIdentity.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\FocusLostVolumePolicy.cs" Link="FocusLostVolumePolicy.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\FocusLostSupervisor.cs" Link="FocusLostSupervisor.cs" />
+      <Compile Include="..\..\EarTrumpet\Logic\VolumeWriteScope.cs" Link="VolumeWriteScope.cs" />
+    </ItemGroup>
 </Project>

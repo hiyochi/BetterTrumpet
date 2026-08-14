@@ -65,7 +65,7 @@ Use `python tools/bettertrumpet_workbench.py` for repo-aware routing and validat
 - `build`, `web`, and `package` run explicit heavy actions.
 - `learn --area ... --symptom ... --rule ...` records recurring traps.
 
-On the Linux cloud-agent VM, run `bash tools/run-linux-self-test.sh` (needs the .NET 8 SDK). It executes PathSanitizer tests, the session disconnect race gate, and source contracts that lock the .NET 8 HSTRING marshalling fix. It does not run WASAPI, WPF, or the tray.
+On the Linux cloud-agent VM, run `bash tools/run-linux-self-test.sh` (needs the .NET 8 SDK). It executes PathSanitizer, the disconnect race gate, the portable engines in `EarTrumpet/Logic/`, and source contracts for HSTRING marshalling plus the settings/UI wiring. It does not run WASAPI, WPF, or the tray.
 
 ## Repo Map
 
@@ -73,6 +73,7 @@ On the Linux cloud-agent VM, run `bash tools/run-linux-self-test.sh` (needs the 
 EarTrumpet/
 ├── App.xaml.cs              # Startup, onboarding, changelog, tray menu
 ├── AppSettings.cs           # Registry / portable settings
+├── Logic/                    # Portable engines compiled into the Linux self-test
 ├── CLI/
 │   ├── CliHandler.cs        # CLI command parsing and pipe IPC
 │   └── CliEntryPoint.cs     # bt entry point / help text
@@ -154,7 +155,13 @@ Notes:
 
 Recent work in `master` includes:
 
-- Linux cloud-agent self-test: `bash tools/run-linux-self-test.sh` covers PathSanitizer, the session disconnect race gate, and source contracts for the .NET 8 HSTRING marshalling fix. It cannot exercise WASAPI, the flyout, or combase.dll.
+- Linux cloud-agent self-test: `bash tools/run-linux-self-test.sh` covers PathSanitizer, the session disconnect race gate, portable engines in `EarTrumpet/Logic/` (app identity, folder defaults, mixer size, device-change notify, focus-lost, RDP identity), and source contracts for the .NET 8 HSTRING marshalling fix plus the settings/UI wiring for those engines. It cannot exercise WASAPI, the flyout, or combase.dll.
+- Mixer Open window (#40): user-resized width/height persist as `MixerWindowWidth`/`MixerWindowHeight` and are restored only in many-devices mode (`> 3` devices), after `SizeToContent` would otherwise wipe `WINDOWPLACEMENT`. Tiny/off-screen values clamp via `WindowSizePolicy`.
+- Appearance (#39): the legacy tray-icon checkbox moved from General to Appearance. Tooltips stay on General.
+- App rules empty state (#30): the big “No rules yet” hint hides when folder defaults exist. Folder matching lives in `FolderVolumeRuleMatcher` (deepest path wins).
+- Device-change toast (#36): opt-in `NotifyOnDefaultDeviceChange` in Mouse/Volume settings. Startup’s first default device is silent.
+- Focus-lost volume (#33): opt-in mute/attenuate of background apps via `FocusLostSupervisor` + a 250 ms foreground poll. Lock and keep-muted rules are skipped; original volume restores on focus.
+- RDP reconnect volume (#7): `mstsc`/`msrdc` last volume persists across new process ids and reapplies on the next session unless an explicit app/folder rule exists.
 - GitHub #37 / #41 / #43 hardening: per-app device switching now uses manual HSTRING / IInspectable interop for .NET 8 (`Combase.GetActivationFactory`), so `SetPersistedDefaultAudioEndpoint` actually reaches Windows instead of throwing `MarshalDirectiveException` and cloning the app row. Session teardown is idempotent, icon-path callbacks marshal to the dispatcher, and collection `Reset`/`Move`/`Replace` rebuild instead of throwing. Manual diagnostic export warns first, stages files for review, sanitizes user-folder paths, and Sentry/GitHub update checks wait for first-run consent. Telemetry opt-out still does not disable update checks; they are independent.
 - Folder launch-volume defaults: App rules now include custom folder defaults that apply a chosen starting volume to desktop sessions whose executable path is under the configured folder, recursively. The deepest matching folder wins. Explicit app `Set at launch` and `Lock` volume rules remain higher priority; hard mute still composes with a folder default. Folder-default settings export and import with the rest of the profile.
 - CLI `set-default` now switches and verifies both Windows `Console` and `Multimedia` playback roles. COM failures or unchanged endpoints return an error instead of a false `ok: true`; `GetDefaultDevice(role)` must query the requested role rather than always reading `Multimedia`.

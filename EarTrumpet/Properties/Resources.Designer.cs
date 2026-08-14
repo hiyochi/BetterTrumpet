@@ -3156,5 +3156,35 @@ namespace EarTrumpet.Properties {
         public static string NoUpdatesAvailableText {
             get { return ResourceManager.GetString("NoUpdatesAvailableText", resourceCulture); }
         }
+        public static string SettingsDeviceChangeNotify {
+            get { return ResourceManager.GetString("SettingsDeviceChangeNotify", resourceCulture); }
+        }
+        public static string SettingsDeviceChangeNotifyDesc {
+            get { return ResourceManager.GetString("SettingsDeviceChangeNotifyDesc", resourceCulture); }
+        }
+        public static string SettingsNotifyOnDeviceChange {
+            get { return ResourceManager.GetString("SettingsNotifyOnDeviceChange", resourceCulture); }
+        }
+        public static string DefaultDeviceChangedNotificationTitle {
+            get { return ResourceManager.GetString("DefaultDeviceChangedNotificationTitle", resourceCulture); }
+        }
+        public static string DefaultDeviceChangedNotificationFormat {
+            get { return ResourceManager.GetString("DefaultDeviceChangedNotificationFormat", resourceCulture); }
+        }
+        public static string SettingsFocusLostVolume {
+            get { return ResourceManager.GetString("SettingsFocusLostVolume", resourceCulture); }
+        }
+        public static string SettingsFocusLostVolumeDesc {
+            get { return ResourceManager.GetString("SettingsFocusLostVolumeDesc", resourceCulture); }
+        }
+        public static string SettingsUseFocusLostVolume {
+            get { return ResourceManager.GetString("SettingsUseFocusLostVolume", resourceCulture); }
+        }
+        public static string SettingsFocusLostAttenuate {
+            get { return ResourceManager.GetString("SettingsFocusLostAttenuate", resourceCulture); }
+        }
+        public static string SettingsFocusLostAttenuateHint {
+            get { return ResourceManager.GetString("SettingsFocusLostAttenuateHint", resourceCulture); }
+        }
     }
 }

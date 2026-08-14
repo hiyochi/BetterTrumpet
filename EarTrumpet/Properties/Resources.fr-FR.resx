@@ -1803,4 +1803,34 @@ Détails : {0}</value>
   <data name="SettingsUseMonkeyTickSoundTip" xml:space="preserve">
     <value>Conserver ce son secret pour les réglages du volume</value>
   </data>
+  <data name="SettingsDeviceChangeNotify" xml:space="preserve">
+    <value>Changement de périphérique</value>
+  </data>
+  <data name="SettingsDeviceChangeNotifyDesc" xml:space="preserve">
+    <value>Notification quand la sortie audio par défaut change</value>
+  </data>
+  <data name="SettingsNotifyOnDeviceChange" xml:space="preserve">
+    <value>Afficher une notification quand le périphérique par défaut change</value>
+  </data>
+  <data name="DefaultDeviceChangedNotificationTitle" xml:space="preserve">
+    <value>Périphérique de lecture</value>
+  </data>
+  <data name="DefaultDeviceChangedNotificationFormat" xml:space="preserve">
+    <value>Utilisation de {0}</value>
+  </data>
+  <data name="SettingsFocusLostVolume" xml:space="preserve">
+    <value>Perte de focus</value>
+  </data>
+  <data name="SettingsFocusLostVolumeDesc" xml:space="preserve">
+    <value>Couper ou baisser les applications quand une autre fenêtre est au premier plan</value>
+  </data>
+  <data name="SettingsUseFocusLostVolume" xml:space="preserve">
+    <value>Baisser le volume des applications qui perdent le focus</value>
+  </data>
+  <data name="SettingsFocusLostAttenuate" xml:space="preserve">
+    <value>Volume en arrière-plan (0 % coupe le son)</value>
+  </data>
+  <data name="SettingsFocusLostAttenuateHint" xml:space="preserve">
+    <value>Les règles verrouillées et « garder en sourdine » restent intactes. Le volume d'origine revient quand l'application reprend le focus.</value>
+  </data>
 </root>
