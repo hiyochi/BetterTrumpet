@@ -98,6 +98,12 @@ namespace EarTrumpet.Logic
 
             var separator = UsesWindowsSeparators(folder) || UsesWindowsSeparators(executable) ? '\\' : '/';
             var prefix = EndsWithSeparator(folder) ? folder : folder + separator;
+            if (executable.Equals(folder, StringComparison.OrdinalIgnoreCase) ||
+                executable.Equals(TrimSeparators(folder), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             if (executable.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
                 return true;

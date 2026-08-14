@@ -315,6 +315,7 @@ namespace EarTrumpet
             // Tray icon is already visible from ContinueStartup
 
             CollectionViewModel.DefaultChanged += OnDefaultPlaybackDeviceChanged;
+            _lastNotifiedDeviceId = CollectionViewModel.Default?.Id;
             _focusLostService = new FocusLostService(CollectionViewModel, Settings);
             _focusLostService.Start();
             Exit += (_, __) => _focusLostService.Stop();

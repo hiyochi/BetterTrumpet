@@ -381,6 +381,7 @@ namespace EarTrumpet.UI.ViewModels
             else if ((rule == null || !rule.HasVolumeRule) &&
                      isNewSession &&
                      RemoteDesktopIdentity.IsRemoteDesktopExe(app.ExeName) &&
+                     _settings != null &&
                      _settings.TryGetRemoteDesktopVolume(out var remoteDesktopVolume) &&
                      LaunchVolumeTracker.TryClaim(app.ProcessId))
             {
@@ -439,6 +440,7 @@ namespace EarTrumpet.UI.ViewModels
             if (sender is IAppItemViewModel app)
             {
                 if (e.PropertyName == nameof(IAppItemViewModel.Volume) &&
+                    _settings != null &&
                     RemoteDesktopIdentity.IsRemoteDesktopExe(app.ExeName) &&
                     !VolumeWriteScope.IsActive)
                 {

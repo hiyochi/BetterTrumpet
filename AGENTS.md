@@ -155,7 +155,7 @@ Notes:
 
 Recent work in `master` includes:
 
-- Linux cloud-agent self-test: `bash tools/run-linux-self-test.sh` covers PathSanitizer, the session disconnect race gate, portable engines in `EarTrumpet/Logic/` (app identity, folder defaults, mixer size, device-change notify, focus-lost, RDP identity), and source contracts for the .NET 8 HSTRING marshalling fix plus the settings/UI wiring for those engines. It cannot exercise WASAPI, the flyout, or combase.dll.
+- Linux cloud-agent self-test: `bash tools/run-linux-self-test.sh` covers PathSanitizer, the session disconnect race gate, portable engines in `EarTrumpet/Logic/` (app identity, folder defaults, mixer size, device-change notify, focus-lost, RDP identity), and source contracts for the .NET 8 HSTRING marshalling fix plus the settings/UI wiring for those engines. It cannot exercise WASAPI, the flyout, or combase.dll. Focus-lost ignores BetterTrumpet's own process, does not record undo, and reapplies from the original snapshot when the mute/attenuate setting changes. Mixer size is saved only in many-devices mode and restored once per open. Device-change toasts seed the current default so the first real switch can notify.
 - Mixer Open window (#40): user-resized width/height persist as `MixerWindowWidth`/`MixerWindowHeight` and are restored only in many-devices mode (`> 3` devices), after `SizeToContent` would otherwise wipe `WINDOWPLACEMENT`. Tiny/off-screen values clamp via `WindowSizePolicy`.
 - Appearance (#39): the legacy tray-icon checkbox moved from General to Appearance. Tooltips stay on General.
 - App rules empty state (#30): the big “No rules yet” hint hides when folder defaults exist. Folder matching lives in `FolderVolumeRuleMatcher` (deepest path wins).

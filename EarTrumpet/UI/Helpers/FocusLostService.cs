@@ -95,7 +95,8 @@ namespace EarTrumpet.UI.Helpers
                     foregroundPid,
                     sessions,
                     mode,
-                    attenuatePercent);
+                    attenuatePercent,
+                    Environment.ProcessId);
 
                 if (adjustments.Count == 0)
                 {
@@ -115,15 +116,19 @@ namespace EarTrumpet.UI.Helpers
                         if (app is AudioSessionViewModel session)
                         {
                             session.SetVolumeWithoutUndo(adjustment.Volume);
+                            session.SetMuteWithoutUndo(adjustment.IsMuted);
                         }
-                        else if (app.Volume != adjustment.Volume)
+                        else
                         {
-                            app.Volume = adjustment.Volume;
-                        }
+                            if (app.Volume != adjustment.Volume)
+                            {
+                                app.Volume = adjustment.Volume;
+                            }
 
-                        if (app.IsMuted != adjustment.IsMuted)
-                        {
-                            app.IsMuted = adjustment.IsMuted;
+                            if (app.IsMuted != adjustment.IsMuted)
+                            {
+                                app.IsMuted = adjustment.IsMuted;
+                            }
                         }
                     }
                 }

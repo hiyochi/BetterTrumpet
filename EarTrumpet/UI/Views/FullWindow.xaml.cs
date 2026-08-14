@@ -11,6 +11,7 @@ namespace EarTrumpet.UI.Views
     public partial class FullWindow : Window
     {
         private readonly double _windowAndItemSize;
+        private bool _restoredUserSize;
         private FullWindowViewModel ViewModel => (FullWindowViewModel)DataContext;
 
         public FullWindow()
@@ -39,8 +40,11 @@ namespace EarTrumpet.UI.Views
                     App.Settings.FullMixerWindowPlacement = placement;
                 }
 
-                App.Settings.MixerWindowWidth = Width;
-                App.Settings.MixerWindowHeight = Height;
+                if (WindowSizePolicy.ShouldRestoreUserSize(ViewModel.AllDevices.Count))
+                {
+                    App.Settings.MixerWindowWidth = Width;
+                    App.Settings.MixerWindowHeight = Height;
+                }
             };
 
             // Auto-size on the first layout pass.
@@ -82,11 +86,19 @@ namespace EarTrumpet.UI.Views
             ResizeMode = ViewModel.IsManyDevicesMode ? ResizeMode.CanResize : ResizeMode.NoResize;
             this.RemoveWindowStyle(User32.WS_MAXIMIZEBOX);
 
-            if (WindowSizePolicy.ShouldRestoreUserSize(ViewModel.AllDevices.Count) &&
-                WindowSizePolicy.TryNormalize(App.Settings.MixerWindowWidth, App.Settings.MixerWindowHeight, out var width, out var height))
+            if (WindowSizePolicy.ShouldRestoreUserSize(ViewModel.AllDevices.Count))
             {
-                Width = width;
-                Height = height;
+                if (!_restoredUserSize &&
+                    WindowSizePolicy.TryNormalize(App.Settings.MixerWindowWidth, App.Settings.MixerWindowHeight, out var width, out var height))
+                {
+                    Width = width;
+                    Height = height;
+                    _restoredUserSize = true;
+                }
+            }
+            else
+            {
+                _restoredUserSize = false;
             }
         }
     }

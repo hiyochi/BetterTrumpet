@@ -208,6 +208,7 @@ internal static class Program
             app.Contains("Settings.HasShownFirstRun = true") && app.Contains("vm.Completed +="),
             "hasShownFirstRun is written when onboarding completes");
         Assert(app.Contains("OnDefaultPlaybackDeviceChanged"), "device-change toast is wired");
+        Assert(app.Contains("_lastNotifiedDeviceId = CollectionViewModel.Default"), "first default device is seeded so the next switch can notify");
         Assert(app.Contains("FocusLostService"), "focus-lost service starts with the tray");
 
         var colors = Read(repoRoot, "EarTrumpet/UI/ViewModels/EarTrumpetColorsSettingsPageViewModel.cs");
@@ -226,6 +227,15 @@ internal static class Program
         var mixer = Read(repoRoot, "EarTrumpet/UI/Views/FullWindow.xaml.cs");
         Assert(mixer.Contains("WindowSizePolicy.ShouldRestoreUserSize"), "mixer restores size only in many-devices mode");
         Assert(mixer.Contains("MixerWindowWidth"), "mixer persists width/height");
+        Assert(mixer.Contains("_restoredUserSize"), "mixer does not re-apply saved size on every device change");
+        Assert(Regex.IsMatch(mixer, @"ShouldRestoreUserSize\([\s\S]*MixerWindowWidth"), "auto-sized small mixer does not overwrite the saved size");
+
+        var sessionVm = Read(repoRoot, "EarTrumpet/UI/ViewModels/AudioSessionViewModel.cs");
+        Assert(sessionVm.Contains("SetMuteWithoutUndo"), "automatic mute does not record undo steps");
+
+        var focusService = Read(repoRoot, "EarTrumpet/UI/Helpers/FocusLostService.cs");
+        Assert(focusService.Contains("Environment.ProcessId"), "focus-lost ignores BetterTrumpet's own process");
+        Assert(focusService.Contains("SetMuteWithoutUndo"), "focus-lost mute skips the undo stack");
 
         var deviceVm = Read(repoRoot, "EarTrumpet/UI/ViewModels/DeviceViewModel.cs");
         Assert(deviceVm.Contains("RemoteDesktopIdentity.IsRemoteDesktopExe"), "RDP reconnect restores last volume");
@@ -299,6 +309,14 @@ internal static class Program
                 @"C:\Games\other\game.exe",
                 @"C:\Program Files\Steam"),
             "unrelated folder does not match");
+        Assert(FolderVolumeRuleMatcher.IsExecutableUnderFolder(
+                @"C:\Program Files\WindowsApps\Foo.Bar_1.0.0.0_x64",
+                @"C:\Program Files\WindowsApps\Foo.Bar_1.0.0.0_x64"),
+            "store package folder equals the rule path");
+        Assert(!FolderVolumeRuleMatcher.IsExecutableUnderFolder(
+                @"C:\Game2\game.exe",
+                @"C:\Game"),
+            "prefix without a separator is not a match");
 
         int volume;
         Assert(FolderVolumeRuleMatcher.TryMatch(@"C:\Program Files\Steam\steamapps\common\Game\game.exe", rules, out volume) && volume == 5,
@@ -379,17 +397,32 @@ internal static class Program
         var first = supervisor.OnForegroundChanged(1001, new[] { game, music, locked }, FocusLostMode.Mute, 0);
         Assert(first.Count == 0, "first foreground observation does not touch volumes");
 
-        var backgrounded = supervisor.OnForegroundChanged(2002, new[] { game, music, locked }, FocusLostMode.Mute, 0);
+        var ignored = supervisor.OnForegroundChanged(9999, new[] { game, music, locked }, FocusLostMode.Mute, 0, 9999);
+        Assert(ignored.Count == 0, "BetterTrumpet's own HWND does not mute everything");
+
+        var backgrounded = supervisor.OnForegroundChanged(2002, new[] { game, music, locked }, FocusLostMode.Mute, 0, 9999);
         Assert(backgrounded.Count == 1 && backgrounded[0].Key == "game" && backgrounded[0].IsMuted,
             "leaving a game mutes it");
         Assert(backgrounded.All(a => a.Key != "locked"), "locked sessions are skipped");
 
-        var restored = supervisor.OnForegroundChanged(1001, new[] { game, music, locked }, FocusLostMode.Mute, 0);
-        Assert(restored.Any(a => a.Key == "game" && !a.IsMuted && a.Volume == 80), "returning focus restores the game");
-        Assert(restored.Any(a => a.Key == "music" && a.IsMuted), "the previous app is muted");
+        var gameMuted = new FocusLostSession("game", 1001, 80, true, true);
+        var again = supervisor.OnForegroundChanged(4004, new[] { gameMuted, music, locked }, FocusLostMode.Mute, 0, 9999);
+        Assert(again.All(a => a.Key != "game"), "already-muted background app is not written again");
+        Assert(again.Any(a => a.Key == "music" && a.IsMuted), "the new background app is muted");
 
-        var off = supervisor.OnForegroundChanged(1001, new[] { game, music, locked }, FocusLostMode.Off, 0);
+        var musicMuted = new FocusLostSession("music", 2002, 50, true, true);
+        var restored = supervisor.OnForegroundChanged(1001, new[] { gameMuted, musicMuted, locked }, FocusLostMode.Mute, 0);
+        Assert(restored.Any(a => a.Key == "game" && !a.IsMuted && a.Volume == 80), "returning focus restores the game");
+
+        var off = supervisor.OnForegroundChanged(1001, new[] { game, musicMuted, locked }, FocusLostMode.Off, 0);
         Assert(off.Any(a => a.Key == "music" && !a.IsMuted && a.Volume == 50), "disabling the feature restores leftovers");
+
+        var modeSwitch = new FocusLostSupervisor();
+        modeSwitch.OnForegroundChanged(1001, new[] { game, music }, FocusLostMode.Mute, 0);
+        modeSwitch.OnForegroundChanged(2002, new[] { game, music }, FocusLostMode.Mute, 0);
+        var attenuated = modeSwitch.OnForegroundChanged(2002, new[] { gameMuted, music }, FocusLostMode.Attenuate, 20);
+        Assert(attenuated.Any(a => a.Key == "game" && a.Volume == 20 && !a.IsMuted),
+            "changing 0% mute to 20% reapplies from the original snapshot");
 
         using (VolumeWriteScope.Begin())
         {

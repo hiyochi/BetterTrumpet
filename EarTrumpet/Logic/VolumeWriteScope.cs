@@ -1,23 +1,25 @@
 using System;
+using System.Threading;
 
 namespace EarTrumpet.Logic
 {
     /// <summary>
     /// Marks volume writes that should not persist as the user's last RDP volume.
+    /// Uses Interlocked rather than ThreadStatic: WASAPI property callbacks can
+    /// arrive on a different thread than the dispatcher write.
     /// </summary>
     public static class VolumeWriteScope
     {
-        [ThreadStatic]
         private static int _depth;
 
         public static bool IsActive
         {
-            get { return _depth > 0; }
+            get { return Volatile.Read(ref _depth) > 0; }
         }
 
         public static IDisposable Begin()
         {
-            _depth++;
+            Interlocked.Increment(ref _depth);
             return new Releaser();
         }
 
@@ -33,7 +35,7 @@ namespace EarTrumpet.Logic
                 }
 
                 _disposed = true;
-                _depth--;
+                Interlocked.Decrement(ref _depth);
             }
         }
     }

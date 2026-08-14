@@ -10,6 +10,7 @@ namespace EarTrumpet.Logic
     {
         private readonly Dictionary<string, FocusLostSnapshot> _saved = new Dictionary<string, FocusLostSnapshot>();
         private int _foregroundPid;
+        private FocusLostMode _mode = FocusLostMode.Off;
 
         public bool HasSavedState
         {
@@ -20,7 +21,8 @@ namespace EarTrumpet.Logic
             int foregroundPid,
             IReadOnlyList<FocusLostSession> sessions,
             FocusLostMode mode,
-            int attenuatePercent)
+            int attenuatePercent,
+            int ignoredForegroundPid = 0)
         {
             var adjustments = new List<FocusLostAdjustment>();
             sessions = sessions ?? new FocusLostSession[0];
@@ -29,6 +31,7 @@ namespace EarTrumpet.Logic
             {
                 RestoreAll(sessions, adjustments);
                 _foregroundPid = 0;
+                _mode = FocusLostMode.Off;
                 return adjustments;
             }
 
@@ -37,19 +40,29 @@ namespace EarTrumpet.Logic
                 return adjustments;
             }
 
-            if (_foregroundPid == 0)
+            if (ignoredForegroundPid != 0 && foregroundPid == ignoredForegroundPid)
             {
-                _foregroundPid = foregroundPid;
                 return adjustments;
             }
 
-            if (_foregroundPid == foregroundPid)
+            if (_foregroundPid == 0)
+            {
+                _foregroundPid = foregroundPid;
+                _mode = mode;
+                return adjustments;
+            }
+
+            var pidChanged = _foregroundPid != foregroundPid;
+            var modeChanged = _mode != mode;
+            if (!pidChanged && !modeChanged)
             {
                 return adjustments;
             }
 
             _foregroundPid = foregroundPid;
+            _mode = mode;
 
+            var liveKeys = new HashSet<string>();
             for (var i = 0; i < sessions.Count; i++)
             {
                 var session = sessions[i];
@@ -58,31 +71,46 @@ namespace EarTrumpet.Logic
                     continue;
                 }
 
+                liveKeys.Add(session.Key);
+
                 if (session.ProcessId == foregroundPid)
                 {
                     FocusLostSnapshot saved;
                     if (_saved.TryGetValue(session.Key, out saved))
                     {
-                        adjustments.Add(new FocusLostAdjustment(session.Key, saved.Volume, saved.IsMuted));
+                        QueueIfChanged(adjustments, session, saved.Volume, saved.IsMuted);
                         _saved.Remove(session.Key);
                     }
                     continue;
                 }
 
-                if (!_saved.ContainsKey(session.Key))
+                FocusLostSnapshot original;
+                if (!_saved.TryGetValue(session.Key, out original))
                 {
-                    _saved[session.Key] = new FocusLostSnapshot(session.Volume, session.IsMuted);
+                    original = new FocusLostSnapshot(session.Volume, session.IsMuted);
+                    _saved[session.Key] = original;
                 }
 
                 var applied = FocusLostVolumePolicy.ApplyBackground(
-                    session.Volume,
-                    session.IsMuted,
+                    original.Volume,
+                    original.IsMuted,
                     mode,
                     attenuatePercent);
-                adjustments.Add(new FocusLostAdjustment(session.Key, applied.Volume, applied.IsMuted));
+                QueueIfChanged(adjustments, session, applied.Volume, applied.IsMuted);
             }
 
+            Prune(liveKeys);
             return adjustments;
+        }
+
+        private static void QueueIfChanged(List<FocusLostAdjustment> adjustments, FocusLostSession session, int volume, bool isMuted)
+        {
+            if (session.Volume == volume && session.IsMuted == isMuted)
+            {
+                return;
+            }
+
+            adjustments.Add(new FocusLostAdjustment(session.Key, volume, isMuted));
         }
 
         private void RestoreAll(IReadOnlyList<FocusLostSession> sessions, List<FocusLostAdjustment> adjustments)
@@ -98,11 +126,33 @@ namespace EarTrumpet.Logic
                 FocusLostSnapshot saved;
                 if (!string.IsNullOrEmpty(session.Key) && _saved.TryGetValue(session.Key, out saved))
                 {
-                    adjustments.Add(new FocusLostAdjustment(session.Key, saved.Volume, saved.IsMuted));
+                    QueueIfChanged(adjustments, session, saved.Volume, saved.IsMuted);
                 }
             }
 
             _saved.Clear();
+        }
+
+        private void Prune(HashSet<string> liveKeys)
+        {
+            if (_saved.Count == 0)
+            {
+                return;
+            }
+
+            var stale = new List<string>();
+            foreach (var key in _saved.Keys)
+            {
+                if (!liveKeys.Contains(key))
+                {
+                    stale.Add(key);
+                }
+            }
+
+            for (var i = 0; i < stale.Count; i++)
+            {
+                _saved.Remove(stale[i]);
+            }
         }
     }
 }
