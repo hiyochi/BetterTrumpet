@@ -661,7 +661,7 @@ namespace EarTrumpet.UI.Controls
                 StartAnimation();
 
                 // Only start dragging if we KNOW we clicked on the thumb
-                // Otherwise (clicked on track, or thumb not found), animate smoothly
+                // Otherwise (clicked on track, or thumb not found), jump directly.
                 if (_thumb != null && _thumb.IsMouseOver)
                 {
                     // Click on thumb - start dragging immediately
@@ -670,10 +670,14 @@ namespace EarTrumpet.UI.Controls
                 }
                 else
                 {
-                    // Click on track (or thumb not found) - animate smoothly to target
+                    // Click on track (or thumb not found) - set value directly.
+                    // We avoid animation here because the flyout may close on
+                    // mouse-up and unload the slider, which cancels the render
+                    // subscription mid-animation and leaves Value stuck partway.
                     _clickedOnTrack = true;
                     _isDragging = false;
-                    SetPositionByControlPoint(_lastMousePosition, animate: true);
+                    _isAnimatingValue = false;
+                    SetPositionByControlPoint(_lastMousePosition, animate: false);
                 }
 
                 CaptureMouse();
@@ -768,12 +772,12 @@ namespace EarTrumpet.UI.Controls
 
         public void SetPositionByControlPoint(Point point, bool animate = false)
         {
-            var thumbWidth = _thumb?.ActualWidth > 0 ? _thumb.ActualWidth : 0;
-            var usableWidth = ActualWidth - thumbWidth;
+            var thumbWidth = _thumb?.ActualWidth ?? 0;
+            var trackWidth = ActualWidth - thumbWidth;
             double percent;
-            if (usableWidth > 0)
+            if (trackWidth > 0)
             {
-                percent = (point.X - thumbWidth / 2.0) / usableWidth;
+                percent = (point.X - thumbWidth / 2.0) / trackWidth;
             }
             else
             {
