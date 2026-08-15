@@ -730,13 +730,15 @@ namespace EarTrumpet.UI.Controls
                 
                 if (_clickedOnTrack)
                 {
-                    // User clicked on track - they're now dragging after the initial click
-                    // Stop animation and switch to instant updates
+                    // User clicked on track and is now dragging.
+                    // Switch from animation to instant updates so the thumb
+                    // follows the cursor without lag, but keep the target
+                    // in sync so a subsequent release lands on the cursor.
                     _clickedOnTrack = false;
                     _isDragging = true;
                     _isAnimatingValue = false;
                 }
-                
+
                 if (_isDragging)
                 {
                     // When dragging, we want instant updates (no animation)
@@ -766,7 +768,17 @@ namespace EarTrumpet.UI.Controls
 
         public void SetPositionByControlPoint(Point point, bool animate = false)
         {
-            var percent = point.X / ActualWidth;
+            var thumbWidth = _thumb?.ActualWidth > 0 ? _thumb.ActualWidth : 0;
+            var usableWidth = ActualWidth - thumbWidth;
+            double percent;
+            if (usableWidth > 0)
+            {
+                percent = (point.X - thumbWidth / 2.0) / usableWidth;
+            }
+            else
+            {
+                percent = point.X / ActualWidth;
+            }
             var newValue = Bound((Maximum - Minimum) * percent);
             
             // Only animate if requested AND smooth animation is enabled in settings
