@@ -4,9 +4,12 @@ using System.Runtime.InteropServices;
 namespace EarTrumpet.Interop.MMDeviceAPI
 {
     [Guid("2a59116d-6c4f-45e0-a74f-707e3fef9258")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIInspectable)]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IAudioPolicyConfigFactoryVariantForDownlevel
     {
+        int GetIids(out uint iidCount, out IntPtr iids);
+        int GetRuntimeClassName(out IntPtr className);
+        int GetTrustLevel(out int trustLevel);
         int __incomplete__add_CtxVolumeChange();
         int __incomplete__remove_CtxVolumeChanged();
         int __incomplete__add_RingerVibrateStateChanged();
@@ -29,7 +32,7 @@ namespace EarTrumpet.Interop.MMDeviceAPI
         [PreserveSig]
         HRESULT SetPersistedDefaultAudioEndpoint(uint processId, EDataFlow flow, ERole role, IntPtr deviceId);
         [PreserveSig]
-        HRESULT GetPersistedDefaultAudioEndpoint(uint processId, EDataFlow flow, ERole role, [Out, MarshalAs(UnmanagedType.HString)] out string deviceId);
+        HRESULT GetPersistedDefaultAudioEndpoint(uint processId, EDataFlow flow, ERole role, out IntPtr deviceId);
         [PreserveSig]
         HRESULT ClearAllPersistedApplicationDefaultEndpoints();
     }
