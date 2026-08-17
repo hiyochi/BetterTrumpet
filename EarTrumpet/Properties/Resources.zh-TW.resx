@@ -154,7 +154,7 @@
     <value>匯出診斷報告</value>
   </data>
   <data name="HotkeyDescriptionText" xml:space="preserve">
-    <value>你的快捷鍵</value>
+    <value>你的快速鍵</value>
   </data>
   <data name="DefaultDeviceText" xml:space="preserve">
     <value>總是使用預設播放裝置</value>
@@ -169,7 +169,7 @@
     <value>"音量 {Volume}% - {Name}"</value>
   </data>
   <data name="AppOrDeviceMutedFormatAccessibleText" xml:space="preserve">
-    <value>"靜音 - {Name}"</value>
+    <value>"已靜音 - {Name}"</value>
   </data>
   <data name="AppsListAccessibleText" xml:space="preserve">
     <value>應用程式</value>
@@ -181,7 +181,7 @@
     <value>摺疊畫面，只顯示預設播放裝置</value>
   </data>
   <data name="DefaultHotkeyDescriptionText" xml:space="preserve">
-    <value>預設快捷鍵</value>
+    <value>預設快速鍵</value>
   </data>
   <data name="ExpandAccessibleText" xml:space="preserve">
     <value>展開畫面，顯示所有播放裝置</value>
@@ -205,10 +205,10 @@
     <value>已靜音</value>
   </data>
   <data name="OpenSoundSettingsText" xml:space="preserve">
-    <value>系統音效設定</value>
+    <value>音效設定</value>
   </data>
   <data name="WindowsLegacyMenuText" xml:space="preserve">
-    <value>Windows 傳統</value>
+    <value>Windows 舊版</value>
   </data>
   <data name="AboutThisAddonText" xml:space="preserve">
     <value>關於 {Name} 擴充功能</value>
@@ -229,19 +229,19 @@
     <value>管理</value>
   </data>
   <data name="LegacySettingsPageText" xml:space="preserve">
-    <value>傳統設定</value>
+    <value>舊版設定</value>
   </data>
   <data name="PublisherText" xml:space="preserve">
     <value>發行者：</value>
   </data>
   <data name="SettingsDescriptionText" xml:space="preserve">
-    <value>啟動、音量、滑鼠、快捷鍵和預設</value>
+    <value>啟動、音量、滑鼠、快速鍵和預設</value>
   </data>
   <data name="SettingsTitle" xml:space="preserve">
     <value>BetterTrumpet 設定</value>
   </data>
   <data name="ShortcutsPageText" xml:space="preserve">
-    <value>捷徑</value>
+    <value>快速鍵</value>
   </data>
   <data name="VersionText" xml:space="preserve">
     <value>版本：</value>
@@ -253,7 +253,7 @@
     <value>沒有結果</value>
   </data>
   <data name="SettingsOpenMixerText" xml:space="preserve">
-    <value>開啟混音程式</value>
+    <value>開啟音量混音程式</value>
   </data>
   <data name="ToggleSwitchOffText" xml:space="preserve">
     <value>關閉</value>
@@ -309,7 +309,7 @@
     <value>新增條件</value>
   </data>
   <data name="AddonDescriptionText" xml:space="preserve">
-    <value>設定快捷鍵與自動化動作</value>
+    <value>設定快速鍵與自動化動作</value>
   </data>
   <data name="AddTriggerText" xml:space="preserve">
     <value>新增觸發器</value>
@@ -372,10 +372,10 @@
     <value>進階篩選器</value>
   </data>
   <data name="ContextMenuTrigger_AddText" xml:space="preserve">
-    <value>我點擊此動作的右鍵選單項目</value>
+    <value>我使用此動作的內容功能表項目</value>
   </data>
   <data name="ContextMenuTrigger_LinkText" xml:space="preserve">
-    <value>我點擊此動作的右鍵選單項目</value>
+    <value>我使用此動作的內容功能表項目</value>
   </data>
   <data name="DefaultDeviceCondition_AddText" xml:space="preserve">
     <value>當預設播放裝置是或不是某裝置</value>
@@ -408,7 +408,7 @@
     <value>BetterTrumpet 啟動或結束時</value>
   </data>
   <data name="EventTrigger_LinkText" xml:space="preserve">
-    <value> BetterTrumpet {Option}</value>
+    <value>BetterTrumpet {Option}</value>
   </data>
   <data name="EveryAppText" xml:space="preserve">
     <value>所有應用程式</value>
@@ -423,10 +423,10 @@
     <value>前台應用程式</value>
   </data>
   <data name="HotkeyTrigger_AddText" xml:space="preserve">
-    <value>按下自訂快捷鍵</value>
+    <value>按下快速鍵</value>
   </data>
   <data name="HotkeyTrigger_EmptyText" xml:space="preserve">
-    <value>(請設定快捷鍵)</value>
+    <value>(請設定快速鍵)</value>
   </data>
   <data name="HotkeyTrigger_LinkText" xml:space="preserve">
     <value>按下 {Hotkey}</value>
@@ -462,7 +462,7 @@
     <value>播放</value>
   </data>
   <data name="ProcessCondition_AddText" xml:space="preserve">
-    <value>當處理程序正在或未在執行中</value>
+    <value>當某處理程序正在執行或未執行時</value>
   </data>
   <data name="ProcessCondition_EmptyText" xml:space="preserve">
     <value>(輸入處理程序名稱)</value>
@@ -573,7 +573,7 @@
     <value>當</value>
   </data>
   <data name="VariableCondition_AddText" xml:space="preserve">
-    <value>當局部變數值是 true 或 false</value>
+    <value>當區域變數值是 true 或 false</value>
   </data>
   <data name="VariableCondition_EmptyText" xml:space="preserve">
     <value>(輸入變數名稱)</value>
@@ -699,7 +699,7 @@
     <value>強制靜音此應用程式</value>
   </data>
   <data name="HardMuteAppMenuText" xml:space="preserve">
-    <value>保持靜音（重啟後仍生效）</value>
+    <value>保持靜音（重新啟動後仍生效）</value>
   </data>
   <data name="HardMuteAppMenuDisableText" xml:space="preserve">
     <value>取消保持靜音</value>
@@ -735,7 +735,7 @@
     <value>應用程式規則</value>
   </data>
   <data name="AppRulesSettingsPageSubtitle" xml:space="preserve">
-    <value>保持靜音或固定音量的應用程式，重啟後仍生效</value>
+    <value>保持靜音或固定音量的應用程式，重新啟動後仍生效</value>
   </data>
   <data name="FolderVolumeRulesHeaderText" xml:space="preserve">
     <value>資料夾預設值</value>
@@ -927,7 +927,7 @@
     <value>QuickTrumpet</value>
   </data>
   <data name="QuickTrumpetSettingsPageSubtitle" xml:space="preserve">
-    <value>從 BetterTrumpet、快捷鍵或 Raycast 儲存和套用音訊預設。</value>
+    <value>從 BetterTrumpet、快速鍵或 Raycast 儲存和套用音訊預設。</value>
   </data>
   <data name="UpdatesSettingsPageText" xml:space="preserve">
     <value>更新</value>
@@ -1302,7 +1302,7 @@
     <value>絕對音量</value>
   </data>
   <data name="SettingsAbsoluteVolumeDesc" xml:space="preserve">
-    <value>直接音量增減快捷鍵</value>
+    <value>直接音量增減快速鍵</value>
   </data>
   <data name="SettingsSwitchDevice" xml:space="preserve">
     <value>切換預設裝置</value>
@@ -1320,7 +1320,7 @@
     <value>QuickTrumpet 預設</value>
   </data>
   <data name="SettingsSavedProfilesDesc" xml:space="preserve">
-    <value>從 BetterTrumpet、快捷鍵、Raycast 或 bt CLI 套用</value>
+    <value>從 BetterTrumpet、快速鍵、Raycast 或 bt CLI 套用</value>
   </data>
   <data name="SettingsProfileDeviceCount" xml:space="preserve">
     <value>{0} 個裝置 | {1}</value>
@@ -1338,7 +1338,7 @@
     <value>在此預設中包含所有裝置</value>
   </data>
   <data name="SettingsQuickTrumpetShortcut" xml:space="preserve">
-    <value>快捷鍵</value>
+    <value>快速鍵</value>
   </data>
   <data name="SettingsQuickTrumpetShortcutDesc" xml:space="preserve">
     <value>在此與預設一起管理，使 Raycast、CLI 和鍵盤工作流程保持統一。</value>
@@ -1494,13 +1494,13 @@
     <value>歡迎使用</value>
   </data>
   <data name="OnboardingWindowTitle" xml:space="preserve">
-    <value>BetterTrumpet 安裝設定</value>
+    <value>BetterTrumpet 設定精靈</value>
   </data>
   <data name="OnboardingStepFormat" xml:space="preserve">
     <value>第 {0} 步，共 {1} 步</value>
   </data>
   <data name="OnboardingIntroTitle" xml:space="preserve">
-    <value>一次性設定混音程式。</value>
+    <value>只需設定一次混音程式。</value>
   </data>
   <data name="OnboardingIntroDesc" xml:space="preserve">
     <value>BetterTrumpet 常駐工作列，讓你快速控制應用程式、裝置、主題和復原設定。</value>
@@ -1611,7 +1611,7 @@
     <value>固定 BetterTrumpet</value>
   </data>
   <data name="OnboardingPinDesc" xml:space="preserve">
-    <value>將 BetterTrumpet 圖示從隱藏選單拖到工作列，實現一鍵存取。</value>
+    <value>將 BetterTrumpet 圖示從隱藏選單拖曳到工作列，實現一鍵存取。</value>
   </data>
   <data name="OnboardingNoDevices" xml:space="preserve">
     <value>未偵測到音訊裝置。</value>
@@ -1734,7 +1734,7 @@
     <value>記住應用程式音量</value>
   </data>
   <data name="SettingsRememberAppVolumesDesc" xml:space="preserve">
-    <value>應用程式重啟時自動還原音量水平</value>
+    <value>應用程式重新啟動時自動還原音量水平</value>
   </data>
   <data name="SettingsRememberAppVolumesEnable" xml:space="preserve">
     <value>按應用程式記住音量水平</value>
