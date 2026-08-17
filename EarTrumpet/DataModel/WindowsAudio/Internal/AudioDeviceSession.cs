@@ -9,12 +9,13 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 
 namespace EarTrumpet.DataModel.WindowsAudio.Internal
 {
-    class AudioDeviceSession : BindableBase, IAudioSessionEvents, IAudioDeviceSession, IAudioDeviceSessionInternal
+    class AudioDeviceSession : BindableBase, IAudioSessionEvents, IAudioDeviceSession, IAudioDeviceSessionInternal, IAutomaticVolumeWrite
     {
         public IAudioDevice Parent
         {
@@ -36,28 +37,7 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
             }
             set
             {
-                value = value.Bound(0, 1f);
-
-                if (App.Settings.UseLogarithmicVolume)
-                {
-                    value = value.ToLogVolume();
-                }
-
-                if (_volume != value)
-                {
-                    try
-                    {
-                        _volume = value;
-                        Guid dummy = Guid.Empty;
-                        _simpleVolume.SetMasterVolume(value, ref dummy);
-                    }
-                    catch (Exception ex) when (ex.Is(HRESULT.AUDCLNT_E_DEVICE_INVALIDATED))
-                    {
-                        // Expected in some cases.
-                    }
-
-                    IsMuted = App.Settings.UseLogarithmicVolume ? _volume <= (1 / 100f).ToLogVolume() : _volume.ToVolumeInt() == 0;
-                }
+                SetVolume(value, Guid.Empty);
             }
         }
 
@@ -66,18 +46,7 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
             get => _isMuted;
             set
             {
-                if (value != _isMuted)
-                {
-                    try
-                    {
-                        Guid dummy = Guid.Empty;
-                        _simpleVolume.SetMute(value ? 1 : 0, ref dummy);
-                    }
-                    catch (Exception ex) when (ex.Is(HRESULT.AUDCLNT_E_DEVICE_INVALIDATED))
-                    {
-                        // Expected in some cases.
-                    }
-                }
+                SetMute(value, Guid.Empty);
             }
         }
 
@@ -137,9 +106,11 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
         private AudioSessionState _state;
         private bool _isMuted;
         private bool _isDisconnected;
+        private int _disconnectIssued;
         private bool _isMoved;
         private bool _moveOnInactive;
         private bool _isRegistered;
+        private bool _automaticVolumeChangePending;
         private WeakReference<IAudioDevice> _parent;
 
         public AudioDeviceSession(IAudioDevice parent, IAudioSessionControl session, Dispatcher foregroundDispatcher)
@@ -228,6 +199,69 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
             if (_parent.TryGetTarget(out var parent))
             {
                 ((IAudioDeviceManagerWindowsAudio)parent.Parent).SetDefaultEndPoint(id, ProcessId);
+            }
+        }
+
+        void IAutomaticVolumeWrite.SetVolumeAutomatically(float value)
+        {
+            SetVolume(value, AutomaticVolumeWriteContext.Id);
+        }
+
+        void IAutomaticVolumeWrite.SetMuteAutomatically(bool value)
+        {
+            SetMute(value, AutomaticVolumeWriteContext.Id);
+        }
+
+        bool IAutomaticVolumeWrite.ConsumeAutomaticVolumeChange()
+        {
+            var wasAutomatic = _automaticVolumeChangePending;
+            _automaticVolumeChangePending = false;
+            return wasAutomatic;
+        }
+
+        private void SetVolume(float value, Guid eventContext)
+        {
+            value = value.Bound(0, 1f);
+
+            if (App.Settings.UseLogarithmicVolume)
+            {
+                value = value.ToLogVolume();
+            }
+
+            if (_volume == value)
+            {
+                return;
+            }
+
+            try
+            {
+                _volume = value;
+                _simpleVolume.SetMasterVolume(value, ref eventContext);
+            }
+            catch (Exception ex) when (ex.Is(HRESULT.AUDCLNT_E_DEVICE_INVALIDATED))
+            {
+                // Expected in some cases.
+            }
+
+            SetMute(
+                App.Settings.UseLogarithmicVolume ? _volume <= (1 / 100f).ToLogVolume() : _volume.ToVolumeInt() == 0,
+                eventContext);
+        }
+
+        private void SetMute(bool value, Guid eventContext)
+        {
+            if (value == _isMuted)
+            {
+                return;
+            }
+
+            try
+            {
+                _simpleVolume.SetMute(value ? 1 : 0, ref eventContext);
+            }
+            catch (Exception ex) when (ex.Is(HRESULT.AUDCLNT_E_DEVICE_INVALIDATED))
+            {
+                // Expected in some cases.
             }
         }
 
@@ -368,6 +402,11 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
 
         private void DisconnectSession()
         {
+            if (Interlocked.Exchange(ref _disconnectIssued, 1) != 0)
+            {
+                return;
+            }
+
             Trace.WriteLine($"AudioDeviceSession DisconnectSession {ExeName} {Id}");
 
             _isDisconnected = true;
@@ -381,11 +420,14 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
         {
             _volume = NewVolume;
             _isMuted = NewMute != 0;
+            var automatic = EventContext == AutomaticVolumeWriteContext.Id;
 
             _dispatcher.BeginInvoke((Action)(() =>
             {
+                _automaticVolumeChangePending = automatic;
                 RaisePropertyChanged(nameof(Volume));
                 RaisePropertyChanged(nameof(IsMuted));
+                _automaticVolumeChangePending = false;
             }));
         }
 
@@ -446,8 +488,11 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
 
         void IAudioSessionEvents.OnIconPathChanged(string NewIconPath, ref Guid EventContext)
         {
-            IconPath = NewIconPath;
-            RaisePropertyChanged(nameof(IconPath));
+            ChooseIconPath(NewIconPath);
+            _dispatcher.BeginInvoke((Action)(() =>
+            {
+                RaisePropertyChanged(nameof(IconPath));
+            }));
         }
     }
 }

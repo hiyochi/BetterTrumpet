@@ -1,3 +1,4 @@
+using EarTrumpet.Logic;
 using EarTrumpet.UI.Helpers;
 using System;
 using System.Collections.ObjectModel;
@@ -26,7 +27,8 @@ namespace EarTrumpet.UI.ViewModels
         public ObservableCollection<FolderVolumeRuleItemViewModel> FolderVolumeRules { get; } = new ObservableCollection<FolderVolumeRuleItemViewModel>();
 
         public bool HasRules => Rules.Count > 0;
-        public bool IsEmpty => Rules.Count == 0;
+        public bool IsEmpty => Rules.Count == 0 && FolderVolumeRules.Count == 0;
+        public bool ShowAppRulesEmptyHint => Rules.Count == 0 && FolderVolumeRules.Count == 0;
         public bool HasFolderVolumeRules => FolderVolumeRules.Count > 0;
         public bool HasNoFolderVolumeRules => FolderVolumeRules.Count == 0;
 
@@ -194,6 +196,7 @@ namespace EarTrumpet.UI.ViewModels
         {
             RaisePropertyChanged(nameof(HasRules));
             RaisePropertyChanged(nameof(IsEmpty));
+            RaisePropertyChanged(nameof(ShowAppRulesEmptyHint));
             RaisePropertyChanged(nameof(HasFolderVolumeRules));
             RaisePropertyChanged(nameof(HasNoFolderVolumeRules));
         }
@@ -243,49 +246,20 @@ namespace EarTrumpet.UI.ViewModels
             return running;
         }
 
-        // A new rule starts as a hard mute: that's the only state that means something
-        // on its own, and the row's controls take it from there.
+        // Adding an app creates a retained profile only. Each behavior is opt-in and
+        // can be changed independently from the other controls in the row.
         private void AddRuleFromExeName()
         {
-            var exeName = NormalizeTypedExeName(NewRuleExeName);
+            var exeName = AppIdentity.NormalizeExeName(NewRuleExeName);
             if (string.IsNullOrEmpty(exeName))
             {
                 return;
             }
 
-            _settings.SetAppHardMuted(exeName, true, exeName);
+            _settings.AddAppRule(exeName, exeName);
             NewRuleExeName = "";
             IsAddRulePanelOpen = false;
             SyncRules();
-        }
-
-        /// <summary>
-        /// Matches what a live session reports as its ExeName, which is the file name with
-        /// no extension (DesktopAppInfo uses Path.GetFileNameWithoutExtension). Typing
-        /// "steam.exe" or pasting a full path both have to end up as "steam", otherwise the
-        /// rule is stored but never matches anything.
-        /// </summary>
-        private static string NormalizeTypedExeName(string typed)
-        {
-            var value = (typed ?? "").Trim().Trim('"');
-            if (string.IsNullOrEmpty(value))
-            {
-                return "";
-            }
-
-            try
-            {
-                // Handles both a bare name and a full path.
-                var withoutExtension = System.IO.Path.GetFileNameWithoutExtension(value);
-                return string.IsNullOrWhiteSpace(withoutExtension) ? value : withoutExtension;
-            }
-            catch (ArgumentException)
-            {
-                // Invalid path characters: fall back to trimming a trailing .exe by hand.
-                return value.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                    ? value.Substring(0, value.Length - 4)
-                    : value;
-            }
         }
 
         private void BrowseForExe()
@@ -302,8 +276,8 @@ namespace EarTrumpet.UI.ViewModels
 
                 if (dlg.ShowDialog() == true)
                 {
-                    var exeName = NormalizeTypedExeName(dlg.FileName);
-                    _settings.SetAppHardMuted(exeName, true, exeName, dlg.FileName, true);
+                    var exeName = AppIdentity.NormalizeExeName(dlg.FileName);
+                    _settings.AddAppRule(exeName, exeName, dlg.FileName, true);
                     NewRuleExeName = "";
                     IsAddRulePanelOpen = false;
                     SyncRules();

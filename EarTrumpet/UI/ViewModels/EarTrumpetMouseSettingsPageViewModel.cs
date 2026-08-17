@@ -32,6 +32,67 @@ namespace EarTrumpet.UI.ViewModels
             set => _settings.UseVolumeTickSound = value;
         }
 
+        public bool NotifyOnDefaultDeviceChange
+        {
+            get => _settings.NotifyOnDefaultDeviceChange;
+            set => _settings.NotifyOnDefaultDeviceChange = value;
+        }
+
+        public bool UseFocusLostVolume
+        {
+            get => _settings.UseFocusLostVolume;
+            set
+            {
+                _settings.UseFocusLostVolume = value;
+                RaisePropertyChanged(nameof(UseFocusLostVolume));
+            }
+        }
+
+        public int FocusLostAttenuatePercent
+        {
+            get => _settings.FocusLostAttenuatePercent;
+            set
+            {
+                _settings.FocusLostAttenuatePercent = value;
+                RaisePropertyChanged(nameof(FocusLostAttenuatePercent));
+            }
+        }
+
+        public int FocusLostFadeDurationMs
+        {
+            get => _settings.FocusLostFadeDurationMs;
+            set
+            {
+                _settings.FocusLostFadeDurationMs = value;
+                RaisePropertyChanged(nameof(FocusLostFadeDurationMs));
+            }
+        }
+
+        public bool FocusLostSelectedAppsOnly
+        {
+            get => _settings.FocusLostSelectedAppsOnly;
+            set
+            {
+                _settings.FocusLostSelectedAppsOnly = value;
+                RaisePropertyChanged(nameof(FocusLostSelectedAppsOnly));
+            }
+        }
+
+        public bool FocusLostAllApps
+        {
+            get => !_settings.FocusLostSelectedAppsOnly;
+            set
+            {
+                if (value)
+                {
+                    _settings.FocusLostSelectedAppsOnly = false;
+                    RaisePropertyChanged(nameof(FocusLostSelectedAppsOnly));
+                }
+
+                RaisePropertyChanged(nameof(FocusLostAllApps));
+            }
+        }
+
         private readonly AppSettings _settings;
 
         public EarTrumpetMouseSettingsPageViewModel(AppSettings settings) : base(null)

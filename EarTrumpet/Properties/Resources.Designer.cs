@@ -1223,6 +1223,12 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string AppRulesNoActiveActionsText {
+            get {
+                return ResourceManager.GetString("AppRulesNoActiveActionsText", resourceCulture);
+            }
+        }
+
         public static string AppRulesModeLaunchText {
             get {
                 return ResourceManager.GetString("AppRulesModeLaunchText", resourceCulture);
@@ -2705,6 +2711,36 @@ namespace EarTrumpet.Properties {
         public static string DiagnosticsExportSuccessMessage {
             get { return ResourceManager.GetString("DiagnosticsExportSuccessMessage", resourceCulture); }
         }
+        public static string DiagnosticsExportConfirmTitle {
+            get { return ResourceManager.GetString("DiagnosticsExportConfirmTitle", resourceCulture); }
+        }
+        public static string DiagnosticsExportConfirmMessage {
+            get { return ResourceManager.GetString("DiagnosticsExportConfirmMessage", resourceCulture); }
+        }
+        public static string DiagnosticsExportReviewTitle {
+            get { return ResourceManager.GetString("DiagnosticsExportReviewTitle", resourceCulture); }
+        }
+        public static string DiagnosticsExportReviewMessage {
+            get { return ResourceManager.GetString("DiagnosticsExportReviewMessage", resourceCulture); }
+        }
+        public static string DiagnosticsExportStagingKeptMessage {
+            get { return ResourceManager.GetString("DiagnosticsExportStagingKeptMessage", resourceCulture); }
+        }
+        public static string CrashDialogTitle {
+            get { return ResourceManager.GetString("CrashDialogTitle", resourceCulture); }
+        }
+        public static string CrashDialogFatalBody {
+            get { return ResourceManager.GetString("CrashDialogFatalBody", resourceCulture); }
+        }
+        public static string CrashDialogNonFatalBody {
+            get { return ResourceManager.GetString("CrashDialogNonFatalBody", resourceCulture); }
+        }
+        public static string CrashDialogDiagnosticPath {
+            get { return ResourceManager.GetString("CrashDialogDiagnosticPath", resourceCulture); }
+        }
+        public static string CrashDialogUnknownError {
+            get { return ResourceManager.GetString("CrashDialogUnknownError", resourceCulture); }
+        }
         public static string DiagnosticsExportFailedTitle {
             get { return ResourceManager.GetString("DiagnosticsExportFailedTitle", resourceCulture); }
         }
@@ -3125,6 +3161,66 @@ namespace EarTrumpet.Properties {
         }
         public static string NoUpdatesAvailableText {
             get { return ResourceManager.GetString("NoUpdatesAvailableText", resourceCulture); }
+        }
+        public static string SettingsDeviceChangeNotify {
+            get { return ResourceManager.GetString("SettingsDeviceChangeNotify", resourceCulture); }
+        }
+        public static string SettingsDeviceChangeNotifyDesc {
+            get { return ResourceManager.GetString("SettingsDeviceChangeNotifyDesc", resourceCulture); }
+        }
+        public static string SettingsNotifyOnDeviceChange {
+            get { return ResourceManager.GetString("SettingsNotifyOnDeviceChange", resourceCulture); }
+        }
+        public static string DefaultDeviceChangedNotificationTitle {
+            get { return ResourceManager.GetString("DefaultDeviceChangedNotificationTitle", resourceCulture); }
+        }
+        public static string DefaultDeviceChangedNotificationFormat {
+            get { return ResourceManager.GetString("DefaultDeviceChangedNotificationFormat", resourceCulture); }
+        }
+        public static string SettingsFocusLostVolume {
+            get { return ResourceManager.GetString("SettingsFocusLostVolume", resourceCulture); }
+        }
+        public static string SettingsFocusLostVolumeDesc {
+            get { return ResourceManager.GetString("SettingsFocusLostVolumeDesc", resourceCulture); }
+        }
+        public static string SettingsUseFocusLostVolume {
+            get { return ResourceManager.GetString("SettingsUseFocusLostVolume", resourceCulture); }
+        }
+        public static string SettingsFocusLostAttenuate {
+            get { return ResourceManager.GetString("SettingsFocusLostAttenuate", resourceCulture); }
+        }
+        public static string SettingsFocusLostAttenuateHint {
+            get { return ResourceManager.GetString("SettingsFocusLostAttenuateHint", resourceCulture); }
+        }
+        public static string SettingsFocusLostFade {
+            get { return ResourceManager.GetString("SettingsFocusLostFade", resourceCulture); }
+        }
+        public static string SettingsFocusLostFadeHint {
+            get { return ResourceManager.GetString("SettingsFocusLostFadeHint", resourceCulture); }
+        }
+        public static string SettingsFocusLostScope {
+            get { return ResourceManager.GetString("SettingsFocusLostScope", resourceCulture); }
+        }
+        public static string SettingsFocusLostAllApps {
+            get { return ResourceManager.GetString("SettingsFocusLostAllApps", resourceCulture); }
+        }
+        public static string SettingsFocusLostSelectedApps {
+            get { return ResourceManager.GetString("SettingsFocusLostSelectedApps", resourceCulture); }
+        }
+        public static string SettingsFocusLostSelectedHint {
+            get { return ResourceManager.GetString("SettingsFocusLostSelectedHint", resourceCulture); }
+        }
+        public static string AppRulesFocusLostColumnText {
+            get { return ResourceManager.GetString("AppRulesFocusLostColumnText", resourceCulture); }
+        }
+        public static string FocusLostAppButtonText {
+            get { return ResourceManager.GetString("FocusLostAppButtonText", resourceCulture); }
+        }
+        public static string FocusLostAppMenuText {
+            get { return ResourceManager.GetString("FocusLostAppMenuText", resourceCulture); }
+        }
+        public static string FocusLostAppMenuDisableText {
+            get { return ResourceManager.GetString("FocusLostAppMenuDisableText", resourceCulture); }
         }
     }
 }

@@ -1,6 +1,7 @@
 using EarTrumpet.DataModel;
 using EarTrumpet.DataModel.Storage;
 using EarTrumpet.Interop.Helpers;
+using EarTrumpet.Logic;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -104,7 +105,13 @@ namespace EarTrumpet
             public string DisplayName { get; set; }
             public string IconPath { get; set; }
             public bool IsDesktopApp { get; set; }
+            /// <summary>
+            /// Keeps the app profile visible even when every behavior is disabled.
+            /// A profile is removed only through RemoveAppRule/ClearAppRules.
+            /// </summary>
+            public bool IsPinned { get; set; }
             public bool HardMuted { get; set; }
+            public bool FocusLostEnabled { get; set; }
             public VolumeRuleMode VolumeMode { get; set; }
             public int VolumePercent { get; set; }
             public DateTime CreatedAtUtc { get; set; }
@@ -115,7 +122,7 @@ namespace EarTrumpet
             public bool HasVolumeRule => VolumeMode != VolumeRuleMode.None;
 
             [Newtonsoft.Json.JsonIgnore]
-            public bool IsEmpty => !HardMuted && VolumeMode == VolumeRuleMode.None;
+            public bool HasActiveBehavior => HardMuted || FocusLostEnabled || VolumeMode != VolumeRuleMode.None;
         }
 
         // Legacy shape, only deserialized during the one-shot migration.
@@ -664,6 +671,77 @@ namespace EarTrumpet
             }
         }
 
+        /// <summary>
+        /// Adds an app profile without enabling any behavior. The profile remains
+        /// available for later configuration until the user removes it explicitly.
+        /// </summary>
+        public void AddAppRule(
+            string exeName,
+            string displayName = null,
+            string iconPath = null,
+            bool? isDesktopApp = null)
+        {
+            var normalizedExeName = NormalizeHiddenKeyValue(exeName);
+            if (string.IsNullOrEmpty(normalizedExeName))
+            {
+                return;
+            }
+
+            var safeDisplayName = string.IsNullOrWhiteSpace(displayName) ? string.Empty : displayName.Trim();
+            var safeIconPath = string.IsNullOrWhiteSpace(iconPath) ? string.Empty : iconPath.Trim();
+            bool changed = false;
+
+            lock (_appRulesSync)
+            {
+                EnsureAppRulesLoaded();
+                var existing = _appRuleEntries.FirstOrDefault(entry => entry.ExeName == normalizedExeName);
+                if (existing == null)
+                {
+                    _appRuleEntries.Add(new AppRuleEntry
+                    {
+                        ExeName = normalizedExeName,
+                        DisplayName = safeDisplayName,
+                        IconPath = safeIconPath,
+                        IsDesktopApp = isDesktopApp ?? false,
+                        IsPinned = true,
+                        CreatedAtUtc = DateTime.UtcNow,
+                    });
+                    changed = true;
+                }
+                else
+                {
+                    if (!existing.IsPinned)
+                    {
+                        existing.IsPinned = true;
+                        changed = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(safeDisplayName) && existing.DisplayName != safeDisplayName)
+                    {
+                        existing.DisplayName = safeDisplayName;
+                        changed = true;
+                    }
+
+                    if (!string.IsNullOrEmpty(safeIconPath) && existing.IconPath != safeIconPath)
+                    {
+                        existing.IconPath = safeIconPath;
+                        existing.IsDesktopApp = isDesktopApp ?? existing.IsDesktopApp;
+                        changed = true;
+                    }
+                }
+
+                if (changed)
+                {
+                    SaveAppRulesUnsafe();
+                }
+            }
+
+            if (changed)
+            {
+                AppRulesChanged?.Invoke();
+            }
+        }
+
         public void SetAppHardMuted(
             string exeName,
             bool hardMuted,
@@ -679,6 +757,25 @@ namespace EarTrumpet
                 }
 
                 rule.HardMuted = hardMuted;
+                return true;
+            });
+        }
+
+        public void SetAppFocusLost(
+            string exeName,
+            bool enabled,
+            string displayName = null,
+            string iconPath = null,
+            bool? isDesktopApp = null)
+        {
+            UpdateRule(exeName, displayName, iconPath, isDesktopApp, rule =>
+            {
+                if (rule.FocusLostEnabled == enabled)
+                {
+                    return false;
+                }
+
+                rule.FocusLostEnabled = enabled;
                 return true;
             });
         }
@@ -706,8 +803,8 @@ namespace EarTrumpet
             });
         }
 
-        // Applies a mutation to one app's rule, creating it if needed and dropping it
-        // once nothing is left to remember. Returns without notifying if nothing changed.
+        // Applies a mutation to one app profile, creating it when an enabled behavior
+        // needs one. Existing profiles remain until RemoveAppRule is called explicitly.
         private void UpdateRule(
             string exeName,
             string displayName,
@@ -735,6 +832,7 @@ namespace EarTrumpet
                     DisplayName = safeDisplayName,
                     IconPath = safeIconPath,
                     IsDesktopApp = isDesktopApp ?? false,
+                    IsPinned = true,
                     CreatedAtUtc = DateTime.UtcNow,
                 };
 
@@ -742,7 +840,9 @@ namespace EarTrumpet
 
                 if (existing == null)
                 {
-                    if (rule.IsEmpty)
+                    // A disabled mutation against an unknown app is not an add
+                    // operation. Explicit profile creation uses AddAppRule.
+                    if (!changed)
                     {
                         return;
                     }
@@ -771,8 +871,6 @@ namespace EarTrumpet
                     }
                 }
 
-                // An entry with no mute and no volume rule carries no information.
-                _appRuleEntries.RemoveAll(entry => !entry.HardMuted && entry.VolumeMode == VolumeRuleMode.None);
                 SaveAppRulesUnsafe();
             }
 
@@ -877,6 +975,7 @@ namespace EarTrumpet
                         ExeName = entry.ExeName,
                         DisplayName = entry.DisplayName,
                         HardMuted = true,
+                        FocusLostEnabled = false,
                         VolumeMode = VolumeRuleMode.None,
                         VolumePercent = 0,
                         CreatedAtUtc = entry.HardMutedAtUtc,
@@ -897,8 +996,8 @@ namespace EarTrumpet
             _settings.Set(AppRuleEntriesJsonKey, Newtonsoft.Json.JsonConvert.SerializeObject(_appRuleEntries));
         }
 
-        // Drops malformed entries, lowercases the exe key, dedupes on it, clamps the
-        // volume, and forgets rules that no longer do anything.
+        // Drops malformed entries, lowercases the exe key, dedupes on it, and clamps
+        // the volume. Existing entries are profiles, even when all behaviors are off.
         private List<AppRuleEntry> NormalizeAppRuleEntries(List<AppRuleEntry> entries)
         {
             var dedup = new HashSet<string>(StringComparer.Ordinal);
@@ -921,18 +1020,17 @@ namespace EarTrumpet
                 var mode = Enum.IsDefined(typeof(VolumeRuleMode), entry.VolumeMode) ? entry.VolumeMode : VolumeRuleMode.None;
                 var percent = Math.Max(0, Math.Min(100, entry.VolumePercent));
 
-                if (!entry.HardMuted && mode == VolumeRuleMode.None)
-                {
-                    continue;
-                }
-
                 normalizedEntries.Add(new AppRuleEntry
                 {
                     ExeName = normalizedExeName,
                     DisplayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? string.Empty : entry.DisplayName.Trim(),
                     IconPath = string.IsNullOrWhiteSpace(entry.IconPath) ? string.Empty : entry.IconPath.Trim(),
                     IsDesktopApp = entry.IsDesktopApp,
+                    // Entries written before profiles were introduced were all
+                    // intentional rules, so normalize them into retained profiles.
+                    IsPinned = true,
                     HardMuted = entry.HardMuted,
+                    FocusLostEnabled = entry.FocusLostEnabled,
                     VolumeMode = mode,
                     VolumePercent = percent,
                     CreatedAtUtc = entry.CreatedAtUtc,
@@ -952,7 +1050,9 @@ namespace EarTrumpet
                 DisplayName = entry.DisplayName,
                 IconPath = entry.IconPath,
                 IsDesktopApp = entry.IsDesktopApp,
+                IsPinned = entry.IsPinned,
                 HardMuted = entry.HardMuted,
+                FocusLostEnabled = entry.FocusLostEnabled,
                 VolumeMode = entry.VolumeMode,
                 VolumePercent = entry.VolumePercent,
                 CreatedAtUtc = entry.CreatedAtUtc,
@@ -1181,6 +1281,8 @@ namespace EarTrumpet
         }
 
         public event Action TelemetryConsentChanged;
+
+        public bool HasStoredTelemetryConsent => _settings.HasKey("IsTelemetryEnabled");
 
         public bool IsTelemetryEnabled
         {
@@ -1529,7 +1631,7 @@ namespace EarTrumpet
 
         public void AddFolderVolumeRule(string folderPath, int volumePercent = 5)
         {
-            var normalizedFolder = NormalizeFolderPath(folderPath);
+            var normalizedFolder = FolderVolumeRuleMatcher.NormalizeFolderPath(folderPath);
             if (string.IsNullOrEmpty(normalizedFolder))
             {
                 return;
@@ -1579,7 +1681,7 @@ namespace EarTrumpet
                 return;
             }
 
-            var normalizedFolder = NormalizeFolderPath(folderPath);
+            var normalizedFolder = FolderVolumeRuleMatcher.NormalizeFolderPath(folderPath);
             if (string.IsNullOrEmpty(normalizedFolder))
             {
                 return;
@@ -1639,27 +1741,16 @@ namespace EarTrumpet
         public bool TryGetFolderVolume(string executablePath, out int volumePercent)
         {
             volumePercent = 0;
-            if (string.IsNullOrWhiteSpace(executablePath) || !Path.IsPathFullyQualified(executablePath))
-            {
-                return false;
-            }
-
             lock (_folderVolumeRulesSync)
             {
                 EnsureFolderVolumeRulesLoaded();
-                var matchingRule = _folderVolumeRules
-                    .Where(entry => IsExecutableUnderFolder(executablePath, entry.FolderPath))
-                    .OrderByDescending(entry => entry.FolderPath.Length)
-                    .ThenBy(entry => entry.CreatedAtUtc)
-                    .FirstOrDefault();
-
-                if (matchingRule == null)
+                var rules = new List<FolderVolumeRule>(_folderVolumeRules.Count);
+                foreach (var entry in _folderVolumeRules)
                 {
-                    return false;
+                    rules.Add(new FolderVolumeRule(entry.FolderPath, entry.VolumePercent, entry.CreatedAtUtc));
                 }
 
-                volumePercent = matchingRule.VolumePercent;
-                return true;
+                return FolderVolumeRuleMatcher.TryMatch(executablePath, rules, out volumePercent);
             }
         }
 
@@ -1697,7 +1788,7 @@ namespace EarTrumpet
 
             foreach (var entry in entries.Where(entry => entry != null))
             {
-                var normalizedFolder = NormalizeFolderPath(entry.FolderPath);
+                var normalizedFolder = FolderVolumeRuleMatcher.NormalizeFolderPath(entry.FolderPath);
                 if (string.IsNullOrEmpty(normalizedFolder) || !knownFolders.Add(normalizedFolder))
                 {
                     continue;
@@ -1724,47 +1815,6 @@ namespace EarTrumpet
                 VolumePercent = entry.VolumePercent,
                 CreatedAtUtc = entry.CreatedAtUtc,
             };
-        }
-
-        private static bool IsExecutableUnderFolder(string executablePath, string folderPath)
-        {
-            try
-            {
-                var folder = NormalizeFolderPath(folderPath);
-                var executable = Path.GetFullPath(executablePath);
-                if (string.IsNullOrEmpty(folder) || string.IsNullOrEmpty(executable))
-                {
-                    return false;
-                }
-
-                var folderPrefix = Path.EndsInDirectorySeparator(folder)
-                    ? folder
-                    : folder + Path.DirectorySeparatorChar;
-                return executable.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase);
-            }
-            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException)
-            {
-                Trace.WriteLine($"AppSettings folder match failed: {ex.Message}");
-                return false;
-            }
-        }
-
-        private static string NormalizeFolderPath(string folder)
-        {
-            if (string.IsNullOrWhiteSpace(folder))
-            {
-                return "";
-            }
-
-            try
-            {
-                return Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder.Trim().Trim('"')));
-            }
-            catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException)
-            {
-                Trace.WriteLine($"AppSettings folder normalization failed: {ex.Message}");
-                return "";
-            }
         }
 
         /// <summary>
@@ -1821,6 +1871,48 @@ namespace EarTrumpet
         {
             get => _settings.Get("FullMixerWindowPlacement", default(WINDOWPLACEMENT?));
             set => _settings.Set("FullMixerWindowPlacement", value);
+        }
+
+        public double MixerWindowWidth
+        {
+            get => _settings.Get("MixerWindowWidth", 0.0);
+            set => _settings.Set("MixerWindowWidth", value);
+        }
+
+        public double MixerWindowHeight
+        {
+            get => _settings.Get("MixerWindowHeight", 0.0);
+            set => _settings.Set("MixerWindowHeight", value);
+        }
+
+        public bool NotifyOnDefaultDeviceChange
+        {
+            get => _settings.Get("NotifyOnDefaultDeviceChange", false);
+            set => _settings.Set("NotifyOnDefaultDeviceChange", value);
+        }
+
+        public bool UseFocusLostVolume
+        {
+            get => _settings.Get("UseFocusLostVolume", false);
+            set => _settings.Set("UseFocusLostVolume", value);
+        }
+
+        public int FocusLostAttenuatePercent
+        {
+            get => FocusLostVolumePolicy.ClampAttenuatePercent(_settings.Get("FocusLostAttenuatePercent", 0));
+            set => _settings.Set("FocusLostAttenuatePercent", FocusLostVolumePolicy.ClampAttenuatePercent(value));
+        }
+
+        public int FocusLostFadeDurationMs
+        {
+            get => FocusLostFadePolicy.ClampDurationMs(_settings.Get("FocusLostFadeDurationMs", FocusLostFadePolicy.DefaultDurationMs));
+            set => _settings.Set("FocusLostFadeDurationMs", FocusLostFadePolicy.ClampDurationMs(value));
+        }
+
+        public bool FocusLostSelectedAppsOnly
+        {
+            get => _settings.Get("FocusLostSelectedAppsOnly", false);
+            set => _settings.Set("FocusLostSelectedAppsOnly", value);
         }
 
         public WINDOWPLACEMENT? SettingsWindowPlacement
