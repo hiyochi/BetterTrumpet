@@ -190,13 +190,13 @@
     <value>一般</value>
   </data>
   <data name="MoveButtonAccessibleText" xml:space="preserve">
-    <value>指定此應用使用的播放裝置</value>
+    <value>指定此應用程式使用的播放裝置</value>
   </data>
   <data name="SettingsOpenEarTrumpetText" xml:space="preserve">
     <value>開啟工作列浮動面板</value>
   </data>
   <data name="SettingsUseLegacyEarTrumpetIcon" xml:space="preserve">
-    <value>使用經典圖示</value>
+    <value>使用舊版圖示</value>
   </data>
   <data name="MoreCommandsAccessibleText" xml:space="preserve">
     <value>更多指令</value>
@@ -669,7 +669,7 @@
     <value>開啟設定</value>
   </data>
   <data name="TrayShowOnboarding" xml:space="preserve">
-    <value>顯示引導</value>
+    <value>顯示新手上路</value>
   </data>
   <data name="TrayWhatsNew" xml:space="preserve">
     <value>最新動態</value>
@@ -885,7 +885,7 @@
     <value>外觀</value>
   </data>
   <data name="CustomizationCategoryDescription" xml:space="preserve">
-    <value>主題、顏色、媒體彈窗和效能</value>
+    <value>主題、顏色、媒體快顯和效能</value>
   </data>
   <data name="AppCategoryTitle" xml:space="preserve">
     <value>應用程式</value>
@@ -918,10 +918,10 @@
     <value>自訂 BetterTrumpet 在桌面上的外觀。</value>
   </data>
   <data name="MediaPopupSettingsPageText" xml:space="preserve">
-    <value>媒體彈窗</value>
+    <value>媒體快顯</value>
   </data>
   <data name="MediaPopupSettingsPageSubtitle" xml:space="preserve">
-    <value>控制停留系統匣時媒體控件的顯示方式。</value>
+    <value>控制停留系統匣時媒體控制項的顯示方式。</value>
   </data>
   <data name="QuickTrumpetSettingsPageText" xml:space="preserve">
     <value>QuickTrumpet</value>
@@ -1152,10 +1152,10 @@
     <value>系統匣圖示外觀</value>
   </data>
   <data name="SettingsMediaPopupDesc" xml:space="preserve">
-    <value>停留系統匣時顯示媒體控件</value>
+    <value>停留系統匣時顯示媒體控制項</value>
   </data>
   <data name="SettingsEnableMediaPopup" xml:space="preserve">
-    <value>啟用媒體彈窗</value>
+    <value>啟用媒體快顯</value>
   </data>
   <data name="SettingsInteractionDesc" xml:space="preserve">
     <value>停留延遲和觸發行為</value>
@@ -1164,7 +1164,7 @@
     <value>僅在播放媒體時顯示</value>
   </data>
   <data name="SettingsShowWhenPaused" xml:space="preserve">
-    <value>媒體暫停時顯示控件</value>
+    <value>媒體暫停時顯示控制項</value>
   </data>
   <data name="SettingsRememberExpanded" xml:space="preserve">
     <value>記住展開/摺疊狀態</value>
@@ -1278,7 +1278,7 @@
     <value>此裝置上已隱藏的應用程式項目數</value>
   </data>
   <data name="SettingsMediaPopup" xml:space="preserve">
-    <value>媒體彈窗</value>
+    <value>媒體快顯</value>
   </data>
   <data name="SettingsInteraction" xml:space="preserve">
     <value>互動</value>
@@ -1494,7 +1494,7 @@
     <value>歡迎使用</value>
   </data>
   <data name="OnboardingWindowTitle" xml:space="preserve">
-    <value>BetterTrumpet 設定</value>
+    <value>BetterTrumpet 安裝設定</value>
   </data>
   <data name="OnboardingStepFormat" xml:space="preserve">
     <value>第 {0} 步，共 {1} 步</value>
