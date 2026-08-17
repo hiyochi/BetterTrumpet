@@ -97,6 +97,12 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
 
             session.PropertyChanged += Session_PropertyChanged;
 
+            // Windows can leave the previous endpoint's session alive when the
+            // system default changes. The newly-created session on the current
+            // default endpoint is authoritative for apps without an explicit
+            // per-app route, so reconcile the old endpoint before grouping it.
+            ReconcileDefaultMoveSources(session);
+
             if (_parent.TryGetTarget(out var parent))
             {
                 if (session.IsSystemSoundsSession)
@@ -174,6 +180,159 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
                     AddSession(session);
                 }
             }
+        }
+
+        internal void HideSessionsForDefaultMove(IAudioDeviceSession targetSession)
+        {
+            if (targetSession == null || targetSession.IsSystemSoundsSession)
+            {
+                return;
+            }
+
+            foreach (var appGroup in _sessions.OfType<AudioDeviceSessionGroup>().ToArray())
+            {
+                foreach (var sourceSession in EnumerateLeafSessions(appGroup).ToArray())
+                {
+                    if (IsImplicitDefaultMoveSource(sourceSession, targetSession))
+                    {
+                        Trace.WriteLine($"AudioDeviceSessionCollection HideDefaultMoveSource {sourceSession.ExeName} {sourceSession.Id} -> {targetSession.Parent.Id}");
+                        ((IAudioDeviceSessionInternal)sourceSession).Hide();
+                    }
+                }
+            }
+
+            foreach (var sourceSession in _movedSessions.ToArray())
+            {
+                if (IsImplicitDefaultMoveSource(sourceSession, targetSession))
+                {
+                    Trace.WriteLine($"AudioDeviceSessionCollection HideDefaultMovedSource {sourceSession.ExeName} {sourceSession.Id} -> {targetSession.Parent.Id}");
+                    ((IAudioDeviceSessionInternal)sourceSession).Hide();
+                }
+            }
+        }
+
+        private static void ReconcileDefaultMoveSources(IAudioDeviceSession targetSession)
+        {
+            if (targetSession == null ||
+                targetSession.IsSystemSoundsSession ||
+                targetSession.ProcessId <= 0 ||
+                targetSession.Parent?.Parent is not IAudioDeviceManager manager ||
+                !IsCurrentDefaultDevice(targetSession) ||
+                HasPersistedRoute(targetSession))
+            {
+                return;
+            }
+
+            foreach (var device in manager.Devices.ToArray())
+            {
+                if (string.Equals(device.Id, targetSession.Parent.Id, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (device is IAudioDeviceInternal internalDevice)
+                {
+                    internalDevice.HideSessionsForDefaultMove(targetSession);
+                }
+            }
+        }
+
+        private static bool IsCurrentDefaultDevice(IAudioDeviceSession session)
+        {
+            if (session?.Parent?.Parent is not IAudioDeviceManager manager || session.Parent == null)
+            {
+                return false;
+            }
+
+            if (manager.Default != null &&
+                string.Equals(manager.Default.Id, session.Parent.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (manager is IAudioDeviceManagerWindowsAudio windowsManager)
+            {
+                try
+                {
+                    var currentDefault = windowsManager.GetDefaultDevice(ERole.eMultimedia);
+                    return currentDefault != null &&
+                           string.Equals(currentDefault.Id, session.Parent.Id, StringComparison.OrdinalIgnoreCase);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"AudioDeviceSessionCollection DefaultDeviceQueryFailed {ex.Message}");
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasPersistedRoute(IAudioDeviceSession session)
+        {
+            if (session?.Parent?.Parent is not IAudioDeviceManagerWindowsAudio manager)
+            {
+                return true;
+            }
+
+            try
+            {
+                return !string.IsNullOrWhiteSpace(manager.GetDefaultEndPoint(session.ProcessId));
+            }
+            catch (Exception ex)
+            {
+                // Do not hide a source when Windows cannot answer whether the
+                // user configured an explicit per-app endpoint.
+                Trace.WriteLine($"AudioDeviceSessionCollection PersistedRouteQueryFailed {ex.Message}");
+                return true;
+            }
+        }
+
+        private static bool IsImplicitDefaultMoveSource(IAudioDeviceSession sourceSession, IAudioDeviceSession targetSession)
+        {
+            if (sourceSession == null ||
+                targetSession == null ||
+                sourceSession.IsSystemSoundsSession ||
+                targetSession.IsSystemSoundsSession ||
+                sourceSession.Parent == null ||
+                targetSession.Parent == null ||
+                string.Equals(sourceSession.Parent.Id, targetSession.Parent.Id, StringComparison.OrdinalIgnoreCase) ||
+                sourceSession.ProcessId <= 0 ||
+                sourceSession.ProcessId != targetSession.ProcessId ||
+                !IsSameApplication(sourceSession, targetSession))
+            {
+                return false;
+            }
+
+            return !HasPersistedRoute(targetSession);
+        }
+
+        private static bool IsSameApplication(IAudioDeviceSession sourceSession, IAudioDeviceSession targetSession)
+        {
+            if (!string.IsNullOrWhiteSpace(sourceSession.AppId) && !string.IsNullOrWhiteSpace(targetSession.AppId))
+            {
+                return string.Equals(sourceSession.AppId, targetSession.AppId, StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(sourceSession.ExeName, targetSession.ExeName, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return string.Equals(sourceSession.ExeName, targetSession.ExeName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static IEnumerable<IAudioDeviceSession> EnumerateLeafSessions(IAudioDeviceSession session)
+        {
+            if (session.Children != null && session.Children.Count > 0)
+            {
+                foreach (var child in session.Children.ToArray())
+                {
+                    foreach (var leaf in EnumerateLeafSessions(child))
+                    {
+                        yield return leaf;
+                    }
+                }
+
+                yield break;
+            }
+
+            yield return session;
         }
 
         public void MoveHiddenAppsToDevice(string appId, string id)
