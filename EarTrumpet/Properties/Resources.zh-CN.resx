@@ -121,7 +121,7 @@
     <value>退出</value>
   </data>
   <data name="ContextMenuNoDevices" xml:space="preserve">
-    <value>找不到播放设备</value>
+    <value>未找到播放设备</value>
   </data>
   <data name="ContextMenuSendFeedback" xml:space="preserve">
     <value>提交反馈</value>
@@ -196,7 +196,7 @@
     <value>打开任务栏浮出面板</value>
   </data>
   <data name="SettingsUseLegacyEarTrumpetIcon" xml:space="preserve">
-    <value>使用经典图标</value>
+    <value>使用旧版图标</value>
   </data>
   <data name="MoreCommandsAccessibleText" xml:space="preserve">
     <value>更多命令</value>
@@ -1494,7 +1494,7 @@
     <value>欢迎使用</value>
   </data>
   <data name="OnboardingWindowTitle" xml:space="preserve">
-    <value>BetterTrumpet 设置</value>
+    <value>BetterTrumpet 设置向导</value>
   </data>
   <data name="OnboardingStepFormat" xml:space="preserve">
     <value>第 {0} 步，共 {1} 步</value>
