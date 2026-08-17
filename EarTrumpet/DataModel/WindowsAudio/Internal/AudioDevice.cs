@@ -190,6 +190,11 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
             _sessions.UnHideSessionsForProcessId(processId);
         }
 
+        public void HideSessionsForDefaultMove(IAudioDeviceSession targetSession)
+        {
+            _sessions.HideSessionsForDefaultMove(targetSession);
+        }
+
         public void MoveHiddenAppsToDevice(string appId, string id)
         {
             _sessions.MoveHiddenAppsToDevice(appId, id);
