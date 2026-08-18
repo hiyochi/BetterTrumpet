@@ -295,6 +295,22 @@ namespace EarTrumpet.UI.ViewModels
             }
         }
 
+        public void ToggleFocusLostApp(IAppItemViewModel app)
+        {
+            if (_settings == null || app == null || string.IsNullOrWhiteSpace(app.ExeName))
+            {
+                return;
+            }
+
+            var rule = _settings.GetAppRule(app.ExeName);
+            _settings.SetAppFocusLost(
+                app.ExeName,
+                !(rule?.FocusLostEnabled ?? false),
+                app.DisplayName,
+                app.IconPath,
+                app.IsDesktopApp);
+        }
+
         /// <summary>
         /// Sets the persistent volume rule for an app and applies it to the live session
         /// immediately, so picking a value in the menu has a visible effect right away.
@@ -384,7 +400,8 @@ namespace EarTrumpet.UI.ViewModels
                     break;
 
                 default:
-                    throw new NotImplementedException();
+                    Trace.WriteLine($"DeviceCollectionViewModel OnCollectionChanged ignored action {e.Action}");
+                    break;
             }
         }
 
@@ -447,7 +464,6 @@ namespace EarTrumpet.UI.ViewModels
                 bool isLogicallyMovingDevices = (oldDevice != newDevice);
 
                 var tempApp = new TemporaryAppItemViewModel(this, _deviceManager, app);
-
                 app.MoveToDevice(device?.Id, hide: isLogicallyMovingDevices);
 
                 // Update the UI if the device logically changed places.

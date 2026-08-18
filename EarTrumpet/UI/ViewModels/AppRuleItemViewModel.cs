@@ -21,6 +21,7 @@ namespace EarTrumpet.UI.ViewModels
         private readonly DispatcherTimer _volumeWriteTimer;
 
         private bool _hardMuted;
+        private bool _focusLostEnabled;
         private int _volumeModeIndex;
         private int _volumePercent;
         private bool _isRunning;
@@ -32,6 +33,7 @@ namespace EarTrumpet.UI.ViewModels
         public string IconPath => _iconPath;
         public bool IsDesktopApp => _isDesktopApp;
         public bool HasIcon => !string.IsNullOrWhiteSpace(_iconPath);
+        public bool HasActiveBehavior => HardMuted || FocusLostEnabled || HasVolumeRule;
         public char IconText => string.IsNullOrWhiteSpace(Title)
             ? '?'
             : Title.ToUpperInvariant().FirstOrDefault(character => char.IsLetterOrDigit(character));
@@ -51,6 +53,7 @@ namespace EarTrumpet.UI.ViewModels
             ExeName = entry.ExeName;
             DisplayName = entry.DisplayName;
             _hardMuted = entry.HardMuted;
+            _focusLostEnabled = entry.FocusLostEnabled;
             _volumeModeIndex = (int)entry.VolumeMode;
             _volumePercent = entry.VolumePercent;
             _isRunning = liveApp != null;
@@ -75,7 +78,15 @@ namespace EarTrumpet.UI.ViewModels
             if (_hardMuted != entry.HardMuted)
             {
                 _hardMuted = entry.HardMuted;
+                RaisePropertyChanged(nameof(HasActiveBehavior));
                 RaisePropertyChanged(nameof(HardMuted));
+            }
+
+            if (_focusLostEnabled != entry.FocusLostEnabled)
+            {
+                _focusLostEnabled = entry.FocusLostEnabled;
+                RaisePropertyChanged(nameof(FocusLostEnabled));
+                RaisePropertyChanged(nameof(HasActiveBehavior));
             }
 
             var newModeIndex = (int)entry.VolumeMode;
@@ -84,6 +95,7 @@ namespace EarTrumpet.UI.ViewModels
                 _volumeModeIndex = newModeIndex;
                 RaisePropertyChanged(nameof(VolumeModeIndex));
                 RaisePropertyChanged(nameof(HasVolumeRule));
+                RaisePropertyChanged(nameof(HasActiveBehavior));
             }
 
             if (_volumePercent != entry.VolumePercent)
@@ -119,7 +131,25 @@ namespace EarTrumpet.UI.ViewModels
 
                 _hardMuted = value;
                 RaisePropertyChanged(nameof(HardMuted));
+                RaisePropertyChanged(nameof(HasActiveBehavior));
                 _settings.SetAppHardMuted(ExeName, value, DisplayName);
+            }
+        }
+
+        public bool FocusLostEnabled
+        {
+            get => _focusLostEnabled;
+            set
+            {
+                if (_focusLostEnabled == value)
+                {
+                    return;
+                }
+
+                _focusLostEnabled = value;
+                RaisePropertyChanged(nameof(FocusLostEnabled));
+                RaisePropertyChanged(nameof(HasActiveBehavior));
+                _settings.SetAppFocusLost(ExeName, value, DisplayName, IconPath, IsDesktopApp);
             }
         }
 
@@ -137,6 +167,7 @@ namespace EarTrumpet.UI.ViewModels
                 _volumeModeIndex = value;
                 RaisePropertyChanged(nameof(VolumeModeIndex));
                 RaisePropertyChanged(nameof(HasVolumeRule));
+                RaisePropertyChanged(nameof(HasActiveBehavior));
                 WriteVolumeRule();
             }
         }

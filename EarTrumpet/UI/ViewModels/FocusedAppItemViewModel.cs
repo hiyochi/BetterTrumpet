@@ -87,6 +87,7 @@ namespace EarTrumpet.UI.ViewModels
                 var ruleMode = rule?.VolumeMode ?? AppSettings.VolumeRuleMode.None;
                 var rulePercent = rule?.VolumePercent ?? 0;
                 bool isHardMuted = parent.IsAppHardMuted(app);
+                bool isFocusLostEnabled = rule?.FocusLostEnabled ?? false;
 
                 Toolbar.Insert(0, new ToolbarItemViewModel
                 {
@@ -105,6 +106,29 @@ namespace EarTrumpet.UI.ViewModels
                             Command = new RelayCommand(() =>
                             {
                                 parent.ToggleHardMuteApp(app);
+                                RequestClose.Invoke();
+                            }),
+                        }
+                    }
+                });
+
+                Toolbar.Insert(0, new ToolbarItemViewModel
+                {
+                    GlyphFontSize = 16,
+                    DisplayName = Properties.Resources.FocusLostAppButtonText,
+                    Glyph = "\uE7F4",
+                    IsActive = isFocusLostEnabled,
+                    Menu = new ObservableCollection<ContextMenuItem>
+                    {
+                        new ContextMenuItem
+                        {
+                            DisplayName = isFocusLostEnabled
+                                ? Properties.Resources.FocusLostAppMenuDisableText
+                                : Properties.Resources.FocusLostAppMenuText,
+                            IsChecked = isFocusLostEnabled,
+                            Command = new RelayCommand(() =>
+                            {
+                                parent.ToggleFocusLostApp(app);
                                 RequestClose.Invoke();
                             }),
                         }
