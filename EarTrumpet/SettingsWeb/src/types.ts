@@ -8,6 +8,11 @@ export type SettingKey =
   | "useGlobalMouseWheelHook"
   | "useLogarithmicVolume"
   | "useVolumeTickSound"
+  | "notifyOnDeviceChange"
+  | "useFocusLostVolume"
+  | "focusLostAttenuatePercent"
+  | "focusLostFadeDurationMs"
+  | "focusLostSelectedAppsOnly"
   | "showQuickTrumpetConfirmation"
   | "mediaPopupEnabled"
   | "mediaPopupHoverDelay"
@@ -79,6 +84,7 @@ export interface AppRule {
   exeName: string;
   displayName: string;
   hardMuted: boolean;
+  focusLost: boolean;
   volumeMode: number;
   volumePercent: number;
 }

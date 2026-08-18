@@ -270,6 +270,21 @@ namespace EarTrumpet.UI.Views
                 case "useVolumeTickSound":
                     App.Settings.UseVolumeTickSound = valueElement.GetBoolean();
                     break;
+                case "notifyOnDeviceChange":
+                    App.Settings.NotifyOnDefaultDeviceChange = valueElement.GetBoolean();
+                    break;
+                case "useFocusLostVolume":
+                    App.Settings.UseFocusLostVolume = valueElement.GetBoolean();
+                    break;
+                case "focusLostAttenuatePercent":
+                    App.Settings.FocusLostAttenuatePercent = Math.Max(0, Math.Min(100, valueElement.GetInt32()));
+                    break;
+                case "focusLostFadeDurationMs":
+                    App.Settings.FocusLostFadeDurationMs = Math.Max(0, Math.Min(EarTrumpet.Logic.FocusLostFadePolicy.MaxDurationMs, valueElement.GetInt32()));
+                    break;
+                case "focusLostSelectedAppsOnly":
+                    App.Settings.FocusLostSelectedAppsOnly = valueElement.GetBoolean();
+                    break;
                 case "showQuickTrumpetConfirmation":
                     App.Settings.ShowQuickTrumpetConfirmation = valueElement.GetBoolean();
                     break;
@@ -544,6 +559,14 @@ namespace EarTrumpet.UI.Views
                     ["volumeScaleTitle"] = R("SettingsVolumeScale"), ["volumeScaleDescription"] = R("SettingsVolumeScaleDesc"),
                     ["useLogarithmicVolume"] = R("SettingsUseLogarithmicVolume"), ["useVolumeTickSound"] = R("SettingsVolumeTickSound"),
                     ["useVolumeTickSoundDescription"] = R("SettingsVolumeTickSoundTip"), ["shortcuts"] = R("ShortcutsPageText"),
+                    ["deviceChangeTitle"] = R("SettingsDeviceChangeNotify"), ["deviceChangeDescription"] = R("SettingsDeviceChangeNotifyDesc"),
+                    ["notifyOnDeviceChange"] = R("SettingsNotifyOnDeviceChange"),
+                    ["focusLostTitle"] = R("SettingsFocusLostVolume"), ["focusLostDescription"] = R("SettingsFocusLostVolumeDesc"),
+                    ["useFocusLostVolume"] = R("SettingsUseFocusLostVolume"),
+                    ["focusLostAttenuate"] = R("SettingsFocusLostAttenuate"), ["focusLostAttenuateHint"] = R("SettingsFocusLostAttenuateHint"),
+                    ["focusLostFade"] = R("SettingsFocusLostFade"), ["focusLostFadeHint"] = R("SettingsFocusLostFadeHint"),
+                    ["focusLostScope"] = R("SettingsFocusLostScope"), ["focusLostAllApps"] = R("SettingsFocusLostAllApps"),
+                    ["focusLostSelectedApps"] = R("SettingsFocusLostSelectedApps"), ["focusLostSelectedHint"] = R("SettingsFocusLostSelectedHint"),
                     ["recordShortcut"] = R("WebSettingsRecordShortcut"), ["clearShortcut"] = R("WebSettingsClearShortcut"),
                     ["profileCapture"] = R("SettingsSaveCurrentVolumes"), ["profileCaptureDescription"] = R("SettingsSaveCurrentVolumesDesc"),
                     ["profileName"] = R("SettingsThemeNamePlaceholder"), ["allDevices"] = R("SettingsQuickTrumpetAllDevices"),
@@ -553,7 +576,7 @@ namespace EarTrumpet.UI.Views
                     ["appsOnly"] = R("SettingsQuickTrumpetAppsOnly"), ["appRules"] = R("AppRulesListHeaderText"),
                     ["appRulesDescription"] = R("AppRulesListHeaderDesc"), ["addApp"] = R("AppRulesAddRuleButtonText"),
                     ["appPlaceholder"] = R("AppRulesAddPlaceholderText"), ["browse"] = R("AppRulesBrowseButtonText"),
-                    ["hardMute"] = R("AppRulesHardMuteColumnText"), ["volumeBehavior"] = R("AppRulesVolumeBehaviorText"),
+                    ["hardMute"] = R("AppRulesHardMuteColumnText"), ["focusLostRule"] = R("AppRulesFocusLostColumnText"), ["volumeBehavior"] = R("AppRulesVolumeBehaviorText"),
                     ["targetVolume"] = R("AppRulesTargetVolumeText"), ["modeNone"] = R("AppRulesModeNoneText"),
                     ["modeLaunch"] = R("AppRulesModeLaunchText"), ["modeLock"] = R("AppRulesModeLockText"),
                     ["clearAllRules"] = R("AppRulesClearAllButtonText"), ["folderRules"] = R("FolderVolumeRulesHeaderText"),
@@ -605,6 +628,11 @@ namespace EarTrumpet.UI.Views
                     useGlobalMouseWheelHook = App.Settings.UseGlobalMouseWheelHook,
                     useLogarithmicVolume = App.Settings.UseLogarithmicVolume,
                     useVolumeTickSound = App.Settings.UseVolumeTickSound,
+                    notifyOnDeviceChange = App.Settings.NotifyOnDefaultDeviceChange,
+                    useFocusLostVolume = App.Settings.UseFocusLostVolume,
+                    focusLostAttenuatePercent = App.Settings.FocusLostAttenuatePercent,
+                    focusLostFadeDurationMs = App.Settings.FocusLostFadeDurationMs,
+                    focusLostSelectedAppsOnly = App.Settings.FocusLostSelectedAppsOnly,
                     showQuickTrumpetConfirmation = App.Settings.ShowQuickTrumpetConfirmation,
                     mediaPopupEnabled = App.Settings.MediaPopupEnabled,
                     mediaPopupHoverDelay = App.Settings.MediaPopupHoverDelay,
@@ -646,7 +674,7 @@ namespace EarTrumpet.UI.Views
                         hotkey = profile.Hotkey?.ToString() ?? string.Empty,
                     }).Cast<object>() ?? Enumerable.Empty<object>(),
                     selectedProfileIndex = profiles?.SelectedProfile == null ? -1 : profiles.Profiles.IndexOf(profiles.SelectedProfile),
-                    appRules = App.Settings.GetAppRules().Select(rule => new { rule.ExeName, rule.DisplayName, rule.HardMuted, volumeMode = (int)rule.VolumeMode, rule.VolumePercent }),
+                    appRules = App.Settings.GetAppRules().Select(rule => new { rule.ExeName, rule.DisplayName, rule.HardMuted, focusLost = rule.FocusLostEnabled, volumeMode = (int)rule.VolumeMode, rule.VolumePercent }),
                     folderRules = App.Settings.GetFolderVolumeRules().Select(rule => new { rule.Id, rule.FolderPath, rule.VolumePercent }),
                     themes = colors?.AvailableThemes.Concat(colors.CustomThemes).GroupBy(theme => theme.Name).Select(group => group.First()).Select(theme => new
                     {
@@ -741,9 +769,11 @@ namespace EarTrumpet.UI.Views
             }
 
             var hardMuted = message.TryGetProperty("hardMuted", out _) ? GetBoolean(message, "hardMuted") : existing.HardMuted;
+            var focusLost = message.TryGetProperty("focusLost", out _) ? GetBoolean(message, "focusLost") : existing.FocusLostEnabled;
             var mode = message.TryGetProperty("volumeMode", out _) ? GetInt32(message, "volumeMode") : (int)existing.VolumeMode;
             var volume = message.TryGetProperty("volumePercent", out _) ? GetInt32(message, "volumePercent") : existing.VolumePercent;
             App.Settings.SetAppHardMuted(exeName, hardMuted, existing.DisplayName);
+            App.Settings.SetAppFocusLost(exeName, focusLost, existing.DisplayName);
             App.Settings.SetAppVolumeRule(exeName, (AppSettings.VolumeRuleMode)Math.Max(0, Math.Min(2, mode)), Math.Max(0, Math.Min(100, volume)), existing.DisplayName);
         }
 
