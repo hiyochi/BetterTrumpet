@@ -22,15 +22,7 @@
     <Grid Background="Transparent">
         <wv2:WebView2 x:Name="SettingsWebView"
                       AllowExternalDrop="False"
-                      DefaultBackgroundColor="Transparent" />
-
-        <Grid x:Name="LoadingOverlay"
-              Background="Transparent"
-              IsHitTestVisible="False">
-            <ProgressBar Width="180"
-                         Height="4"
-                         IsIndeterminate="True" />
-        </Grid>
+                      DefaultBackgroundColor="0" />
 
         <Grid x:Name="ErrorOverlay"
               Visibility="Collapsed"
