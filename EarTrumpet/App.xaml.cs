@@ -46,6 +46,7 @@ namespace EarTrumpet
         private TaskbarIconSource _trayIconSource;
         private WindowHolder _mixerWindow;
         private WindowHolder _settingsWindow;
+        private WindowHolder _legacySettingsWindow;
         private ErrorReporter _errorReporter;
         private MediaPopupWindow _mediaPopup;
         private System.Windows.Threading.DispatcherTimer _mediaPopupDelayTimer;
@@ -296,6 +297,7 @@ namespace EarTrumpet
             // ══════════════════════════════════════════════════════════════
             _mixerWindow = new WindowHolder(CreateMixerExperience);
             _settingsWindow = new WindowHolder(CreateSettingsExperience);
+            _legacySettingsWindow = new WindowHolder(CreateLegacySettingsExperience);
 
             _trayIcon.PrimaryInvoke += (_, type) =>
             {
@@ -776,7 +778,8 @@ namespace EarTrumpet
                 {
                     new ContextMenuSeparator(),
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayOpenVolumeMixer, Glyph = "\xE9E9", IconData = PhosphorIconData.SlidersHorizontal, IconScale = 1.02, Command = new RelayCommand(_mixerWindow.OpenOrBringToFront) },
-                    new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayOpenSettings, Glyph = "\xE713", IconData = PhosphorIconData.GearSix, IconScale = 0.96, Command = new RelayCommand(_settingsWindow.OpenOrBringToFront) },
+                    new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayOpenSettingsNew, Glyph = "\xE713", IconData = PhosphorIconData.GearSix, IconScale = 0.96, Command = new RelayCommand(_settingsWindow.OpenOrBringToFront) },
+                    new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayOpenSettings, Glyph = "\xE8FD", IconData = PhosphorIconData.ListBullets, IconScale = 0.94, Command = new RelayCommand(_legacySettingsWindow.OpenOrBringToFront) },
                 });
 
             if (_updateService != null && _updateService.IsUpdateAvailable)
@@ -867,6 +870,16 @@ namespace EarTrumpet
 
         private Window CreateSettingsExperience()
         {
+            return new WebSettingsWindow(CreateSettingsViewModel());
+        }
+
+        private Window CreateLegacySettingsExperience()
+        {
+            return new SettingsWindow { DataContext = CreateSettingsViewModel() };
+        }
+
+        private SettingsViewModel CreateSettingsViewModel()
+        {
             // General — the everyday settings: startup/tray, volume & mouse behavior,
             // keyboard shortcuts, and QuickTrumpet volume presets.
             var generalCategory = new SettingsCategoryViewModel(
@@ -925,8 +938,7 @@ namespace EarTrumpet
                 allCategories.AddRange(AddonManager.Host.SettingsItems.Select(a => CreateAddonSettingsPage(a)));
             }
 
-            var viewModel = new SettingsViewModel(EarTrumpet.Properties.Resources.SettingsWindowText, allCategories);
-            return new SettingsWindow { DataContext = viewModel };
+            return new SettingsViewModel(EarTrumpet.Properties.Resources.SettingsWindowText, allCategories);
         }
 
         private SettingsCategoryViewModel CreateAddonSettingsPage(IEarTrumpetAddonSettingsPage addonSettingsPage)

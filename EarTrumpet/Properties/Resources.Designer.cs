@@ -621,6 +621,12 @@ namespace EarTrumpet.Properties {
             }
         }
 
+        public static string TrayOpenSettingsNew {
+            get {
+                return ResourceManager.GetString("TrayOpenSettingsNew", resourceCulture);
+            }
+        }
+
         public static string TrayShowOnboarding {
             get {
                 return ResourceManager.GetString("TrayShowOnboarding", resourceCulture);
@@ -2149,6 +2155,78 @@ namespace EarTrumpet.Properties {
                 return ResourceManager.GetString("SettingsWindowText", resourceCulture);
             }
         }
+
+        public static string WebSettingsSearchPlaceholder {
+            get {
+                return ResourceManager.GetString("WebSettingsSearchPlaceholder", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsClassicButton {
+            get {
+                return ResourceManager.GetString("WebSettingsClassicButton", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsLegacyNoticeTitle {
+            get {
+                return ResourceManager.GetString("WebSettingsLegacyNoticeTitle", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsLegacyNoticeDescription {
+            get {
+                return ResourceManager.GetString("WebSettingsLegacyNoticeDescription", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsOpenClassicPage {
+            get {
+                return ResourceManager.GetString("WebSettingsOpenClassicPage", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsNoResults {
+            get {
+                return ResourceManager.GetString("WebSettingsNoResults", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsOpenFailed {
+            get {
+                return ResourceManager.GetString("WebSettingsOpenFailed", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsMinimize {
+            get {
+                return ResourceManager.GetString("WebSettingsMinimize", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsClose {
+            get {
+                return ResourceManager.GetString("WebSettingsClose", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsLoadErrorTitle {
+            get {
+                return ResourceManager.GetString("WebSettingsLoadErrorTitle", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsLoadErrorDescription {
+            get {
+                return ResourceManager.GetString("WebSettingsLoadErrorDescription", resourceCulture);
+            }
+        }
+
+        public static string WebSettingsRetryButton {
+            get {
+                return ResourceManager.GetString("WebSettingsRetryButton", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Set a local variable.
@@ -3113,6 +3191,33 @@ namespace EarTrumpet.Properties {
         }
         public static string SettingsUseMonkeyTickSoundTip {
             get { return ResourceManager.GetString("SettingsUseMonkeyTickSoundTip", resourceCulture); }
+        }
+        public static string WebSettingsCategoryEssentials {
+            get { return ResourceManager.GetString("WebSettingsCategoryEssentials", resourceCulture); }
+        }
+        public static string WebSettingsCategoryAudio {
+            get { return ResourceManager.GetString("WebSettingsCategoryAudio", resourceCulture); }
+        }
+        public static string WebSettingsCategoryExperience {
+            get { return ResourceManager.GetString("WebSettingsCategoryExperience", resourceCulture); }
+        }
+        public static string WebSettingsHiddenDevices {
+            get { return ResourceManager.GetString("WebSettingsHiddenDevices", resourceCulture); }
+        }
+        public static string WebSettingsRecordShortcut {
+            get { return ResourceManager.GetString("WebSettingsRecordShortcut", resourceCulture); }
+        }
+        public static string WebSettingsClearShortcut {
+            get { return ResourceManager.GetString("WebSettingsClearShortcut", resourceCulture); }
+        }
+        public static string WebSettingsEmpty {
+            get { return ResourceManager.GetString("WebSettingsEmpty", resourceCulture); }
+        }
+        public static string WebSettingsSeconds {
+            get { return ResourceManager.GetString("WebSettingsSeconds", resourceCulture); }
+        }
+        public static string AutoUpdateCheckboxText {
+            get { return ResourceManager.GetString("AutoUpdateCheckboxText", resourceCulture); }
         }
         public static string CheckForUpdatesText {
             get { return ResourceManager.GetString("CheckForUpdatesText", resourceCulture); }

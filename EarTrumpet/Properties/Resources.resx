@@ -135,6 +135,9 @@
   <data name="TrayOpenSettings" xml:space="preserve">
     <value>Open settings</value>
   </data>
+  <data name="TrayOpenSettingsNew" xml:space="preserve">
+    <value>Open settings (new)</value>
+  </data>
   <data name="TrayShowOnboarding" xml:space="preserve">
     <value>Show onboarding</value>
   </data>
@@ -1259,6 +1262,42 @@ Open [https://eartrumpet.app/jmp/fixfonts] now?</value>
   <data name="SettingsRunAtStartup" xml:space="preserve">
     <value>Run at Windows startup</value>
   </data>
+  <data name="WebSettingsSearchPlaceholder" xml:space="preserve">
+    <value>Search settings</value>
+  </data>
+  <data name="WebSettingsClassicButton" xml:space="preserve">
+    <value>Classic settings</value>
+  </data>
+  <data name="WebSettingsLegacyNoticeTitle" xml:space="preserve">
+    <value>This page is coming soon</value>
+  </data>
+  <data name="WebSettingsLegacyNoticeDescription" xml:space="preserve">
+    <value>It remains available in the classic interface during the migration.</value>
+  </data>
+  <data name="WebSettingsOpenClassicPage" xml:space="preserve">
+    <value>Open this page</value>
+  </data>
+  <data name="WebSettingsNoResults" xml:space="preserve">
+    <value>No settings match your search.</value>
+  </data>
+  <data name="WebSettingsOpenFailed" xml:space="preserve">
+    <value>The classic settings could not be opened. Please try again.</value>
+  </data>
+  <data name="WebSettingsMinimize" xml:space="preserve">
+    <value>Minimize</value>
+  </data>
+  <data name="WebSettingsClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="WebSettingsLoadErrorTitle" xml:space="preserve">
+    <value>The new settings could not be loaded</value>
+  </data>
+  <data name="WebSettingsLoadErrorDescription" xml:space="preserve">
+    <value>WebView2 may be unavailable. You can retry or use the classic settings.</value>
+  </data>
+  <data name="WebSettingsRetryButton" xml:space="preserve">
+    <value>Retry</value>
+  </data>
   <data name="SettingsHiddenAppsTitle" xml:space="preserve">
     <value>Hidden App Entries</value>
   </data>
@@ -1775,5 +1814,32 @@ Details: {0}</value>
   </data>
   <data name="SettingsMoreOptions" xml:space="preserve">
     <value>More options</value>
+  </data>
+  <data name="WebSettingsCategoryEssentials" xml:space="preserve">
+    <value>Essentials</value>
+  </data>
+  <data name="WebSettingsCategoryAudio" xml:space="preserve">
+    <value>Audio</value>
+  </data>
+  <data name="WebSettingsCategoryExperience" xml:space="preserve">
+    <value>Experience</value>
+  </data>
+  <data name="WebSettingsHiddenDevices" xml:space="preserve">
+    <value>Hidden devices</value>
+  </data>
+  <data name="WebSettingsRecordShortcut" xml:space="preserve">
+    <value>Record shortcut</value>
+  </data>
+  <data name="WebSettingsClearShortcut" xml:space="preserve">
+    <value>Clear shortcut</value>
+  </data>
+  <data name="WebSettingsEmpty" xml:space="preserve">
+    <value>Nothing configured yet.</value>
+  </data>
+  <data name="WebSettingsSeconds" xml:space="preserve">
+    <value>seconds</value>
+  </data>
+  <data name="AutoUpdateCheckboxText" xml:space="preserve">
+    <value>Check for updates automatically</value>
   </data>
 </root>

@@ -135,6 +135,9 @@
   <data name="TrayOpenSettings" xml:space="preserve">
     <value>Ouvrir les paramètres</value>
   </data>
+  <data name="TrayOpenSettingsNew" xml:space="preserve">
+    <value>Ouvrir les paramètres (new)</value>
+  </data>
   <data name="TrayShowOnboarding" xml:space="preserve">
     <value>Relancer l'accueil</value>
   </data>
@@ -1193,6 +1196,42 @@ Voulez-vous ouvrir [https://eartrumpet.app/jmp/fixfonts] maintenant?</value>
   <data name="SettingsRunAtStartup" xml:space="preserve">
     <value>Lancer au démarrage de Windows</value>
   </data>
+  <data name="WebSettingsSearchPlaceholder" xml:space="preserve">
+    <value>Rechercher un réglage</value>
+  </data>
+  <data name="WebSettingsClassicButton" xml:space="preserve">
+    <value>Paramètres classiques</value>
+  </data>
+  <data name="WebSettingsLegacyNoticeTitle" xml:space="preserve">
+    <value>Cette page arrive bientôt</value>
+  </data>
+  <data name="WebSettingsLegacyNoticeDescription" xml:space="preserve">
+    <value>Elle reste disponible dans l'interface classique pendant la migration.</value>
+  </data>
+  <data name="WebSettingsOpenClassicPage" xml:space="preserve">
+    <value>Ouvrir cette page</value>
+  </data>
+  <data name="WebSettingsNoResults" xml:space="preserve">
+    <value>Aucun réglage ne correspond à votre recherche.</value>
+  </data>
+  <data name="WebSettingsOpenFailed" xml:space="preserve">
+    <value>Les paramètres classiques n'ont pas pu être ouverts. Veuillez réessayer.</value>
+  </data>
+  <data name="WebSettingsMinimize" xml:space="preserve">
+    <value>Réduire</value>
+  </data>
+  <data name="WebSettingsClose" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="WebSettingsLoadErrorTitle" xml:space="preserve">
+    <value>Les nouveaux paramètres n'ont pas pu être chargés</value>
+  </data>
+  <data name="WebSettingsLoadErrorDescription" xml:space="preserve">
+    <value>WebView2 est peut-être indisponible. Vous pouvez réessayer ou utiliser les paramètres classiques.</value>
+  </data>
+  <data name="WebSettingsRetryButton" xml:space="preserve">
+    <value>Réessayer</value>
+  </data>
   <data name="SettingsHiddenAppsTitle" xml:space="preserve">
     <value>Entrées d'application cachées</value>
   </data>
@@ -1751,5 +1790,32 @@ Détails : {0}</value>
   </data>
   <data name="SettingsUseMonkeyTickSoundTip" xml:space="preserve">
     <value>Conserver ce son secret pour les réglages du volume</value>
+  </data>
+  <data name="WebSettingsCategoryEssentials" xml:space="preserve">
+    <value>Essentiel</value>
+  </data>
+  <data name="WebSettingsCategoryAudio" xml:space="preserve">
+    <value>Audio</value>
+  </data>
+  <data name="WebSettingsCategoryExperience" xml:space="preserve">
+    <value>Expérience</value>
+  </data>
+  <data name="WebSettingsHiddenDevices" xml:space="preserve">
+    <value>Périphériques masqués</value>
+  </data>
+  <data name="WebSettingsRecordShortcut" xml:space="preserve">
+    <value>Enregistrer un raccourci</value>
+  </data>
+  <data name="WebSettingsClearShortcut" xml:space="preserve">
+    <value>Effacer le raccourci</value>
+  </data>
+  <data name="WebSettingsEmpty" xml:space="preserve">
+    <value>Aucune configuration pour le moment.</value>
+  </data>
+  <data name="WebSettingsSeconds" xml:space="preserve">
+    <value>secondes</value>
+  </data>
+  <data name="AutoUpdateCheckboxText" xml:space="preserve">
+    <value>Rechercher automatiquement les mises à jour</value>
   </data>
 </root>

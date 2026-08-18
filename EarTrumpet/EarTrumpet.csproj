@@ -74,6 +74,7 @@
     <PackageReference Include="XamlAnimatedGif" Version="2.1.0" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.ComponentModel.Composition" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
   </ItemGroup>
 
   <!-- Strongly-typed resources: keep the checked-in designer file; the .resx files
@@ -138,6 +139,26 @@
     </PropertyGroup>
     <Message Importance="high" Text="GitVersion_InformationalVersion: $(GitVersion_InformationalVersion)" />
     <Exec Command="powershell -executionpolicy Bypass -noprofile &quot;&amp; '$(ProjectDir)prebuild.ps1'&quot; $(ChannelVersion)" />
+  </Target>
+
+  <!-- The React settings UI is compiled to static files and copied beside the app.
+       Node is a build-time dependency only; WebView2 loads the local bundle at runtime. -->
+  <Target Name="BuildSettingsWeb"
+          BeforeTargets="PrepareForBuild"
+          Condition="'$(DesignTimeBuild)' != 'true' and $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('_wpftmp')) != 'true'">
+    <Exec Command="npm.cmd ci --no-audit --no-fund" WorkingDirectory="$(ProjectDir)SettingsWeb" Condition="!Exists('$(ProjectDir)SettingsWeb\node_modules')" />
+    <Exec Command="npm.cmd run build" WorkingDirectory="$(ProjectDir)SettingsWeb" />
+  </Target>
+
+  <Target Name="CopySettingsWebAssets"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('_wpftmp')) != 'true'">
+    <ItemGroup>
+      <SettingsWebAsset Include="$(ProjectDir)SettingsWeb\dist\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SettingsWebAsset)"
+          DestinationFiles="@(SettingsWebAsset->'$(OutputPath)SettingsWeb\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

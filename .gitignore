@@ -161,6 +161,10 @@ ClientBin/
 *.pfx
 *.publishsettings
 node_modules/
+EarTrumpet/SettingsWeb/dist/
+EarTrumpet/SettingsWeb/*.tsbuildinfo
+EarTrumpet/SettingsWeb/vite.config.js
+EarTrumpet/SettingsWeb/vite.config.d.ts
 bower_components/
 
 # RIA/Silverlight projects

@@ -1,0 +1,79 @@
+:root {
+  font-family: "Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  letter-spacing: 0;
+  color-scheme: light dark;
+}
+
+::selection {
+  color: #f7f5fb;
+  background: #6741c7;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+input::placeholder {
+  opacity: 0.72;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(155 123 234 / 0.32) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  background: rgb(155 123 234 / 0.32);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(177 150 241 / 0.58);
+  border-width: 1px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
