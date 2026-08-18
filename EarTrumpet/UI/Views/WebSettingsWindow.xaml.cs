@@ -85,8 +85,23 @@ namespace EarTrumpet.UI.Views
                 return;
             }
 
-            LoadingOverlay.Visibility = Visibility.Visible;
             ErrorOverlay.Visibility = Visibility.Collapsed;
+
+            // Native acrylic behind the web view: the web UI keeps its own translucent
+            // sage surface so the Windows backdrop shows through, like the flyout.
+            try
+            {
+                var isDark = !EarTrumpet.DataModel.SystemSettings.IsLightTheme;
+                var tint = isDark
+                    ? System.Windows.Media.Color.FromArgb(0xC8, 0x14, 0x12, 0x18)
+                    : System.Windows.Media.Color.FromArgb(0xC8, 0xEF, 0xED, 0xF5);
+                AccentPolicyLibrary.EnableAcrylic(SettingsWebView, tint, EarTrumpet.Interop.User32.AccentFlags.None);
+                Trace.WriteLine("WebSettingsWindow acrylic enabled");
+            }
+            catch (Exception accentEx)
+            {
+                Trace.WriteLine($"WebSettingsWindow acrylic unavailable: {accentEx.Message}");
+            }
 
             try
             {
@@ -196,7 +211,7 @@ namespace EarTrumpet.UI.Views
                         SetHotkey(root);
                         break;
                     case "rendered":
-                        LoadingOverlay.Visibility = Visibility.Collapsed;
+                        // The React app owns its loading skeleton; nothing to hide here.
                         break;
                 }
             }
@@ -910,14 +925,12 @@ namespace EarTrumpet.UI.Views
 
         private void ShowLoadError()
         {
-            LoadingOverlay.Visibility = Visibility.Collapsed;
             ErrorOverlay.Visibility = Visibility.Visible;
         }
 
         private async void Retry_Click(object sender, RoutedEventArgs e)
         {
             ErrorOverlay.Visibility = Visibility.Collapsed;
-            LoadingOverlay.Visibility = Visibility.Visible;
             _isInitialized = SettingsWebView.CoreWebView2 != null;
             if (_isInitialized)
             {

@@ -2,12 +2,17 @@
   font-family: "Segoe UI Variable Display", "Segoe UI Variable", "Segoe UI", sans-serif;
   font-synthesis: none;
   letter-spacing: 0;
-  color-scheme: light dark;
+  color-scheme: dark;
+}
+
+@keyframes sage-shimmer {
+  from { background-position: -50% 0; }
+  to { background-position: 150% 0; }
 }
 
 ::selection {
   color: #f7f5fb;
-  background: #6741c7;
+  background: #7c5cd0;
 }
 
 html,
