@@ -1,0 +1,98 @@
+.elastic-slider {
+  display: grid;
+  grid-template-columns: minmax(150px, 190px) 46px;
+  align-items: center;
+  gap: 10px;
+  min-width: 214px;
+}
+
+.elastic-slider__control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  touch-action: none;
+  user-select: none;
+}
+
+.elastic-slider__root {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 92px;
+  height: 34px;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.elastic-slider__root:active {
+  cursor: grabbing;
+}
+
+.elastic-slider__root:focus-visible::after {
+  position: absolute;
+  inset: 5px -4px;
+  border: 2px solid var(--colorBrandStroke1);
+  border-radius: 4px;
+  content: "";
+}
+
+.elastic-slider__track-wrap {
+  display: flex;
+  flex: 1;
+  will-change: transform, height;
+}
+
+.elastic-slider__track {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--colorNeutralForeground3) 28%, transparent);
+}
+
+.elastic-slider__range {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--colorBrandBackground);
+}
+
+.elastic-slider__icon {
+  display: grid;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  color: var(--colorNeutralForeground3);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  will-change: transform;
+}
+
+.elastic-slider__value {
+  min-width: 46px;
+  color: var(--colorNeutralForeground3);
+  font-family: "Cascadia Mono", "Segoe UI Mono", monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .elastic-slider {
+    grid-template-columns: minmax(130px, 1fr) 44px;
+    min-width: 190px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elastic-slider__track-wrap,
+  .elastic-slider__icon {
+    will-change: auto;
+  }
+}

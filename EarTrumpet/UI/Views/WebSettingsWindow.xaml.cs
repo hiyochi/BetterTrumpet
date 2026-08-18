@@ -1,0 +1,932 @@
+using EarTrumpet.Extensions;
+using EarTrumpet.Interop;
+using EarTrumpet.Interop.Helpers;
+using EarTrumpet.UI.Helpers;
+using EarTrumpet.UI.ViewModels;
+using Microsoft.Web.WebView2.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Shell;
+
+namespace EarTrumpet.UI.Views
+{
+    public partial class WebSettingsWindow : Window
+    {
+        private const string SettingsHostName = "bettertrumpet.settings";
+        private const int WmNcLButtonDown = 0x00A1;
+        private static readonly IntPtr HtCaption = new IntPtr(2);
+
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
+        private readonly SettingsViewModel _viewModel;
+        private SettingsWindow _legacyWindow;
+        private bool _isInitialized;
+        private bool _isCapturingHotkey;
+
+        internal WebSettingsWindow(SettingsViewModel viewModel)
+        {
+            _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+
+            InitializeComponent();
+            WindowChrome.SetWindowChrome(this, new WindowChrome
+            {
+                CaptionHeight = 0,
+                CornerRadius = new CornerRadius(0),
+                GlassFrameThickness = new Thickness(0),
+                ResizeBorderThickness = SystemParameters.WindowResizeBorderThickness,
+                UseAeroCaptionButtons = false,
+            });
+            Trace.WriteLine("WebSettingsWindow .ctor");
+
+            Loaded += async (_, __) => await InitializeWebViewAsync();
+            Closed += (_, __) =>
+            {
+                ResumeHotkeys();
+                Trace.WriteLine("WebSettingsWindow Closed");
+            };
+
+            SourceInitialized += (sender, __) =>
+            {
+                this.Cloak();
+                this.EnableRoundedCornersIfApplicable();
+
+                if (App.Settings.SettingsWindowPlacement != null)
+                {
+                    User32.SetWindowPlacement(new WindowInteropHelper((Window)sender).Handle, App.Settings.SettingsWindowPlacement.Value);
+                }
+            };
+
+            StateChanged += OnWindowStateChanged;
+            Closing += (sender, __) =>
+            {
+                if (User32.GetWindowPlacement(new WindowInteropHelper((Window)sender).Handle, out var placement))
+                {
+                    App.Settings.SettingsWindowPlacement = placement;
+                }
+            };
+        }
+
+        private async Task InitializeWebViewAsync()
+        {
+            if (_isInitialized)
+            {
+                return;
+            }
+
+            LoadingOverlay.Visibility = Visibility.Visible;
+            ErrorOverlay.Visibility = Visibility.Collapsed;
+
+            try
+            {
+                var bundlePath = Path.Combine(AppContext.BaseDirectory, "SettingsWeb");
+                var indexPath = Path.Combine(bundlePath, "index.html");
+                if (!File.Exists(indexPath))
+                {
+                    throw new FileNotFoundException("The compiled settings bundle was not found.", indexPath);
+                }
+
+                var userDataPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "BetterTrumpet",
+                    "WebView2");
+                Directory.CreateDirectory(userDataPath);
+
+                var environment = await CoreWebView2Environment.CreateAsync(null, userDataPath);
+                await SettingsWebView.EnsureCoreWebView2Async(environment);
+
+                var core = SettingsWebView.CoreWebView2;
+                core.Settings.AreDefaultContextMenusEnabled = false;
+                core.Settings.AreDevToolsEnabled = IsDebugBuild();
+                core.Settings.IsStatusBarEnabled = false;
+                core.Settings.IsZoomControlEnabled = false;
+                core.SetVirtualHostNameToFolderMapping(
+                    SettingsHostName,
+                    bundlePath,
+                    CoreWebView2HostResourceAccessKind.DenyCors);
+
+                core.NavigationStarting += Core_NavigationStarting;
+                core.NavigationCompleted += Core_NavigationCompleted;
+                core.WebMessageReceived += Core_WebMessageReceived;
+                core.ProcessFailed += (_, args) =>
+                {
+                    Trace.WriteLine($"WebSettingsWindow WebView2 process failed: {args.ProcessFailedKind}");
+                    Dispatcher.BeginInvoke(new Action(ShowLoadError));
+                };
+
+                _isInitialized = true;
+                core.Navigate($"https://{SettingsHostName}/index.html");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"WebSettingsWindow initialization failed: {ex}");
+                ShowLoadError();
+            }
+        }
+
+        private void Core_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) ||
+                !string.Equals(uri.Host, SettingsHostName, StringComparison.OrdinalIgnoreCase))
+            {
+                e.Cancel = true;
+                Trace.WriteLine($"WebSettingsWindow blocked navigation: {e.Uri}");
+            }
+        }
+
+        private void Core_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
+        {
+            if (!e.IsSuccess)
+            {
+                Trace.WriteLine($"WebSettingsWindow navigation failed: {e.WebErrorStatus}");
+                ShowLoadError();
+            }
+        }
+
+        private void Core_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(e.WebMessageAsJson);
+                var root = document.RootElement;
+                if (!root.TryGetProperty("type", out var typeElement))
+                {
+                    return;
+                }
+
+                switch (typeElement.GetString())
+                {
+                    case "ready":
+                        PostState();
+                        break;
+                    case "setSetting":
+                        ApplySetting(root);
+                        break;
+                    case "openLegacy":
+                        var pageId = root.TryGetProperty("pageId", out var pageElement) && pageElement.ValueKind == JsonValueKind.String
+                            ? pageElement.GetString()
+                            : null;
+                        OpenLegacySettings(pageId);
+                        break;
+                    case "windowAction":
+                        HandleWindowAction(root);
+                        break;
+                    case "action":
+                        HandleAction(root);
+                        break;
+                    case "hotkeyCaptureStarted":
+                        if (!_isCapturingHotkey)
+                        {
+                            HotkeyManager.Current.Pause();
+                            _isCapturingHotkey = true;
+                        }
+                        break;
+                    case "setHotkey":
+                        SetHotkey(root);
+                        break;
+                    case "rendered":
+                        LoadingOverlay.Visibility = Visibility.Collapsed;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"WebSettingsWindow message failed: {ex}");
+                PostMessage(new { type = "error", message = ex.Message });
+            }
+        }
+
+        private void HandleWindowAction(JsonElement message)
+        {
+            var action = message.TryGetProperty("action", out var actionElement) &&
+                actionElement.ValueKind == JsonValueKind.String
+                ? actionElement.GetString()
+                : null;
+
+            switch (action)
+            {
+                case "minimize":
+                    WindowState = WindowState.Minimized;
+                    break;
+                case "close":
+                    Close();
+                    break;
+                case "drag":
+                    ReleaseCapture();
+                    User32.SendMessage(new WindowInteropHelper(this).Handle, WmNcLButtonDown, HtCaption, IntPtr.Zero);
+                    break;
+            }
+        }
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ReleaseCapture();
+
+        private void ApplySetting(JsonElement message)
+        {
+            if (!message.TryGetProperty("key", out var keyElement) ||
+                !message.TryGetProperty("value", out var valueElement))
+            {
+                return;
+            }
+
+            var key = keyElement.GetString();
+            var colors = GetPage<EarTrumpetColorsSettingsPageViewModel>();
+            var updates = GetPage<EarTrumpetUpdatesPageViewModel>();
+            var privacy = GetPage<EarTrumpetPrivacyPageViewModel>();
+            var about = GetPage<EarTrumpetAboutPageViewModel>();
+
+            switch (key)
+            {
+                case "runAtStartup":
+                    App.Settings.RunAtStartup = valueElement.GetBoolean();
+                    break;
+                case "useLegacyIcon":
+                    App.Settings.UseLegacyIcon = valueElement.GetBoolean();
+                    break;
+                case "showAppTooltips":
+                    App.Settings.ShowAppTooltips = valueElement.GetBoolean();
+                    break;
+                case "useScrollWheelInTray":
+                    App.Settings.UseScrollWheelInTray = valueElement.GetBoolean();
+                    break;
+                case "useGlobalMouseWheelHook":
+                    App.Settings.UseGlobalMouseWheelHook = valueElement.GetBoolean();
+                    break;
+                case "useLogarithmicVolume":
+                    App.Settings.UseLogarithmicVolume = valueElement.GetBoolean();
+                    break;
+                case "useVolumeTickSound":
+                    App.Settings.UseVolumeTickSound = valueElement.GetBoolean();
+                    break;
+                case "showQuickTrumpetConfirmation":
+                    App.Settings.ShowQuickTrumpetConfirmation = valueElement.GetBoolean();
+                    break;
+                case "mediaPopupEnabled":
+                    App.Settings.MediaPopupEnabled = valueElement.GetBoolean();
+                    break;
+                case "mediaPopupHoverDelay":
+                    App.Settings.MediaPopupHoverDelay = valueElement.GetDouble();
+                    break;
+                case "showWhenPaused":
+                    App.Settings.MediaPopupShowOnlyWhenPlaying = !valueElement.GetBoolean();
+                    break;
+                case "mediaPopupRememberExpanded":
+                    App.Settings.MediaPopupRememberExpanded = valueElement.GetBoolean();
+                    break;
+                case "ecoMode":
+                    App.Settings.EcoMode = valueElement.GetBoolean();
+                    break;
+                case "autoEcoMode":
+                    App.Settings.AutoEcoMode = valueElement.GetBoolean();
+                    break;
+                case "useSmoothVolumeAnimation":
+                    App.Settings.UseSmoothVolumeAnimation = valueElement.GetBoolean();
+                    break;
+                case "volumeAnimationSpeed":
+                    App.Settings.VolumeAnimationSpeed = 0.02 + (Math.Max(1, Math.Min(10, valueElement.GetInt32())) - 1) * 0.053;
+                    break;
+                case "peakMeterFps":
+                    App.Settings.PeakMeterFps = valueElement.GetInt32();
+                    break;
+                case "useCustomSliderColors" when colors != null:
+                    colors.UseCustomSliderColors = valueElement.GetBoolean();
+                    break;
+                case "peakMeterStyleIndex" when colors != null:
+                    colors.PeakMeterStyleIndex = valueElement.GetInt32();
+                    break;
+                case "windowBackgroundOpacity" when colors != null:
+                    colors.WindowBackgroundOpacity = valueElement.GetDouble();
+                    break;
+                case "useDynamicAlbumArtTheme" when colors != null:
+                    colors.UseDynamicAlbumArtTheme = valueElement.GetBoolean();
+                    break;
+                case "sliderThumbColor" when colors != null:
+                    colors.SliderThumbColorHex = valueElement.GetString();
+                    break;
+                case "sliderTrackFillColor" when colors != null:
+                    colors.SliderTrackFillColorHex = valueElement.GetString();
+                    break;
+                case "sliderTrackBackgroundColor" when colors != null:
+                    colors.SliderTrackBackgroundColorHex = valueElement.GetString();
+                    break;
+                case "peakMeterColor" when colors != null:
+                    colors.PeakMeterColorHex = valueElement.GetString();
+                    break;
+                case "windowBackgroundColor" when colors != null:
+                    colors.WindowBackgroundColorHex = valueElement.GetString();
+                    break;
+                case "textColor" when colors != null:
+                    colors.TextColorHex = valueElement.GetString();
+                    break;
+                case "accentGlowColor" when colors != null:
+                    colors.AccentGlowColorHex = valueElement.GetString();
+                    break;
+                case "isTelemetryEnabled" when privacy != null:
+                    privacy.IsTelemetryEnabled = valueElement.GetBoolean();
+                    break;
+                case "autoCheckForUpdates" when updates != null:
+                    updates.AutoCheckForUpdates = valueElement.GetBoolean();
+                    break;
+                case "updateChannelIndex" when updates != null:
+                    updates.UpdateChannelIndex = valueElement.GetInt32();
+                    break;
+                case "useMonkeyTickSound" when about != null:
+                    about.UseMonkeyTickSound = valueElement.GetBoolean();
+                    break;
+                default:
+                    return;
+            }
+
+            PostState();
+        }
+
+        private void HandleAction(JsonElement message)
+        {
+            var action = GetString(message, "action");
+            var profiles = GetPage<EarTrumpetVolumeProfilesSettingsPageViewModel>();
+            var rules = GetPage<EarTrumpetAppRulesSettingsPageViewModel>();
+            var colors = GetPage<EarTrumpetColorsSettingsPageViewModel>();
+            var updates = GetPage<EarTrumpetUpdatesPageViewModel>();
+            var privacy = GetPage<EarTrumpetPrivacyPageViewModel>();
+            var about = GetPage<EarTrumpetAboutPageViewModel>();
+
+            switch (action)
+            {
+                case "restoreHiddenApp":
+                    App.Settings.UnhideAppForDevice(GetString(message, "deviceId"), GetString(message, "appId"), GetString(message, "exeName"));
+                    break;
+                case "restoreAllHiddenApps":
+                    App.Settings.UnhideAllApps();
+                    break;
+                case "restoreHiddenDevice":
+                    App.Settings.UnhideDevice(GetString(message, "deviceId"));
+                    break;
+                case "restoreAllHiddenDevices":
+                    App.Settings.UnhideAllDevices();
+                    break;
+                case "profileSelect" when profiles != null:
+                    profiles.SelectedProfile = profiles.Profiles.ElementAtOrDefault(GetInt32(message, "index"));
+                    break;
+                case "profileCapture" when profiles != null:
+                    profiles.NewProfileName = GetString(message, "name");
+                    profiles.CaptureAllDevices = GetBoolean(message, "allDevices");
+                    profiles.SaveCurrentCommand.Execute(null);
+                    break;
+                case "profileApply" when profiles != null:
+                    SelectProfile(profiles, message);
+                    profiles.ApplyProfileCommand.Execute(null);
+                    break;
+                case "profileDelete" when profiles != null:
+                    SelectProfile(profiles, message);
+                    profiles.DeleteProfileCommand.Execute(null);
+                    break;
+                case "profileExport" when profiles != null:
+                    SelectProfile(profiles, message);
+                    profiles.ExportProfileCommand.Execute(null);
+                    break;
+                case "profileImport" when profiles != null:
+                    profiles.ImportProfileCommand.Execute(null);
+                    break;
+                case "profileAppsOnly" when profiles != null:
+                    SelectProfile(profiles, message);
+                    profiles.SelectedProfileApplyAppsOnly = GetBoolean(message, "value");
+                    break;
+                case "appRuleAdd":
+                    var typedExe = GetString(message, "exeName").Trim().Trim('"');
+                    var exeName = Path.GetFileNameWithoutExtension(typedExe);
+                    if (!string.IsNullOrWhiteSpace(exeName))
+                    {
+                        App.Settings.SetAppHardMuted(exeName, true, exeName);
+                    }
+                    break;
+                case "appRuleBrowse" when rules != null:
+                    rules.BrowseForExeCommand.Execute(null);
+                    break;
+                case "appRuleUpdate":
+                    UpdateAppRule(message);
+                    break;
+                case "appRuleRemove":
+                    App.Settings.RemoveAppRule(GetString(message, "exeName"));
+                    break;
+                case "appRuleClear" when rules != null:
+                    rules.ClearAllRulesCommand.Execute(null);
+                    break;
+                case "folderRuleAdd" when rules != null:
+                    rules.AddFolderVolumeRuleCommand.Execute(null);
+                    break;
+                case "folderRuleUpdate":
+                    App.Settings.UpdateFolderVolumeRule(GetString(message, "id"), GetString(message, "folderPath"), GetInt32(message, "volumePercent"));
+                    break;
+                case "folderRuleBrowse" when rules != null:
+                    var folderRule = rules.FolderVolumeRules.FirstOrDefault(rule => rule.Id == GetString(message, "id"));
+                    if (folderRule != null)
+                    {
+                        rules.BrowseForFolderVolumeRuleCommand.Execute(folderRule);
+                    }
+                    break;
+                case "folderRuleRemove":
+                    App.Settings.RemoveFolderVolumeRule(GetString(message, "id"));
+                    break;
+                case "themeSelect" when colors != null:
+                    colors.SelectedTheme = colors.AvailableThemes.Concat(colors.CustomThemes)
+                        .FirstOrDefault(theme => string.Equals(theme.Name, GetString(message, "name"), StringComparison.Ordinal));
+                    break;
+                case "themeRandomize" when colors != null:
+                    colors.RandomizeColorsCommand.Execute(null);
+                    break;
+                case "themeReset" when colors != null:
+                    colors.ResetToDefaultCommand.Execute(null);
+                    break;
+                case "themeSave" when colors != null:
+                    colors.NewThemeName = GetString(message, "name");
+                    colors.SaveCustomThemeCommand.Execute(null);
+                    break;
+                case "themeExport" when colors != null:
+                    colors.ExportThemeToFileCommand.Execute(null);
+                    break;
+                case "themeImport" when colors != null:
+                    colors.ImportThemeFromFileCommand.Execute(null);
+                    break;
+                case "themeDelete" when colors != null:
+                    var customTheme = colors.CustomThemes.FirstOrDefault(theme =>
+                        string.Equals(theme.Name, GetString(message, "name"), StringComparison.Ordinal));
+                    if (customTheme != null)
+                    {
+                        colors.DeleteCustomThemeCommand.Execute(customTheme);
+                    }
+                    break;
+                case "checkUpdate" when updates != null:
+                    updates.CheckForUpdateCommand.Execute(null);
+                    break;
+                case "installUpdate" when updates != null:
+                    updates.DownloadAndInstall();
+                    break;
+                case "diagnostics" when about != null:
+                    about.OpenDiagnosticsCommand.Execute(null);
+                    break;
+                case "github" when about != null:
+                    about.OpenGitHubCommand.Execute(null);
+                    break;
+                case "feedback" when about != null:
+                    about.OpenFeedbackCommand.Execute(null);
+                    break;
+                case "bugReport" when about != null:
+                    about.OpenBugReportCommand.Execute(null);
+                    break;
+                case "settingsExport" when privacy != null:
+                    privacy.ExportSettingsCommand.Execute(null);
+                    break;
+                case "settingsImport" when privacy != null:
+                    privacy.ImportSettingsCommand.Execute(null);
+                    break;
+                default:
+                    return;
+            }
+
+            PostState();
+        }
+
+        private void PostState()
+        {
+            var legacy = GetPage<EarTrumpetLegacySettingsPageViewModel>();
+            var shortcuts = GetPage<EarTrumpetShortcutsPageViewModel>();
+            var profiles = GetPage<EarTrumpetVolumeProfilesSettingsPageViewModel>();
+            var colors = GetPage<EarTrumpetColorsSettingsPageViewModel>();
+            var updates = GetPage<EarTrumpetUpdatesPageViewModel>();
+            var about = GetPage<EarTrumpetAboutPageViewModel>();
+
+            var categories = _viewModel.Categories.Select(category => new
+            {
+                category.Title,
+                pages = category.Pages.Select(page => new
+                {
+                    id = GetPageId(page),
+                    page.Title,
+                    subtitle = page.Subtitle ?? string.Empty,
+                    migrated = IsMigrated(page),
+                }),
+            });
+
+            var payload = new
+            {
+                appName = "BetterTrumpet",
+                locale = CultureInfo.CurrentUICulture.Name,
+                categories,
+                labels = new Dictionary<string, string>
+                {
+                    ["searchPlaceholder"] = R("WebSettingsSearchPlaceholder"), ["classicSettings"] = R("WebSettingsClassicButton"),
+                    ["noResults"] = R("WebSettingsNoResults"), ["openFailed"] = R("WebSettingsOpenFailed"),
+                    ["minimize"] = R("WebSettingsMinimize"), ["close"] = R("WebSettingsClose"),
+                    ["essentials"] = R("WebSettingsCategoryEssentials"), ["audio"] = R("WebSettingsCategoryAudio"),
+                    ["experience"] = R("WebSettingsCategoryExperience"), ["application"] = R("AppCategoryTitle"),
+                    ["startupTitle"] = R("SettingsStartup"), ["startupDescription"] = R("SettingsStartupDesc"),
+                    ["runAtStartup"] = R("SettingsRunAtStartup"), ["trayTitle"] = R("SettingsTrayIcon"),
+                    ["trayDescription"] = R("SettingsTrayIconDesc"), ["useLegacyIcon"] = R("SettingsUseLegacyEarTrumpetIcon"),
+                    ["showAppTooltips"] = R("SettingsShowAppTooltips"), ["showAppTooltipsDescription"] = R("SettingsAppTooltipsDesc"),
+                    ["hiddenApps"] = R("SettingsHiddenAppsTitle"), ["hiddenAppsDescription"] = R("SettingsHiddenAppsDesc"),
+                    ["restoreAll"] = R("SettingsRestoreHiddenApps"), ["restore"] = R("AppRulesRemoveButtonText"),
+                    ["hiddenDevices"] = R("WebSettingsHiddenDevices"),
+                    ["scrollWheelTitle"] = R("SettingsScrollWheel"), ["scrollWheelDescription"] = R("SettingsScrollWheelDesc"),
+                    ["useScrollWheelInTray"] = R("SettingsUseScrollWheelInTray"), ["useScrollWheelInTrayDescription"] = R("SettingsScrollWheelTrayTip"),
+                    ["useGlobalMouseWheelHook"] = R("SettingsUseGlobalMouseWheelHook"), ["useGlobalMouseWheelHookDescription"] = R("SettingsScrollWheelGlobalTip"),
+                    ["volumeScaleTitle"] = R("SettingsVolumeScale"), ["volumeScaleDescription"] = R("SettingsVolumeScaleDesc"),
+                    ["useLogarithmicVolume"] = R("SettingsUseLogarithmicVolume"), ["useVolumeTickSound"] = R("SettingsVolumeTickSound"),
+                    ["useVolumeTickSoundDescription"] = R("SettingsVolumeTickSoundTip"), ["shortcuts"] = R("ShortcutsPageText"),
+                    ["recordShortcut"] = R("WebSettingsRecordShortcut"), ["clearShortcut"] = R("WebSettingsClearShortcut"),
+                    ["profileCapture"] = R("SettingsSaveCurrentVolumes"), ["profileCaptureDescription"] = R("SettingsSaveCurrentVolumesDesc"),
+                    ["profileName"] = R("SettingsThemeNamePlaceholder"), ["allDevices"] = R("SettingsQuickTrumpetAllDevices"),
+                    ["confirmation"] = R("SettingsQuickTrumpetConfirmation"), ["savedProfiles"] = R("SettingsSavedProfiles"),
+                    ["apply"] = R("SettingsProfileApply"), ["delete"] = R("SettingsProfileDelete"),
+                    ["export"] = R("SettingsProfileExport"), ["import"] = R("SettingsProfileImport"),
+                    ["appsOnly"] = R("SettingsQuickTrumpetAppsOnly"), ["appRules"] = R("AppRulesListHeaderText"),
+                    ["appRulesDescription"] = R("AppRulesListHeaderDesc"), ["addApp"] = R("AppRulesAddRuleButtonText"),
+                    ["appPlaceholder"] = R("AppRulesAddPlaceholderText"), ["browse"] = R("AppRulesBrowseButtonText"),
+                    ["hardMute"] = R("AppRulesHardMuteColumnText"), ["volumeBehavior"] = R("AppRulesVolumeBehaviorText"),
+                    ["targetVolume"] = R("AppRulesTargetVolumeText"), ["modeNone"] = R("AppRulesModeNoneText"),
+                    ["modeLaunch"] = R("AppRulesModeLaunchText"), ["modeLock"] = R("AppRulesModeLockText"),
+                    ["clearAllRules"] = R("AppRulesClearAllButtonText"), ["folderRules"] = R("FolderVolumeRulesHeaderText"),
+                    ["addFolder"] = R("FolderVolumeRulesAddButtonText"), ["folderRulesEmpty"] = R("FolderVolumeRulesEmptyText"),
+                    ["mediaPopup"] = R("SettingsMediaPopup"), ["mediaPopupDescription"] = R("SettingsMediaPopupDesc"),
+                    ["enableMediaPopup"] = R("SettingsEnableMediaPopup"), ["interaction"] = R("SettingsInteraction"),
+                    ["hoverDelay"] = R("SettingsHoverDelay"), ["showWhenPaused"] = R("SettingsShowWhenPaused"),
+                    ["rememberExpanded"] = R("SettingsRememberExpanded"), ["ecoMode"] = R("SettingsEcoMode"),
+                    ["ecoModeDescription"] = R("SettingsEcoModeDesc"), ["enableEcoMode"] = R("SettingsEcoModeEnable"),
+                    ["autoEcoMode"] = R("SettingsAutoEcoMode"), ["animations"] = R("SettingsAnimations"),
+                    ["smoothAnimation"] = R("SettingsSmoothVolumeAnimation"), ["animationSpeed"] = R("SettingsAnimationSpeedLabel"),
+                    ["peakMeter"] = R("SettingsPeakMeter"), ["refreshRate"] = R("SettingsRefreshRate"),
+                    ["appearance"] = R("SettingsColorPalette"), ["appearanceDescription"] = R("SettingsColorPaletteDesc"),
+                    ["dynamicAlbum"] = R("SettingsDynamicAlbumArt"), ["dynamicAlbumDescription"] = R("SettingsDynamicAlbumArtDesc"),
+                    ["enableDynamicAlbum"] = R("SettingsEnableDynamicAlbumArt"), ["presets"] = R("SettingsTabPresets"),
+                    ["customColors"] = R("SettingsCustomColors"), ["customColorsDescription"] = R("SettingsCustomColorsDesc"),
+                    ["useCustomColors"] = R("SettingsUseCustomSliderColors"), ["windowOpacity"] = R("SettingsWindowOpacity"),
+                    ["peakStyle"] = R("SettingsPeakMeterStyle"), ["randomize"] = R("SettingsRandomizeTooltip"),
+                    ["reset"] = R("SettingsResetToDefault"), ["saveTheme"] = R("SettingsSaveTheme"),
+                    ["sliderThumb"] = R("SettingsSliderThumbColor"), ["sliderFill"] = R("SettingsSliderTrackFillColor"),
+                    ["sliderTrack"] = R("SettingsSliderTrackBackgroundColor"), ["peakColor"] = R("SettingsPeakMeterColor"),
+                    ["windowColor"] = R("SettingsWindowBgColor"), ["textColor"] = R("SettingsTextColor"),
+                    ["accentColor"] = R("SettingsAccentGlowColor"), ["updates"] = R("SettingsUpdates"),
+                    ["updatesDescription"] = R("SettingsUpdatesDesc"), ["autoUpdates"] = R("AutoUpdateCheckboxText"),
+                    ["notifyFor"] = R("SettingsNotifyFor"), ["checkUpdate"] = R("SettingsCheckUpdate"),
+                    ["installUpdate"] = R("SettingsInstallUpdate"), ["privacy"] = R("PrivacyCheckboxText"),
+                    ["privacyDescription"] = R("SettingsTelemetryDesc"), ["settingsData"] = R("SettingsExportImport"),
+                    ["settingsDataDescription"] = R("SettingsExportImportDesc"), ["exportSettings"] = R("SettingsExportSettings"),
+                    ["importSettings"] = R("SettingsImportSettings"), ["about"] = R("AboutTitle"),
+                    ["diagnostics"] = R("SettingsSendDiagnostics"), ["diagnosticsDescription"] = R("SettingsSendDiagnosticsDesc"),
+                    ["github"] = R("AboutGitHub"), ["feedback"] = R("AboutFeedback"), ["bugReport"] = R("AboutReportBug"),
+                    ["monkeySound"] = R("SettingsUseMonkeyTickSound"), ["monkeySoundDescription"] = R("SettingsUseMonkeyTickSoundTip"),
+                    ["empty"] = R("WebSettingsEmpty"), ["seconds"] = R("WebSettingsSeconds"),
+                    ["profileShortcut"] = R("SettingsQuickTrumpetShortcut"),
+                    ["profileShortcutDescription"] = R("SettingsQuickTrumpetShortcutDesc"),
+                    ["changeFolder"] = R("FolderVolumeRulesBrowseButtonText"),
+                    ["deleteTheme"] = R("SettingsDeleteTitle"),
+                    ["updateChannel0"] = R("SettingsUpdateChannelAllDesc"),
+                    ["updateChannel1"] = R("SettingsUpdateChannelMinorMajorDesc"),
+                    ["updateChannel2"] = R("SettingsUpdateChannelMajorOnlyDesc"),
+                    ["updateChannel3"] = R("SettingsUpdateChannelNoneDesc"),
+                },
+                values = new
+                {
+                    runAtStartup = App.Settings.RunAtStartup,
+                    useLegacyIcon = App.Settings.UseLegacyIcon,
+                    showAppTooltips = App.Settings.ShowAppTooltips,
+                    useScrollWheelInTray = App.Settings.UseScrollWheelInTray,
+                    useGlobalMouseWheelHook = App.Settings.UseGlobalMouseWheelHook,
+                    useLogarithmicVolume = App.Settings.UseLogarithmicVolume,
+                    useVolumeTickSound = App.Settings.UseVolumeTickSound,
+                    showQuickTrumpetConfirmation = App.Settings.ShowQuickTrumpetConfirmation,
+                    mediaPopupEnabled = App.Settings.MediaPopupEnabled,
+                    mediaPopupHoverDelay = App.Settings.MediaPopupHoverDelay,
+                    showWhenPaused = !App.Settings.MediaPopupShowOnlyWhenPlaying,
+                    mediaPopupRememberExpanded = App.Settings.MediaPopupRememberExpanded,
+                    ecoMode = App.Settings.EcoMode,
+                    autoEcoMode = App.Settings.AutoEcoMode,
+                    useSmoothVolumeAnimation = App.Settings.UseSmoothVolumeAnimation,
+                    volumeAnimationSpeed = Math.Max(1, Math.Min(10, (int)Math.Round((App.Settings.VolumeAnimationSpeed - 0.02) / 0.053 + 1))),
+                    peakMeterFps = App.Settings.PeakMeterFps,
+                    useCustomSliderColors = colors?.UseCustomSliderColors ?? App.Settings.UseCustomSliderColors,
+                    peakMeterStyleIndex = colors?.PeakMeterStyleIndex ?? (int)App.Settings.PeakMeterStyle,
+                    windowBackgroundOpacity = colors?.WindowBackgroundOpacity ?? App.Settings.WindowBackgroundOpacity,
+                    useDynamicAlbumArtTheme = colors?.UseDynamicAlbumArtTheme ?? App.Settings.UseDynamicAlbumArtTheme,
+                    sliderThumbColor = colors?.SliderThumbColorHex ?? App.Settings.SliderThumbColor.ToString(),
+                    sliderTrackFillColor = colors?.SliderTrackFillColorHex ?? App.Settings.SliderTrackFillColor.ToString(),
+                    sliderTrackBackgroundColor = colors?.SliderTrackBackgroundColorHex ?? App.Settings.SliderTrackBackgroundColor.ToString(),
+                    peakMeterColor = colors?.PeakMeterColorHex ?? App.Settings.PeakMeterColor.ToString(),
+                    windowBackgroundColor = colors?.WindowBackgroundColorHex ?? App.Settings.WindowBackgroundColor.ToString(),
+                    textColor = colors?.TextColorHex ?? App.Settings.TextColor.ToString(),
+                    accentGlowColor = colors?.AccentGlowColorHex ?? App.Settings.AccentGlowColor.ToString(),
+                    isTelemetryEnabled = App.Settings.IsTelemetryEnabled,
+                    autoCheckForUpdates = App.Settings.AutoCheckForUpdates,
+                    updateChannelIndex = (int)App.Settings.UpdateNotifyChannel,
+                    useMonkeyTickSound = App.Settings.UseMonkeyTickSound,
+                },
+                collections = new
+                {
+                    hiddenApps = legacy?.HiddenApps.Select(item => new { item.DeviceId, item.AppId, item.ExeName, item.DisplayName, item.DeviceName }).Cast<object>() ?? Enumerable.Empty<object>(),
+                    hiddenDevices = App.Settings.GetHiddenDevices().Select(item => new { item.DeviceId, item.DisplayName }),
+                    hotkeys = BuildHotkeys(shortcuts),
+                    profiles = profiles?.Profiles.Select((profile, index) => new
+                    {
+                        index,
+                        profile.Name,
+                        slug = string.IsNullOrWhiteSpace(profile.Slug) ? EarTrumpet.DataModel.VolumeProfileService.ToSlug(profile.Name) : profile.Slug,
+                        details = BuildProfileDetails(profile),
+                        profile.ApplyAppsOnly,
+                        hotkey = profile.Hotkey?.ToString() ?? string.Empty,
+                    }).Cast<object>() ?? Enumerable.Empty<object>(),
+                    selectedProfileIndex = profiles?.SelectedProfile == null ? -1 : profiles.Profiles.IndexOf(profiles.SelectedProfile),
+                    appRules = App.Settings.GetAppRules().Select(rule => new { rule.ExeName, rule.DisplayName, rule.HardMuted, volumeMode = (int)rule.VolumeMode, rule.VolumePercent }),
+                    folderRules = App.Settings.GetFolderVolumeRules().Select(rule => new { rule.Id, rule.FolderPath, rule.VolumePercent }),
+                    themes = colors?.AvailableThemes.Concat(colors.CustomThemes).GroupBy(theme => theme.Name).Select(group => group.First()).Select(theme => new
+                    {
+                        theme.Name,
+                        theme.Category,
+                        theme.IsCustom,
+                        colors = new[] { ToHex(theme.ThumbColor), ToHex(theme.TrackFillColor), ToHex(theme.PeakMeterColor), ToHex(theme.WindowBackgroundColor) },
+                    }).Cast<object>() ?? Enumerable.Empty<object>(),
+                    activeThemeName = App.Settings.ActiveThemeName,
+                },
+                status = new
+                {
+                    version = about?.AboutText ?? $"v{App.PackageVersion}",
+                    health = about?.HealthSummary ?? string.Empty,
+                    updateText = updates?.UpdateStatusText ?? string.Empty,
+                    updateDetail = updates?.LastCheckText ?? string.Empty,
+                    updateAvailable = updates?.IsUpdateAvailable ?? false,
+                    updateBusy = updates?.IsDownloading ?? false,
+                    effectivePeakMeterFps = App.Settings.EffectivePeakMeterFps,
+                    ecoModeActive = App.Settings.IsEffectiveEcoMode,
+                    monkeyUnlocked = App.Settings.MonkeyTickSoundUnlocked,
+                },
+            };
+
+            PostMessage(new { type = "state", data = payload });
+        }
+
+        private T GetPage<T>() where T : SettingsPageViewModel
+        {
+            return _viewModel.Categories.SelectMany(category => category.Pages).OfType<T>().FirstOrDefault();
+        }
+
+        private static string R(string key)
+        {
+            return EarTrumpet.Properties.Resources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+        }
+
+        private static string GetString(JsonElement message, string name)
+        {
+            return message.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;
+        }
+
+        private static int GetInt32(JsonElement message, string name)
+        {
+            return message.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number ? value.GetInt32() : 0;
+        }
+
+        private static bool GetBoolean(JsonElement message, string name)
+        {
+            return message.TryGetProperty(name, out var value) &&
+                (value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False) &&
+                value.GetBoolean();
+        }
+
+        private static void SelectProfile(EarTrumpetVolumeProfilesSettingsPageViewModel profiles, JsonElement message)
+        {
+            profiles.SelectedProfile = profiles.Profiles.ElementAtOrDefault(GetInt32(message, "index"));
+        }
+
+        private static string BuildProfileDetails(EarTrumpet.DataModel.VolumeProfileService.VolumeProfile profile)
+        {
+            var deviceCount = profile.Devices?.Count ?? 0;
+            var appCount = profile.Devices?.Sum(device => device.Apps?.Count ?? 0) ?? 0;
+            return $"{deviceCount} device(s) · {appCount} app(s)";
+        }
+
+        private static string ToHex(System.Windows.Media.Color color)
+        {
+            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        }
+
+        private static object[] BuildHotkeys(EarTrumpetShortcutsPageViewModel shortcuts)
+        {
+            return new[]
+            {
+                new { id = "flyout", label = R("SettingsOpenEarTrumpetText"), description = R("SettingsOpenEarTrumpetText"), value = shortcuts?.OpenFlyoutHotkey.HotkeyText ?? App.Settings.FlyoutHotkey.ToString() },
+                new { id = "mixer", label = R("SettingsOpenMixerText"), description = R("SettingsOpenMixerText"), value = shortcuts?.OpenMixerHotkey.HotkeyText ?? App.Settings.MixerHotkey.ToString() },
+                new { id = "settings", label = R("SettingsOpenSettingsText"), description = R("SettingsOpenSettingsText"), value = shortcuts?.OpenSettingsHotkey.HotkeyText ?? App.Settings.SettingsHotkey.ToString() },
+                new { id = "volumeUp", label = R("SettingsAbsoluteVolumeUpText"), description = R("SettingsAbsoluteVolumeDesc"), value = shortcuts?.AbsoluteVolumeUpHotkey.HotkeyText ?? App.Settings.AbsoluteVolumeUpHotkey.ToString() },
+                new { id = "volumeDown", label = R("SettingsAbsoluteVolumeDownText"), description = R("SettingsAbsoluteVolumeDesc"), value = shortcuts?.AbsoluteVolumeDownHotkey.HotkeyText ?? App.Settings.AbsoluteVolumeDownHotkey.ToString() },
+                new { id = "switchDevice", label = R("SettingsSwitchDevice"), description = R("SettingsSwitchDevice"), value = shortcuts?.SwitchDeviceHotkey.HotkeyText ?? App.Settings.SwitchDeviceHotkey.ToString() },
+            }.Cast<object>().ToArray();
+        }
+
+        private static void UpdateAppRule(JsonElement message)
+        {
+            var exeName = GetString(message, "exeName");
+            var existing = App.Settings.GetAppRules().FirstOrDefault(rule => string.Equals(rule.ExeName, exeName, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                return;
+            }
+
+            var hardMuted = message.TryGetProperty("hardMuted", out _) ? GetBoolean(message, "hardMuted") : existing.HardMuted;
+            var mode = message.TryGetProperty("volumeMode", out _) ? GetInt32(message, "volumeMode") : (int)existing.VolumeMode;
+            var volume = message.TryGetProperty("volumePercent", out _) ? GetInt32(message, "volumePercent") : existing.VolumePercent;
+            App.Settings.SetAppHardMuted(exeName, hardMuted, existing.DisplayName);
+            App.Settings.SetAppVolumeRule(exeName, (AppSettings.VolumeRuleMode)Math.Max(0, Math.Min(2, mode)), Math.Max(0, Math.Min(100, volume)), existing.DisplayName);
+        }
+
+        private void SetHotkey(JsonElement message)
+        {
+            try
+            {
+                var keyCode = GetInt32(message, "keyCode");
+                var modifiers = System.Windows.Forms.Keys.None;
+                if (GetBoolean(message, "ctrlKey")) modifiers |= System.Windows.Forms.Keys.Control;
+                if (GetBoolean(message, "altKey")) modifiers |= System.Windows.Forms.Keys.Alt;
+                if (GetBoolean(message, "shiftKey")) modifiers |= System.Windows.Forms.Keys.Shift;
+                if (GetBoolean(message, "metaKey")) modifiers |= System.Windows.Forms.Keys.LWin;
+
+                var hotkey = new EarTrumpet.Interop.Helpers.HotkeyData
+                {
+                    Key = (System.Windows.Forms.Keys)keyCode,
+                    Modifiers = modifiers,
+                };
+
+                switch (GetString(message, "id"))
+                {
+                    case "flyout": App.Settings.FlyoutHotkey = hotkey; break;
+                    case "mixer": App.Settings.MixerHotkey = hotkey; break;
+                    case "settings": App.Settings.SettingsHotkey = hotkey; break;
+                    case "volumeUp": App.Settings.AbsoluteVolumeUpHotkey = hotkey; break;
+                    case "volumeDown": App.Settings.AbsoluteVolumeDownHotkey = hotkey; break;
+                    case "switchDevice": App.Settings.SwitchDeviceHotkey = hotkey; break;
+                    case string profileId when profileId.StartsWith("profile:", StringComparison.Ordinal) &&
+                        int.TryParse(profileId.Substring("profile:".Length), out var profileIndex):
+                        GetPage<EarTrumpetVolumeProfilesSettingsPageViewModel>()?.SetProfileHotkey(profileIndex, hotkey);
+                        break;
+                }
+            }
+            finally
+            {
+                ResumeHotkeys();
+                PostState();
+            }
+        }
+
+        private void ResumeHotkeys()
+        {
+            if (_isCapturingHotkey)
+            {
+                HotkeyManager.Current.Resume();
+                _isCapturingHotkey = false;
+            }
+        }
+
+        private void PostMessage(object message)
+        {
+            SettingsWebView.CoreWebView2?.PostWebMessageAsJson(JsonSerializer.Serialize(message, JsonOptions));
+        }
+
+        private void OpenLegacySettings(string pageId)
+        {
+            Trace.WriteLine($"WebSettingsWindow opening classic settings page: {pageId ?? "home"}");
+
+            try
+            {
+                if (_legacyWindow != null)
+                {
+                    _legacyWindow.RaiseWindow();
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(pageId))
+                {
+                    foreach (var category in _viewModel.Categories)
+                    {
+                        var page = category.Pages.FirstOrDefault(candidate => GetPageId(candidate) == pageId);
+                        if (page != null)
+                        {
+                            _viewModel.InvokeSearchResult(category, page);
+                            break;
+                        }
+                    }
+                }
+
+                _legacyWindow = new SettingsWindow { DataContext = _viewModel };
+                _legacyWindow.Closed += (_, __) =>
+                {
+                    _legacyWindow = null;
+                };
+
+                // SettingsWindow cloaks itself in SourceInitialized. The entrance
+                // animation is responsible for uncloaking it after Show().
+                _legacyWindow.Show();
+                WindowAnimationLibrary.BeginWindowEntranceAnimation(_legacyWindow, () => { });
+                _legacyWindow.RaiseWindow();
+
+                // This is a hand-off, not a two-window navigation stack. Closing
+                // the classic window must not silently reopen the WebView settings.
+                Close();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"WebSettingsWindow classic settings failed: {ex}");
+                _legacyWindow = null;
+                Show();
+                this.RaiseWindow();
+                PostMessage(new
+                {
+                    type = "error",
+                    message = EarTrumpet.Properties.Resources.WebSettingsOpenFailed,
+                });
+            }
+        }
+
+        private static string GetPageId(SettingsPageViewModel page)
+        {
+            return page.GetType().Name switch
+            {
+                nameof(EarTrumpetLegacySettingsPageViewModel) => "general",
+                nameof(EarTrumpetMouseSettingsPageViewModel) => "mouse",
+                nameof(EarTrumpetShortcutsPageViewModel) => "shortcuts",
+                nameof(EarTrumpetVolumeProfilesSettingsPageViewModel) => "profiles",
+                nameof(EarTrumpetAppRulesSettingsPageViewModel) => "app-rules",
+                nameof(EarTrumpetColorsSettingsPageViewModel) => "appearance",
+                nameof(EarTrumpetMediaPopupSettingsPageViewModel) => "media",
+                nameof(EarTrumpetAnimationSettingsPageViewModel) => "performance",
+                nameof(EarTrumpetUpdatesPageViewModel) => "updates",
+                nameof(EarTrumpetPrivacyPageViewModel) => "privacy",
+                nameof(EarTrumpetAboutPageViewModel) => "about",
+                _ => page.GetType().Name,
+            };
+        }
+
+        private static bool IsMigrated(SettingsPageViewModel page)
+        {
+            return page is EarTrumpetLegacySettingsPageViewModel or EarTrumpetMouseSettingsPageViewModel;
+        }
+
+        private void ShowLoadError()
+        {
+            LoadingOverlay.Visibility = Visibility.Collapsed;
+            ErrorOverlay.Visibility = Visibility.Visible;
+        }
+
+        private async void Retry_Click(object sender, RoutedEventArgs e)
+        {
+            ErrorOverlay.Visibility = Visibility.Collapsed;
+            LoadingOverlay.Visibility = Visibility.Visible;
+            _isInitialized = SettingsWebView.CoreWebView2 != null;
+            if (_isInitialized)
+            {
+                SettingsWebView.CoreWebView2.Reload();
+            }
+            else
+            {
+                await InitializeWebViewAsync();
+            }
+        }
+
+        private void OpenClassic_Click(object sender, RoutedEventArgs e)
+        {
+            OpenLegacySettings(null);
+        }
+
+        private void OnWindowStateChanged(object sender, EventArgs e)
+        {
+            var chrome = System.Windows.Shell.WindowChrome.GetWindowChrome(this);
+            if (chrome != null)
+            {
+                chrome.ResizeBorderThickness = WindowState == WindowState.Maximized
+                    ? new Thickness(0)
+                    : SystemParameters.WindowResizeBorderThickness;
+            }
+
+            if (WindowState == WindowState.Maximized)
+            {
+                WindowSizeHelper.RestrictMaximizedSizeToWorkArea(this);
+            }
+        }
+
+        private static bool IsDebugBuild()
+        {
+#if DEBUG
+            return true;
+#else
+            return false;
+#endif
+        }
+    }
+}

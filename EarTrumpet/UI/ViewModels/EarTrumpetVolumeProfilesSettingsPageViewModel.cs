@@ -181,6 +181,23 @@ namespace EarTrumpet.UI.ViewModels
             });
         }
 
+        public void SetProfileHotkey(int index, HotkeyData hotkey)
+        {
+            var profile = Profiles.ElementAtOrDefault(index);
+            if (profile == null)
+            {
+                return;
+            }
+
+            profile.Hotkey = hotkey ?? new HotkeyData();
+            _profileService.SaveProfile(profile);
+
+            if (ReferenceEquals(profile, SelectedProfile))
+            {
+                UpdateSelectedProfileHotkey();
+            }
+        }
+
         private void ApplySelectedProfile()
         {
             if (_selectedProfile == null) return;
