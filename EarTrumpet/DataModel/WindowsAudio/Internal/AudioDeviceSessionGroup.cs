@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace EarTrumpet.DataModel.WindowsAudio.Internal
 {
-    class AudioDeviceSessionGroup : BindableBase, IAudioDeviceSession, IAudioDeviceSessionInternal
+    class AudioDeviceSessionGroup : BindableBase, IAudioDeviceSession, IAudioDeviceSessionInternal, IAutomaticVolumeWrite
     {
         public IAudioDevice Parent => _sessions.Count > 0 ? _sessions[0].Parent : null;
 
@@ -140,6 +140,50 @@ namespace EarTrumpet.DataModel.WindowsAudio.Internal
                     Hide();
                 }
             }
+        }
+
+        void IAutomaticVolumeWrite.SetVolumeAutomatically(float value)
+        {
+            foreach (var session in _sessions)
+            {
+                if (session is IAutomaticVolumeWrite automatic)
+                {
+                    automatic.SetVolumeAutomatically(value);
+                }
+                else
+                {
+                    session.Volume = value;
+                }
+            }
+        }
+
+        void IAutomaticVolumeWrite.SetMuteAutomatically(bool value)
+        {
+            foreach (var session in _sessions)
+            {
+                if (session is IAutomaticVolumeWrite automatic)
+                {
+                    automatic.SetMuteAutomatically(value);
+                }
+                else
+                {
+                    session.IsMuted = value;
+                }
+            }
+        }
+
+        bool IAutomaticVolumeWrite.ConsumeAutomaticVolumeChange()
+        {
+            var wasAutomatic = false;
+            foreach (var session in _sessions)
+            {
+                if (session is IAutomaticVolumeWrite automatic)
+                {
+                    wasAutomatic |= automatic.ConsumeAutomaticVolumeChange();
+                }
+            }
+
+            return wasAutomatic;
         }
 
         public void UpdatePeakValueBackground()

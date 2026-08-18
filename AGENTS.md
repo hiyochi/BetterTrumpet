@@ -55,6 +55,13 @@ powershell -ExecutionPolicy Bypass -File build-portable.ps1
 - Microsoft Store builds must pass `/p:Channel=Store`; without it, GitVersion appends the post-tag commit count (for example `3.2.0.3`) instead of producing the required four-part Store version `3.2.0.0`.
 - Packaged/MSIX runs (`App.HasIdentity == true`) must not initialize or expose the GitHub/Inno updater. Microsoft Store owns updates for those installations; unpackaged GitHub/Chocolatey/Winget builds keep the existing updater.
 
+## User-Led Validation
+
+- The agent may execute `docs/DEV-BUILD-RUN.md` itself when requested or needed: close BetterTrumpet, build the Debug x86 binary, relaunch it, verify the active executable path, run `--ping`, and inspect the startup log.
+- The user performs the functional/manual checks in the UI and reports the result. Do not claim that those checks passed unless the user confirmed them.
+- Use `docs/DEV-BUILD-RUN.md` as the source of truth for the Debug x86 close/build/launch procedure. Its local GitVersion bypass is for development only; public Release builds still follow the Release procedure above.
+- For every code change, provide a short, exact manual validation guide identifying the scenario, expected result, and log excerpt to provide if it fails.
+
 ## Workbench
 
 Use `python tools/bettertrumpet_workbench.py` for repo-aware routing and validation.
@@ -126,7 +133,7 @@ EarTrumpet/
 
 - `Left Ctrl` at startup forces onboarding
 - `Left Shift` at startup forces changelog
-- `HasShownFirstRun` is presence-based. Deleting `HKCU\Software\EarTrumpet\hasShownFirstRun` forces onboarding; writing `false` is not the same thing.
+- `HasShownFirstRun` is presence-based. Deleting `HKCU\Software\EarTrumpet\hasShownFirstRun` forces onboarding; writing `false` is not the same thing. The key is written when onboarding completes (or is skipped), not when the window is first shown, so a crash during first-run still reopens onboarding.
 - The tray icon can become active before all startup work is finished. Keep tray icon code null-safe.
 
 ## Onboarding
@@ -152,11 +159,12 @@ Notes:
 
 Recent work in `master` includes:
 
-- Settings WebView2 redesign: the tray menu exposes both `Open settings (new)` for the React/Fluent UI window and `Open settings` for the existing WPF window. The React window now covers all built-in settings pages, including shortcuts, QuickTrumpet profiles, app/folder rules, themes, media, performance, updates, privacy, and diagnostics. It uses `@animateicons/react` icons and integrated window controls. The settings window explicitly overrides the shared dialog style with `AllowsTransparency=False` and uses the standard hardware-accelerated `WebView2`; DWM Acrylic provides translucency. Do not combine the standard HWND-backed `WebView2` with `AllowsTransparency=True`, because mouse input becomes nonfunctional; the composition control avoids that input bug but scrolls noticeably less smoothly in this layered window. Add-on-defined pages retain the classic-window fallback. `EarTrumpet/SettingsWeb` is built with npm during MSBuild and copied to `Build/<Configuration>/SettingsWeb`; Node/npm are build-time dependencies, while the WebView2 runtime is required at runtime.
+- Settings WebView2 redesign (this worktree): the tray menu exposes both `Open settings (new)` for the React/Fluent UI window and `Open settings` for the existing WPF window. The React window now covers all built-in settings pages, including shortcuts, QuickTrumpet profiles, app/folder rules, themes, media, performance, updates, privacy, and diagnostics. It uses `@animateicons/react` icons and integrated window controls. The settings window explicitly overrides the shared dialog style with `AllowsTransparency=False` and uses the standard hardware-accelerated `WebView2`; DWM Acrylic provides translucency. Do not combine the standard HWND-backed `WebView2` with `AllowsTransparency=True`, because mouse input becomes nonfunctional; the composition control avoids that input bug but scrolls noticeably less smoothly in this layered window. Add-on-defined pages retain the classic-window fallback. `EarTrumpet/SettingsWeb` is built with npm during MSBuild and copied to `Build/<Configuration>/SettingsWeb`; Node/npm are build-time dependencies, while the WebView2 runtime is required at runtime.
 - When the WebView2 settings opens `SettingsWindow` directly, it must call `WindowAnimationLibrary.BeginWindowEntranceAnimation` after `Show()`. The classic window cloaks itself during `SourceInitialized` and otherwise exists but remains invisible.
 - Transparent WPF overlays above `SettingsWebView` must set `IsHitTestVisible="False"` unless they contain active controls. A transparent loading grid otherwise makes the rendered React UI look ready while intercepting every click.
 - `WebSettingsWindow` is layered (`AllowsTransparency=True`), so it must use `WebView2CompositionControl`; the HWND-backed `WebView2` can render while losing pointer input in that host. Keep its chrome at `CaptionHeight=0` and its minimize/close controls inside React.
-
+- Imported Cursor fixes for #33/#40/#36/#39/#30/#41/#43: focus-lost attenuation supports a configurable fade and app scope; mixer size persists; default-device changes can notify; tray-icon choice lives under Appearance; folder-rule empty states keep explicitly added profiles visible; session teardown is idempotent; icon callbacks are dispatcher-safe; and manual diagnostics warn first, stage files for review, sanitize user-folder paths, and honor stored telemetry consent. Telemetry opt-out does not disable update checks; they are independent.
+- GitHub #37 remains handled by `36cb0e30` (`fix: reconcile stale sessions after default switch`). We retained only the independent .NET 8 WinRT HSTRING/IInspectable ABI fix required for per-app endpoint routing; Cursor's duplicate-session/reconciliation and RDP persistence refactors were excluded. #7 (RDP volume persistence) remains an audit item and is not implemented.
 - Folder launch-volume defaults: App rules now include custom folder defaults that apply a chosen starting volume to desktop sessions whose executable path is under the configured folder, recursively. The deepest matching folder wins. Explicit app `Set at launch` and `Lock` volume rules remain higher priority; hard mute still composes with a folder default. Folder-default settings export and import with the rest of the profile.
 - CLI `set-default` now switches and verifies both Windows `Console` and `Multimedia` playback roles. COM failures or unchanged endpoints return an error instead of a false `ok: true`; `GetDefaultDevice(role)` must query the requested role rather than always reading `Multimedia`.
 - The flyout uses tray icon bounds only to select the target monitor; its position remains anchored to that monitor's taskbar edge. It enters the topmost band before opening animations begin so another always-on-top window cannot cover it mid-animation.
@@ -190,6 +198,7 @@ Recent work in `master` includes:
 - Hard mute (persistent per-app mute): apps can be flagged "keep muted" from the flyout app focus menu. A hard-muted app is force-muted every time one of its audio sessions appears, including after relaunch or reboot. Keyed by `ExeName` (stable across restarts, unlike AppId/session ids). Stored in `AppSettings` as `HardMutedAppEntriesJson`, applied in `DeviceViewModel.AddSession` and re-applied via the `HardMutedAppsChanged` event (`DeviceViewModel.ApplyHardMuteState`). Toggle lives in `FocusedAppItemViewModel` as a checkable menu item; localized keys `HardMuteAppButtonText`/`HardMuteAppMenuText` (EN/FR). Included in settings export/import via the `HardMutedAppsJson` passthrough. WASAPI note: an app with no open audio session cannot be pre-muted because Windows exposes no per-app volume object until first playback; hard mute takes effect the moment the session is created. Disabling hard mute leaves the current mute state untouched so the user stays in control.
 - Per-app volume rules are editable live from both the flyout and Settings. The Settings card exposes only `Set at launch` and `Lock`; removing the rule replaces the former visible `None`/`Free` choice. App-rule changes reconcile in place while Settings is open so sliders and focus are preserved.
 - 3.1.2 (in development): monitored recording-device sessions from Windows "Listen to this device" are no longer collapsed into one system-sounds app row when WASAPI exposes distinct grouping parameters. `AudioDeviceSessionCollection.AddSystemSoundsSession()` separates system-sounds session groups by `GroupingParam`, and `AppItemViewModel.DoesGroupWith()` keeps system-sounds rows distinct by session id so each listened-to device can be adjusted independently from the main flyout.
+- Default-device session reconciliation: when Windows leaves an old per-app session on the previous endpoint after a system-default switch, a session arriving on the current default endpoint hides matching implicit-route sessions on every other endpoint. Explicit per-app persisted routes are left untouched, and the reconciliation also covers sessions previously held in `_movedSessions` so switching A -> B -> A does not recreate stale duplicates.
 - 3.2.0 adds a hidden monkey volume-sound easter egg: four clicks on the BetterTrumpet logo in About unlock and enable three cleaned PCM/WAV clips selected by volume (`monkeylow.wav` at 0-20, `monkeymid.wav` above 20 and below 85, `monkeyhigh.wav` at 85-100), then reveals a persistent toggle on the About page. Low is sourced from `monkeylow.mp3`, mid from the shorter `monkeymid2.mp3`, and high keeps its existing source. The normal tick remains independently disableable in mouse/volume settings. `MonkeyTickSoundUnlocked`, `UseMonkeyTickSound`, and `UseVolumeTickSound` participate in settings export/import. `MonkeySoundPlayer` alternates two channels, overlaps repetitions by 75 ms, and crossfades range changes over 40 ms. Audio cleanup uses a conservative `-50 dB` threshold and only compresses silences longer than 40 ms, preserving quiet monkey details while removing MP3 padding and long gaps.
 - The post-update changelog is now a compact confirmation window showing the installed version, with `OK` and a localized link to `https://bettertrumpet.com/changelog`. It no longer downloads or renders full release notes inside the app.
 - The tray context menu is anchored to the monitor work area rather than the click's Y coordinate. After opening, its popup HWND is clamped with an 8-DIP gap from the taskbar/work-area edges, preventing the menu from overlapping the taskbar across bottom, top, left, and right taskbar layouts and DPI scales.
@@ -359,8 +368,11 @@ Tray menu primary icons can use local Phosphor Bold geometries from `UI/Helpers/
 - Portable logs: `config\logs` next to the executable
 - Log rotation: `bettertrumpet-*.log`, max 5 files of 5 MB
 - Manual export: Settings -> About -> `TroubleshootEarTrumpetText`
-- Manual export creates `BetterTrumpet-diagnostics-*.zip`, opens Explorer on it, and copies the path to the clipboard
-- Crash handling creates a diagnostic bundle with the exception and recent logs, without taking a live audio snapshot to avoid cascading failures
+- Manual export warns that the bundle can contain app/device names and logs, writes a staging folder for review/edit, then zips on confirmation
+- Exported text replaces `C:\Users\<name>\...` with `%USERPROFILE%` / `%APPDATA%` / `%LOCALAPPDATA%` / `%TEMP%`
+- Crash handling creates a diagnostic bundle immediately (no review UI) with the exception and recent logs, without taking a live audio snapshot to avoid cascading failures
+- Crash dialogs are localized (EN/FR) and show a sanitized path
+- Sentry initializes only after stored telemetry consent or a completed first-run; GitHub update checks wait until `hasShownFirstRun` exists. Telemetry opt-out does not disable updates.
 
 The diagnostic zip can contain app names, device names, process IDs, endpoint IDs, settings state, and recent logs. Keep this clear in user-facing copy when asking users to attach it.
 
@@ -378,6 +390,9 @@ The diagnostic zip can contain app names, device names, process IDs, endpoint ID
 10. For startup/run entries on .NET 8, do not use `Assembly.GetExecutingAssembly().Location`; it points to `BetterTrumpet.dll`. Use `Environment.ProcessPath` for `BetterTrumpet.exe`.
 11. SMTC's manager-level `GetCurrentSession()` can switch between Spotify and browser tabs between calls. This remains a known baseline limitation after the experimental fix was reverted; isolate any future behavioral fix from visual redesign work.
 12. A custom window background must update both `Background` and `FlyoutBackground` refs. Keep `FlyoutBackground` translucent (`color/opacity/1`) so changing only `AcrylicColor_Flyout` does not leave the content painted with the system accent or remove the acrylic blur.
+13. Telemetry (`IsTelemetryEnabled`) only gates Sentry. GitHub release checks are a separate `AutoCheckForUpdates` / `UpdateNotifyChannel` path.
+14. #7 remains unaudited: do not claim RDP volume persistence is fixed until reconnect identity and per-session restoration are validated on a real RDP path.
+15. The WinRT audio-policy factory is projected as `InterfaceIsIUnknown` with the three explicit `IInspectable` ABI slots. Removing those slots can crash the app during session enumeration; do not revert to `InterfaceIsIInspectable` on .NET 8.
 
 ## Validation Status
 

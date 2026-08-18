@@ -265,7 +265,7 @@
     <value>Règles par application</value>
   </data>
   <data name="AppRulesSettingsPageSubtitle" xml:space="preserve">
-    <value>Applications gardées en sourdine ou dont le volume est mémorisé</value>
+    <value>Profils d'application avec des comportements indépendants</value>
   </data>
   <data name="FolderVolumeRulesHeaderText" xml:space="preserve">
     <value>Volumes par dossier</value>
@@ -292,19 +292,19 @@
     <value>Volume de départ</value>
   </data>
   <data name="AppRulesListHeaderText" xml:space="preserve">
-    <value>Règles enregistrées</value>
+    <value>Profils d'application</value>
   </data>
   <data name="AppRulesListHeaderDesc" xml:space="preserve">
-    <value>Ces règles sont réappliquées à chaque lancement de l'application et survivent au redémarrage.</value>
+    <value>Un profil reste ici jusqu'à sa suppression. Chaque comportement peut être activé indépendamment.</value>
   </data>
   <data name="AppRulesAddHeaderText" xml:space="preserve">
-    <value>Ajouter une application</value>
+    <value>Ajouter un profil d'application</value>
   </data>
   <data name="AppRulesAddRuleButtonText" xml:space="preserve">
     <value>Ajouter une règle</value>
   </data>
   <data name="AppRulesAddHeaderDesc" xml:space="preserve">
-    <value>Saisissez un nom d'exécutable ou parcourez pour créer une règle sans que l'application soit lancée.</value>
+    <value>L'ajout enregistre uniquement l'application ici. Choisissez ensuite les comportements souhaités.</value>
   </data>
   <data name="AppRulesAddButtonText" xml:space="preserve">
     <value>Ajouter</value>
@@ -322,7 +322,7 @@
     <value>Nom de l'exécutable, par exemple steam.exe</value>
   </data>
   <data name="AppRulesEmptyText" xml:space="preserve">
-    <value>Aucune règle pour l'instant. Utilisez le menu d'une application dans le volet, ou ajoutez-en une ci-dessous.</value>
+    <value>Aucun profil d'application. Ajoutez-en un ici ou utilisez le menu d'une application dans le volet.</value>
   </data>
   <data name="AppRulesHardMuteColumnText" xml:space="preserve">
     <value>Garder en sourdine</value>
@@ -338,6 +338,9 @@
   </data>
   <data name="AppRulesModeNoneText" xml:space="preserve">
     <value>Aucune règle</value>
+  </data>
+  <data name="AppRulesNoActiveActionsText" xml:space="preserve">
+    <value>Aucun comportement activé. Ce profil restera enregistré jusqu'à sa suppression.</value>
   </data>
   <data name="AppRulesModeLaunchText" xml:space="preserve">
     <value>Au lancement</value>
@@ -358,7 +361,7 @@
     <value>arrêtée</value>
   </data>
   <data name="AppRulesRemoveButtonText" xml:space="preserve">
-    <value>Supprimer cette règle</value>
+    <value>Supprimer ce profil d'application</value>
   </data>
   <data name="AppRulesClearAllButtonText" xml:space="preserve">
     <value>Tout effacer</value>
@@ -1341,7 +1344,58 @@ Voulez-vous ouvrir [https://eartrumpet.app/jmp/fixfonts] maintenant?</value>
 
 {0}
 
-Joignez ce fichier .zip lorsque vous signalez un problème BetterTrumpet.</value>
+Relisez le zip avant de le partager. Il peut encore contenir des noms d'applications, de périphériques, des identifiants de processus et d'autres détails de votre configuration audio.</value>
+  </data>
+  <data name="DiagnosticsExportConfirmTitle" xml:space="preserve">
+    <value>Exporter le rapport de diagnostic</value>
+  </data>
+  <data name="DiagnosticsExportConfirmMessage" xml:space="preserve">
+    <value>Le rapport de diagnostic peut contenir des noms d'applications, de périphériques, des identifiants de processus, des identifiants de points de terminaison audio Windows, l'état des paramètres et les journaux récents de BetterTrumpet.
+
+Les chemins vers les dossiers utilisateur sont remplacés par des variables d'environnement, mais vous devriez quand même relire les fichiers avant de les partager.
+
+Créer le rapport maintenant ?</value>
+  </data>
+  <data name="DiagnosticsExportReviewTitle" xml:space="preserve">
+    <value>Relire les fichiers de diagnostic</value>
+  </data>
+  <data name="DiagnosticsExportReviewMessage" xml:space="preserve">
+    <value>Les fichiers de diagnostic sont ouverts dans l'Explorateur. Relisez-les ou modifiez-les, puis cliquez sur OK pour les regrouper dans un zip.
+
+Cliquez sur Annuler pour laisser les fichiers non compressés afin de continuer à les modifier.</value>
+  </data>
+  <data name="DiagnosticsExportStagingKeptMessage" xml:space="preserve">
+    <value>Les fichiers de diagnostic ont été laissés non compressés pour que vous puissiez les relire :
+
+{0}
+
+Le chemin du dossier a été copié dans le presse-papiers.</value>
+  </data>
+  <data name="CrashDialogTitle" xml:space="preserve">
+    <value>BetterTrumpet</value>
+  </data>
+  <data name="CrashDialogFatalBody" xml:space="preserve">
+    <value>BetterTrumpet a rencontré une erreur critique et doit fermer.
+
+Le rapport a été enregistré dans les logs.
+
+Détails : {0}{1}</value>
+  </data>
+  <data name="CrashDialogNonFatalBody" xml:space="preserve">
+    <value>BetterTrumpet a rencontré un problème.
+
+L'application va tenter de continuer.
+
+Détails : {0}{1}</value>
+  </data>
+  <data name="CrashDialogDiagnosticPath" xml:space="preserve">
+    <value>
+
+Un rapport de diagnostic a été créé et son chemin a été copié dans le presse-papiers :
+{0}</value>
+  </data>
+  <data name="CrashDialogUnknownError" xml:space="preserve">
+    <value>Erreur inconnue</value>
   </data>
   <data name="DiagnosticsExportFailedTitle" xml:space="preserve">
     <value>Échec de l'export diagnostic</value>
@@ -1817,5 +1871,65 @@ Détails : {0}</value>
   </data>
   <data name="AutoUpdateCheckboxText" xml:space="preserve">
     <value>Rechercher automatiquement les mises à jour</value>
+  </data>
+  <data name="SettingsDeviceChangeNotify" xml:space="preserve">
+    <value>Changement de périphérique</value>
+  </data>
+  <data name="SettingsDeviceChangeNotifyDesc" xml:space="preserve">
+    <value>Notification quand la sortie audio par défaut change</value>
+  </data>
+  <data name="SettingsNotifyOnDeviceChange" xml:space="preserve">
+    <value>Afficher une notification quand le périphérique par défaut change</value>
+  </data>
+  <data name="DefaultDeviceChangedNotificationTitle" xml:space="preserve">
+    <value>Périphérique de lecture</value>
+  </data>
+  <data name="DefaultDeviceChangedNotificationFormat" xml:space="preserve">
+    <value>Utilisation de {0}</value>
+  </data>
+  <data name="SettingsFocusLostVolume" xml:space="preserve">
+    <value>Perte de focus</value>
+  </data>
+  <data name="SettingsFocusLostVolumeDesc" xml:space="preserve">
+    <value>Couper ou baisser les applications quand une autre fenêtre est au premier plan</value>
+  </data>
+  <data name="SettingsUseFocusLostVolume" xml:space="preserve">
+    <value>Baisser le volume des applications qui perdent le focus</value>
+  </data>
+  <data name="SettingsFocusLostAttenuate" xml:space="preserve">
+    <value>Volume en arrière-plan (0 % coupe le son)</value>
+  </data>
+  <data name="SettingsFocusLostAttenuateHint" xml:space="preserve">
+    <value>Les règles verrouillées et « garder en sourdine » restent intactes. Le volume d'origine revient quand l'application reprend le focus.</value>
+  </data>
+  <data name="SettingsFocusLostFade" xml:space="preserve">
+    <value>Durée du fondu</value>
+  </data>
+  <data name="SettingsFocusLostFadeHint" xml:space="preserve">
+    <value>0 ms est instantané. La même durée est utilisée pour restaurer le volume d'origine.</value>
+  </data>
+  <data name="SettingsFocusLostScope" xml:space="preserve">
+    <value>Applications concernées</value>
+  </data>
+  <data name="SettingsFocusLostAllApps" xml:space="preserve">
+    <value>Toutes les applications</value>
+  </data>
+  <data name="SettingsFocusLostSelectedApps" xml:space="preserve">
+    <value>Uniquement les applications sélectionnées dans les règles</value>
+  </data>
+  <data name="SettingsFocusLostSelectedHint" xml:space="preserve">
+    <value>Utilisez la case « Perte de focus » d'une règle ou le menu de l'application pour la sélectionner.</value>
+  </data>
+  <data name="AppRulesFocusLostColumnText" xml:space="preserve">
+    <value>Perte de focus</value>
+  </data>
+  <data name="FocusLostAppButtonText" xml:space="preserve">
+    <value>Comportement à la perte de focus</value>
+  </data>
+  <data name="FocusLostAppMenuText" xml:space="preserve">
+    <value>Inclure cette application à la perte de focus</value>
+  </data>
+  <data name="FocusLostAppMenuDisableText" xml:space="preserve">
+    <value>Exclure cette application à la perte de focus</value>
   </data>
 </root>
