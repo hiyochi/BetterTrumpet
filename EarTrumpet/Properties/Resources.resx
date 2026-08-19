@@ -1887,6 +1887,12 @@ Details: {0}</value>
   <data name="WebSettingsClearShortcut" xml:space="preserve">
     <value>Clear shortcut</value>
   </data>
+  <data name="WebSettingsDeviceShortcuts" xml:space="preserve">
+    <value>Device shortcuts</value>
+  </data>
+  <data name="WebSettingsDeviceShortcutDesc" xml:space="preserve">
+    <value>Switch to this device</value>
+  </data>
   <data name="WebSettingsEmpty" xml:space="preserve">
     <value>Nothing configured yet.</value>
   </data>

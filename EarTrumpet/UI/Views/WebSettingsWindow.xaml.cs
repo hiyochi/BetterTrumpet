@@ -141,7 +141,13 @@ namespace EarTrumpet.UI.Views
                 };
 
                 _isInitialized = true;
-                core.Navigate($"https://{SettingsHostName}/index.html");
+                // The virtual-host mapping is served through Chromium's HTTP
+                // cache, which can keep serving a stale index.html after a
+                // rebuild (the page URL itself never changes). A version query
+                // busts that entry; the hashed asset filenames inside the page
+                // handle caching of the JS/CSS bundles.
+                var bundleStamp = File.Exists(indexPath) ? File.GetLastWriteTimeUtc(indexPath).Ticks : 0;
+                core.Navigate($"https://{SettingsHostName}/index.html?v={bundleStamp}");
             }
             catch (Exception ex)
             {
@@ -583,6 +589,7 @@ namespace EarTrumpet.UI.Views
                     ["focusLostScope"] = R("SettingsFocusLostScope"), ["focusLostAllApps"] = R("SettingsFocusLostAllApps"),
                     ["focusLostSelectedApps"] = R("SettingsFocusLostSelectedApps"), ["focusLostSelectedHint"] = R("SettingsFocusLostSelectedHint"),
                     ["recordShortcut"] = R("WebSettingsRecordShortcut"), ["clearShortcut"] = R("WebSettingsClearShortcut"),
+                    ["deviceShortcuts"] = R("WebSettingsDeviceShortcuts"), ["deviceShortcutDesc"] = R("WebSettingsDeviceShortcutDesc"),
                     ["profileCapture"] = R("SettingsSaveCurrentVolumes"), ["profileCaptureDescription"] = R("SettingsSaveCurrentVolumesDesc"),
                     ["profileName"] = R("SettingsThemeNamePlaceholder"), ["allDevices"] = R("SettingsQuickTrumpetAllDevices"),
                     ["confirmation"] = R("SettingsQuickTrumpetConfirmation"), ["savedProfiles"] = R("SettingsSavedProfiles"),
@@ -679,6 +686,13 @@ namespace EarTrumpet.UI.Views
                     hiddenApps = legacy?.HiddenApps.Select(item => new { item.DeviceId, item.AppId, item.ExeName, item.DisplayName, item.DeviceName }).Cast<object>() ?? Enumerable.Empty<object>(),
                     hiddenDevices = App.Settings.GetHiddenDevices().Select(item => new { item.DeviceId, item.DisplayName }),
                     hotkeys = BuildHotkeys(shortcuts),
+                    deviceHotkeys = GetPlaybackDevices()?.Select(device => new
+                    {
+                        id = "device:" + device.Id,
+                        label = device.DisplayName,
+                        description = R("WebSettingsDeviceShortcutDesc"),
+                        value = App.Settings.GetDeviceHotkey(device.Id)?.ToString()
+                    }).ToArray() ?? Array.Empty<object>(),
                     profiles = profiles?.Profiles.Select((profile, index) => new
                     {
                         index,
@@ -727,6 +741,11 @@ namespace EarTrumpet.UI.Views
             return EarTrumpet.Properties.Resources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
         }
 
+        private static System.Collections.ObjectModel.ObservableCollection<EarTrumpet.DataModel.Audio.IAudioDevice> GetPlaybackDevices()
+        {
+            return (Application.Current as App)?.AudioDeviceManager?.Devices;
+        }
+
         private static string GetString(JsonElement message, string name)
         {
             return message.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;
@@ -763,7 +782,7 @@ namespace EarTrumpet.UI.Views
 
         private static object[] BuildHotkeys(EarTrumpetShortcutsPageViewModel shortcuts)
         {
-            return new[]
+            return new object[]
             {
                 new { id = "flyout", label = R("SettingsOpenEarTrumpetText"), description = R("SettingsOpenEarTrumpetText"), value = shortcuts?.OpenFlyoutHotkey.HotkeyText ?? App.Settings.FlyoutHotkey.ToString() },
                 new { id = "mixer", label = R("SettingsOpenMixerText"), description = R("SettingsOpenMixerText"), value = shortcuts?.OpenMixerHotkey.HotkeyText ?? App.Settings.MixerHotkey.ToString() },
@@ -771,7 +790,7 @@ namespace EarTrumpet.UI.Views
                 new { id = "volumeUp", label = R("SettingsAbsoluteVolumeUpText"), description = R("SettingsAbsoluteVolumeDesc"), value = shortcuts?.AbsoluteVolumeUpHotkey.HotkeyText ?? App.Settings.AbsoluteVolumeUpHotkey.ToString() },
                 new { id = "volumeDown", label = R("SettingsAbsoluteVolumeDownText"), description = R("SettingsAbsoluteVolumeDesc"), value = shortcuts?.AbsoluteVolumeDownHotkey.HotkeyText ?? App.Settings.AbsoluteVolumeDownHotkey.ToString() },
                 new { id = "switchDevice", label = R("SettingsSwitchDevice"), description = R("SettingsSwitchDevice"), value = shortcuts?.SwitchDeviceHotkey.HotkeyText ?? App.Settings.SwitchDeviceHotkey.ToString() },
-            }.Cast<object>().ToArray();
+            };
         }
 
         private static void UpdateAppRule(JsonElement message)
@@ -817,6 +836,10 @@ namespace EarTrumpet.UI.Views
                     case "volumeUp": App.Settings.AbsoluteVolumeUpHotkey = hotkey; break;
                     case "volumeDown": App.Settings.AbsoluteVolumeDownHotkey = hotkey; break;
                     case "switchDevice": App.Settings.SwitchDeviceHotkey = hotkey; break;
+                    case string deviceId when deviceId.StartsWith("device:"):
+                        var id = deviceId.Substring(7);
+                        App.Settings.SetDeviceHotkey(id, hotkey);
+                        break;
                     case string profileId when profileId.StartsWith("profile:", StringComparison.Ordinal) &&
                         int.TryParse(profileId.Substring("profile:".Length), out var profileIndex):
                         GetPage<EarTrumpetVolumeProfilesSettingsPageViewModel>()?.SetProfileHotkey(profileIndex, hotkey);

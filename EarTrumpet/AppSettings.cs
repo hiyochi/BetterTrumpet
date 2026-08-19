@@ -315,6 +315,20 @@ namespace EarTrumpet
             }
         }
 
+        public HotkeyData GetDeviceHotkey(string deviceId)
+        {
+            if (string.IsNullOrEmpty(deviceId)) return new HotkeyData { };
+            return _settings.Get("DeviceHotkey:" + deviceId, new HotkeyData { });
+        }
+
+        public void SetDeviceHotkey(string deviceId, HotkeyData hotkey)
+        {
+            if (string.IsNullOrEmpty(deviceId)) return;
+            HotkeyManager.Current.Unregister(GetDeviceHotkey(deviceId));
+            _settings.Set("DeviceHotkey:" + deviceId, hotkey);
+            HotkeyManager.Current.Register(hotkey);
+        }
+
         public bool UseLegacyIcon
         {
             get
