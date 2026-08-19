@@ -262,3 +262,82 @@
 .classic-button-polished:active {
   transform: scale(0.97);
 }
+
+/* --- Hotkey keycaps ------------------------------------------------ */
+/* Recorded shortcuts render as keycap chips instead of plain button
+   text. The chips live inside the record Button so the element stays
+   mounted during capture (focus and keydown flow are preserved). */
+
+.hotkey-button-polished {
+  font-family: inherit;
+}
+
+.hotkey-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.hotkey-chips kbd {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #edeff3;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom-color: rgba(0, 0, 0, 0.45);
+  border-radius: 7px;
+  padding: 4px 7px 5px;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.hotkey-button-polished:hover .hotkey-chips kbd {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotkey-chips kbd {
+    transition: none;
+  }
+}
+
+/* --- List rows with badges ----------------------------------------- */
+
+.list-row-copy {
+  min-width: 0;
+}
+
+.list-row-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.badge-default-polished {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #c6cdd4;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 2px 9px 3px;
+}
+
+.badge-default-polished::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #9b7bea;
+}

@@ -74,6 +74,7 @@ export interface HotkeySetting {
 export interface DeviceHotkeySetting extends HotkeySetting {
   deviceId: string;
   deviceName: string;
+  isDefault: boolean;
 }
 
 export interface VolumeProfile {

@@ -97,8 +97,8 @@ function SelectRow({ styles, label, description, value, options, onChange }: { s
   return <div className={`${styles.settingRow} setting-row-polished`}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><select className={`${styles.select} select-polished`} value={value} aria-label={label} onChange={event => onChange(Number(event.currentTarget.value))}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>;
 }
 
-function ListRow({ styles, title, meta, actions }: { styles: Styles; title: string; meta?: string; actions: ReactNode }) {
-  return <div className={styles.listRow}><div><Text weight="semibold">{title}</Text>{meta && <Text className={styles.listMeta} size={200}>{meta}</Text>}</div><div className={styles.rowActions}>{actions}</div></div>;
+function ListRow({ styles, title, meta, badge, actions }: { styles: Styles; title: string; meta?: string; badge?: ReactNode; actions: ReactNode }) {
+  return <div className={styles.listRow}><div className="list-row-copy"><div className="list-row-title"><Text weight="semibold">{title}</Text>{badge}</div>{meta && <Text className={styles.listMeta} size={200}>{meta}</Text>}</div><div className={styles.rowActions}>{actions}</div></div>;
 }
 
 function Empty({ payload, styles }: { payload: SettingsPayload; styles: Styles }) { return <Text className={styles.empty}>{t(payload, "empty", "Nothing configured yet.")}</Text>; }
@@ -139,27 +139,32 @@ function ShortcutsPage({ payload, styles }: PageProps) {
     window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: clear ? 0 : event.keyCode, ctrlKey: clear ? false : event.ctrlKey, altKey: clear ? false : event.altKey, shiftKey: clear ? false : event.shiftKey, metaKey: clear ? false : event.metaKey });
     setRecording(null);
   };
-  const getValue = (hotkey: { id: string; value: string; deviceName?: string }) => hotkey.value || t(payload, "recordShortcut", "Record");
-  return <Section icon={<KeyboardIcon size={18} />} title={t(payload, "shortcuts", "Keyboard shortcuts")} styles={styles}>
-    <div className={styles.list}>
-      {payload.collections.hotkeys.map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} meta={hotkey.description} actions={<>
-        <Button appearance={recording === hotkey.id ? "primary" : "secondary"} onClick={() => start(hotkey.id)} onKeyDown={event => keyDown(event, hotkey.id)}>
-          {recording === hotkey.id ? t(payload, "recordShortcut", "Press a shortcut…") : hotkey.value || t(payload, "recordShortcut", "Record")}
-        </Button>
-        {hotkey.value && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id: hotkey.id, keyCode: 0 })} />}
-      </>}/>)}
-    </div>
-    {payload.collections.deviceHotkeys.length > 0 && <Section icon={<Volume2Icon size={18} />} title={t(payload, "deviceShortcuts", "Device shortcuts")} styles={styles}>
+  const HotkeyButton = ({ id, value }: { id: string; value: string }) => (
+    <Button className={value && recording !== id ? "hotkey-button-polished" : undefined} appearance={recording === id ? "primary" : "secondary"} onClick={() => start(id)} onKeyDown={event => keyDown(event, id)}>
+      {recording === id ? t(payload, "recordShortcut", "Press a shortcut…") : value ? <span className="hotkey-chips">{value.split("+").map((part, index) => <kbd key={index}>{part.trim()}</kbd>)}</span> : t(payload, "recordShortcut", "Record")}
+    </Button>
+  );
+  const ClearButton = ({ id }: { id: string }) => (
+    <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: 0 })} />
+  );
+  return <>
+    <Section icon={<KeyboardIcon size={18} />} title={t(payload, "shortcuts", "Keyboard shortcuts")} styles={styles}>
       <div className={styles.list}>
-        {payload.collections.deviceHotkeys.map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} meta={t(payload, "deviceShortcutDesc", "Switch to this device")} actions={<>
-          <Button appearance={recording === hotkey.id ? "primary" : "secondary"} onClick={() => start(hotkey.id)} onKeyDown={event => keyDown(event, hotkey.id)}>
-            {recording === hotkey.id ? t(payload, "recordShortcut", "Press a shortcut…") : getValue(hotkey)}
-          </Button>
-          {hotkey.value && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id: hotkey.id, keyCode: 0 })} />}
-        </>}/>)}
+        {payload.collections.hotkeys.map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} meta={hotkey.description} actions={<>
+          <HotkeyButton id={hotkey.id} value={hotkey.value} />
+          {hotkey.value && <ClearButton id={hotkey.id} />}
+        </>} />)}
+      </div>
+    </Section>
+    {payload.collections.deviceHotkeys.length > 0 && <Section icon={<Volume2Icon size={18} />} title={t(payload, "deviceShortcuts", "Device shortcuts")} description={t(payload, "deviceShortcutsDesc", "Switch the default playback device with one shortcut.")} styles={styles}>
+      <div className={styles.list}>
+        {[...payload.collections.deviceHotkeys].sort((a, b) => Number(b.isDefault) - Number(a.isDefault)).map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} badge={hotkey.isDefault ? <span className="badge-default-polished">{t(payload, "defaultDeviceBadge", "Default")}</span> : undefined} actions={<>
+          <HotkeyButton id={hotkey.id} value={hotkey.value} />
+          {hotkey.value && <ClearButton id={hotkey.id} />}
+        </>} />)}
       </div>
     </Section>}
-  </Section>;
+  </>;
 }
 
 function ProfileHotkey({ payload, styles, profileIndex, value }: { payload: SettingsPayload; styles: Styles; profileIndex: number; value: string }) {
