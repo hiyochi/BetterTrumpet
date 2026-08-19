@@ -1,17 +1,17 @@
 .elastic-slider {
   display: grid;
-  grid-template-columns: minmax(150px, 190px) 46px;
+  grid-template-columns: minmax(160px, 200px) 50px;
   align-items: center;
-  gap: 10px;
-  min-width: 214px;
+  gap: 12px;
+  min-width: 220px;
 }
 
 .elastic-slider__control {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   width: 100%;
-  min-height: 34px;
+  min-height: 38px;
   touch-action: none;
   user-select: none;
 }
@@ -21,23 +21,31 @@
   display: flex;
   flex: 1;
   align-items: center;
-  min-width: 92px;
-  height: 34px;
+  min-width: 100px;
+  height: 38px;
   cursor: grab;
   touch-action: none;
   outline: none;
+  transition: transform 180ms cubic-bezier(.2,0,0,1);
+}
+
+.elastic-slider__root:hover {
+  transform: scale(1.02);
 }
 
 .elastic-slider__root:active {
   cursor: grabbing;
+  transform: scale(0.99);
+  transition-duration: 80ms;
 }
 
 .elastic-slider__root:focus-visible::after {
   position: absolute;
-  inset: 5px -4px;
+  inset: 6px -5px;
   border: 2px solid var(--colorBrandStroke1);
-  border-radius: 4px;
+  border-radius: 6px;
   content: "";
+  box-shadow: 0 0 0 4px rgba(155, 123, 234, 0.15);
 }
 
 .elastic-slider__track-wrap {
@@ -51,48 +59,73 @@
   flex: 1;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--colorNeutralForeground3) 28%, transparent);
+  background: color-mix(in srgb, var(--colorNeutralForeground3) 32%, transparent);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.15);
+  transition: background 180ms cubic-bezier(.2,0,0,1);
+}
+
+.elastic-slider__root:hover .elastic-slider__track {
+  background: color-mix(in srgb, var(--colorNeutralForeground3) 38%, transparent);
 }
 
 .elastic-slider__range {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: var(--colorBrandBackground);
+  background: linear-gradient(135deg, var(--colorBrandBackground), var(--colorBrandBackgroundHover));
+  box-shadow: 0 1px 3px rgba(155, 123, 234, 0.3), inset 0 1px 0 rgba(255,255,255,.15);
+  transition: box-shadow 180ms cubic-bezier(.2,0,0,1);
+}
+
+.elastic-slider__root:active .elastic-slider__range {
+  box-shadow: 0 1px 4px rgba(155, 123, 234, 0.5), inset 0 1px 0 rgba(255,255,255,.2);
 }
 
 .elastic-slider__icon {
   display: grid;
-  flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
   place-items: center;
   color: var(--colorNeutralForeground3);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1;
   will-change: transform;
+  transition: color 180ms cubic-bezier(.2,0,0,1), transform 180ms cubic-bezier(.2,0,0,1);
+}
+
+.elastic-slider__root:hover .elastic-slider__icon {
+  color: var(--colorNeutralForeground2);
+  transform: scale(1.1);
 }
 
 .elastic-slider__value {
-  min-width: 46px;
-  color: var(--colorNeutralForeground3);
+  min-width: 50px;
+  color: var(--colorNeutralForeground2);
   font-family: "Cascadia Mono", "Segoe UI Mono", monospace;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: right;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,.2);
 }
 
 @media (max-width: 720px) {
   .elastic-slider {
-    grid-template-columns: minmax(130px, 1fr) 44px;
-    min-width: 190px;
+    grid-template-columns: minmax(140px, 1fr) 48px;
+    min-width: 200px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .elastic-slider__track-wrap,
-  .elastic-slider__icon {
+  .elastic-slider__icon,
+  .elastic-slider__root,
+  .elastic-slider__track,
+  .elastic-slider__range {
     will-change: auto;
+    transition: none;
   }
 }
