@@ -1899,6 +1899,39 @@ Details: {0}</value>
   <data name="WebSettingsDefaultDeviceBadge" xml:space="preserve">
     <value>Default</value>
   </data>
+  <data name="WebSettingsRestoreButton" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="WebSettingsNavigation" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="WebSettingsCollapseSidebar" xml:space="preserve">
+    <value>Collapse sidebar</value>
+  </data>
+  <data name="WebSettingsExpandSidebar" xml:space="preserve">
+    <value>Expand sidebar</value>
+  </data>
+  <data name="WebSettingsCloseNavigation" xml:space="preserve">
+    <value>Close navigation</value>
+  </data>
+  <data name="WebSettingsOpenNavigation" xml:space="preserve">
+    <value>Open navigation</value>
+  </data>
+  <data name="WebSettingsLoading" xml:space="preserve">
+    <value>Loading settings</value>
+  </data>
+  <data name="WebSettingsPressShortcut" xml:space="preserve">
+    <value>Press keys · Esc clears</value>
+  </data>
+  <data name="WebSettingsEcoActive" xml:space="preserve">
+    <value>Eco</value>
+  </data>
+  <data name="WebSettingsProfileSelected" xml:space="preserve">
+    <value>Selected</value>
+  </data>
+  <data name="ShortcutsPageSubtitle" xml:space="preserve">
+    <value>Assign global hotkeys to quickly control audio.</value>
+  </data>
   <data name="WebSettingsEmpty" xml:space="preserve">
     <value>Nothing configured yet.</value>
   </data>

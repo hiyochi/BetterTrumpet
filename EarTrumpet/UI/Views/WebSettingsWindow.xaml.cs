@@ -50,6 +50,22 @@ namespace EarTrumpet.UI.Views
             });
             Trace.WriteLine("WebSettingsWindow .ctor");
 
+            // Keep the web UI in sync when the default playback device
+            // changes outside the settings window (tray, hotkey, Windows).
+            var deviceManager = (Application.Current as App)?.AudioDeviceManager;
+            if (deviceManager != null)
+            {
+                EventHandler<EarTrumpet.DataModel.Audio.IAudioDevice> onDefaultChanged = (_, __) =>
+                {
+                    if (_isInitialized)
+                    {
+                        Dispatcher.BeginInvoke(new Action(PostState));
+                    }
+                };
+                deviceManager.DefaultChanged += onDefaultChanged;
+                Closed += (_, __) => deviceManager.DefaultChanged -= onDefaultChanged;
+            }
+
             Loaded += async (_, __) => await InitializeWebViewAsync();
             Closed += (_, __) =>
             {
@@ -212,6 +228,12 @@ namespace EarTrumpet.UI.Views
                             HotkeyManager.Current.Pause();
                             _isCapturingHotkey = true;
                         }
+                        break;
+                    case "hotkeyCaptureEnded":
+                        // The web UI abandoned capture (e.g. the button lost
+                        // focus) without recording a key; resume hotkeys so
+                        // global shortcuts do not stay paused forever.
+                        ResumeHotkeys();
                         break;
                     case "setHotkey":
                         SetHotkey(root);
@@ -562,8 +584,14 @@ namespace EarTrumpet.UI.Views
                 labels = new Dictionary<string, string>
                 {
                     ["searchPlaceholder"] = R("WebSettingsSearchPlaceholder"), ["classicSettings"] = R("WebSettingsClassicButton"),
-                    ["noResults"] = R("WebSettingsNoResults"), ["openFailed"] = R("WebSettingsOpenFailed"),
+                    ["noResults"] = R("WebSettingsNoResults"),
                     ["minimize"] = R("WebSettingsMinimize"), ["close"] = R("WebSettingsClose"),
+                    ["navigation"] = R("WebSettingsNavigation"), ["collapseSidebar"] = R("WebSettingsCollapseSidebar"),
+                    ["expandSidebar"] = R("WebSettingsExpandSidebar"), ["closeNavigation"] = R("WebSettingsCloseNavigation"),
+                    ["openNavigation"] = R("WebSettingsOpenNavigation"), ["loading"] = R("WebSettingsLoading"),
+                    ["pressShortcut"] = R("WebSettingsPressShortcut"), ["ecoActive"] = R("WebSettingsEcoActive"),
+                    ["profileSelected"] = R("WebSettingsProfileSelected"),
+                    ["copyright"] = $"© {DateTime.Now.Year} xammen",
                     ["essentials"] = R("WebSettingsCategoryEssentials"), ["audio"] = R("WebSettingsCategoryAudio"),
                     ["experience"] = R("WebSettingsCategoryExperience"), ["application"] = R("AppCategoryTitle"),
                     ["startupTitle"] = R("SettingsStartup"), ["startupDescription"] = R("SettingsStartupDesc"),
@@ -571,7 +599,7 @@ namespace EarTrumpet.UI.Views
                     ["trayDescription"] = R("SettingsTrayIconDesc"), ["useLegacyIcon"] = R("SettingsUseLegacyEarTrumpetIcon"),
                     ["showAppTooltips"] = R("SettingsShowAppTooltips"), ["showAppTooltipsDescription"] = R("SettingsAppTooltipsDesc"),
                     ["hiddenApps"] = R("SettingsHiddenAppsTitle"), ["hiddenAppsDescription"] = R("SettingsHiddenAppsDesc"),
-                    ["restoreAll"] = R("SettingsRestoreHiddenApps"), ["restore"] = R("AppRulesRemoveButtonText"),
+                    ["restoreAll"] = R("SettingsRestoreHiddenApps"), ["restore"] = R("WebSettingsRestoreButton"),
                     ["hiddenDevices"] = R("WebSettingsHiddenDevices"),
                     ["scrollWheelTitle"] = R("SettingsScrollWheel"), ["scrollWheelDescription"] = R("SettingsScrollWheelDesc"),
                     ["useScrollWheelInTray"] = R("SettingsUseScrollWheelInTray"), ["useScrollWheelInTrayDescription"] = R("SettingsScrollWheelTrayTip"),
@@ -611,7 +639,7 @@ namespace EarTrumpet.UI.Views
                     ["autoEcoMode"] = R("SettingsAutoEcoMode"), ["animations"] = R("SettingsAnimations"),
                     ["smoothAnimation"] = R("SettingsSmoothVolumeAnimation"), ["animationSpeed"] = R("SettingsAnimationSpeedLabel"),
                     ["peakMeter"] = R("SettingsPeakMeter"), ["refreshRate"] = R("SettingsRefreshRate"),
-                    ["appearance"] = R("SettingsColorPalette"), ["appearanceDescription"] = R("SettingsColorPaletteDesc"),
+                    ["appearanceDescription"] = R("SettingsColorPaletteDesc"),
                     ["dynamicAlbum"] = R("SettingsDynamicAlbumArt"), ["dynamicAlbumDescription"] = R("SettingsDynamicAlbumArtDesc"),
                     ["enableDynamicAlbum"] = R("SettingsEnableDynamicAlbumArt"), ["presets"] = R("SettingsTabPresets"),
                     ["customColors"] = R("SettingsCustomColors"), ["customColorsDescription"] = R("SettingsCustomColorsDesc"),
@@ -627,7 +655,7 @@ namespace EarTrumpet.UI.Views
                     ["installUpdate"] = R("SettingsInstallUpdate"), ["privacy"] = R("PrivacyCheckboxText"),
                     ["privacyDescription"] = R("SettingsTelemetryDesc"), ["settingsData"] = R("SettingsExportImport"),
                     ["settingsDataDescription"] = R("SettingsExportImportDesc"), ["exportSettings"] = R("SettingsExportSettings"),
-                    ["importSettings"] = R("SettingsImportSettings"), ["about"] = R("AboutTitle"),
+                    ["importSettings"] = R("SettingsImportSettings"),
                     ["diagnostics"] = R("SettingsSendDiagnostics"), ["diagnosticsDescription"] = R("SettingsSendDiagnosticsDesc"),
                     ["github"] = R("AboutGitHub"), ["feedback"] = R("AboutFeedback"), ["bugReport"] = R("AboutReportBug"),
                     ["monkeySound"] = R("SettingsUseMonkeyTickSound"), ["monkeySoundDescription"] = R("SettingsUseMonkeyTickSoundTip"),
