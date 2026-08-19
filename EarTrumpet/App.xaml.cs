@@ -368,6 +368,7 @@ namespace EarTrumpet
                             Settings.SwitchDeviceHotkeyTyped += CycleDefaultDevice;
                             Settings.QuickTrumpetPresetHotkeyTyped += ApplyQuickTrumpetPreset;
                             Settings.RegisterHotkeys();
+                            RegisterDeviceHotkeys();
                         }));
                         Trace.WriteLine($"Startup: Hotkeys registered at {Duration.TotalMilliseconds:F0}ms");
                     }
@@ -1048,6 +1049,36 @@ namespace EarTrumpet
             var next = list[(idx + 1) % list.Count];
             _deviceManager.Default = next;
             Trace.WriteLine($"CycleDefaultDevice: switched to '{next.DisplayName}'");
+        }
+
+        private void RegisterDeviceHotkeys()
+        {
+            HotkeyManager.Current.KeyPressed += OnDeviceHotkeyPressed;
+            if (_deviceManager?.Devices != null)
+            {
+                foreach (var device in _deviceManager.Devices)
+                {
+                    var hotkey = Settings.GetDeviceHotkey(device.Id);
+                    if (!hotkey.IsEmpty)
+                    {
+                        HotkeyManager.Current.Register(hotkey);
+                    }
+                }
+            }
+        }
+
+        private void OnDeviceHotkeyPressed(Interop.Helpers.HotkeyData hotkey)
+        {
+            if (_deviceManager?.Devices == null) return;
+            foreach (var device in _deviceManager.Devices)
+            {
+                if (hotkey.Equals(Settings.GetDeviceHotkey(device.Id)))
+                {
+                    _deviceManager.Default = device;
+                    Trace.WriteLine($"DeviceHotkey: switched to '{device.DisplayName}'");
+                    return;
+                }
+            }
         }
 
         private void OnDefaultPlaybackDeviceChanged(object sender, DeviceViewModel device)

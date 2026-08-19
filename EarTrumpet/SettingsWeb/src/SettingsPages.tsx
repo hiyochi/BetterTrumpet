@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { Button, Input, Spinner, Switch, Text, mergeClasses } from "@fluentui/react-components";
 import {
@@ -47,29 +47,12 @@ interface PageProps {
 
 const t = (payload: SettingsPayload, key: string, fallback: string) => payload.labels[key] || fallback;
 
-function iconForPage(id: string) {
-  const props = { size: 22 };
-  switch (id) {
-    case "mouse": return <MouseIcon {...props} />;
-    case "shortcuts": return <KeyboardIcon {...props} />;
-    case "profiles": return <SaveIcon {...props} />;
-    case "app-rules": return <ListChecksIcon {...props} />;
-    case "appearance": return <BlendIcon {...props} />;
-    case "media": return <MusicIcon {...props} />;
-    case "performance": return <ActivityIcon {...props} />;
-    case "updates": return <RefreshCwIcon {...props} />;
-    case "privacy": return <ShieldCheckIcon {...props} />;
-    case "about": return <InfoIcon {...props} />;
-    default: return <SettingsIcon {...props} />;
-  }
-}
-
 export function SettingsPage(props: PageProps) {
   const { page, styles } = props;
   return <>
     <header className={styles.pageHeader}>
-      <span className={styles.pageIcon}>{iconForPage(page.id)}</span>
-      <div><Text className={styles.pageTitle} as="h1" size={700} weight="semibold">{page.title}</Text><Text className={styles.pageSubtitle} size={300}>{page.subtitle}</Text></div>
+      <Text className={styles.pageTitle} as="h1" size={700} weight="semibold">{page.title}</Text>
+      <Text className={styles.pageSubtitle} size={300}>{page.subtitle}</Text>
     </header>
     {renderPage(props)}
   </>;
@@ -93,17 +76,17 @@ function renderPage(props: PageProps) {
 }
 
 function Section({ title, description, styles, children }: { icon?: ReactNode; title: string; description?: string; styles: Styles; children: ReactNode }) {
-  return <section className={styles.section}><header className={styles.sectionHeader}><Text className={styles.sectionTitle} as="h2" size={400} weight="semibold">{title}</Text>{description && <Text className={styles.sectionDescription} size={200}>{description}</Text>}</header><div className={styles.settingList}>{children}</div></section>;
+  return <section className={`${styles.section} section-polished`}><header className={styles.sectionHeader}><Text className={styles.sectionTitle} as="h2" size={400} weight="semibold">{title}</Text>{description && <Text className={styles.sectionDescription} size={200}>{description}</Text>}</header><div className={styles.settingList}>{children}</div></section>;
 }
 
 function ToggleRow({ payload, styles, settingKey, label, description, disabled, setSetting }: { payload: SettingsPayload; styles: Styles; settingKey: SettingKey; label: string; description?: string; disabled?: boolean; setSetting?: SetSetting }) {
   const checked = Boolean(payload.values[settingKey]);
   const update = setSetting ?? ((key: SettingKey, value: SettingValue) => window.chrome?.webview?.postMessage({ type: "setSetting", key, value }));
-  return <label className={styles.settingRow} htmlFor={`setting-${settingKey}`}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><Switch id={`setting-${settingKey}`} checked={checked} disabled={disabled} aria-label={label} onChange={(_, data) => update(settingKey, data.checked)} /></label>;
+  return <label className={`${styles.settingRow} setting-row-polished`} htmlFor={`setting-${settingKey}`}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><Switch id={`setting-${settingKey}`} checked={checked} disabled={disabled} aria-label={label} onChange={(_, data) => update(settingKey, data.checked)} /></label>;
 }
 
 function RangeRow({ styles, label, description, value, min, max, step = 1, suffix = "", onCommit }: { styles: Styles; label: string; description?: string; value: number; min: number; max: number; step?: number; suffix?: string; onCommit: (value: number) => void }) {
-  return <div className={styles.settingRow}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><ElasticSlider className={styles.range} value={value} startingValue={min} maxValue={max} isStepped stepSize={step} suffix={suffix} ariaLabel={label} leftIcon={<MinusIcon size={15} />} rightIcon={<PlusIcon size={15} />} onCommit={onCommit} /></div>;
+  return <div className={`${styles.settingRow} setting-row-polished`}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><ElasticSlider className={styles.range} value={value} startingValue={min} maxValue={max} isStepped stepSize={step} suffix={suffix} ariaLabel={label} leftIcon={<MinusIcon size={15} />} rightIcon={<PlusIcon size={15} />} onCommit={onCommit} /></div>;
 }
 
 function InlineRange({ styles, label, value, onCommit }: { styles: Styles; label: string; value: number; onCommit: (value: number) => void }) {
@@ -111,7 +94,7 @@ function InlineRange({ styles, label, value, onCommit }: { styles: Styles; label
 }
 
 function SelectRow({ styles, label, description, value, options, onChange }: { styles: Styles; label: string; description?: string; value: number; options: { value: number; label: string }[]; onChange: (value: number) => void }) {
-  return <div className={styles.settingRow}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><select className={styles.select} value={value} aria-label={label} onChange={event => onChange(Number(event.currentTarget.value))}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>;
+  return <div className={`${styles.settingRow} setting-row-polished`}><div className={styles.settingCopy}><Text weight="semibold">{label}</Text>{description && <Text className={styles.settingDescription} size={200}>{description}</Text>}</div><select className={`${styles.select} select-polished`} value={value} aria-label={label} onChange={event => onChange(Number(event.currentTarget.value))}>{options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>;
 }
 
 function ListRow({ styles, title, meta, actions }: { styles: Styles; title: string; meta?: string; actions: ReactNode }) {
@@ -136,6 +119,17 @@ function MousePage({ payload, styles, setSetting }: PageProps) {
 
 function ShortcutsPage({ payload, styles }: PageProps) {
   const [recording, setRecording] = useState<string | null>(null);
+  useEffect(() => {
+    const listener = (event: MessageEvent) => {
+      if (event.data.type === "state") {
+        setRecording(null);
+      }
+    };
+    window.chrome?.webview?.addEventListener("message", listener);
+    return () => {
+      window.chrome?.webview?.removeEventListener("message", listener);
+    };
+  }, []);
   const start = (id: string) => { setRecording(id); window.chrome?.webview?.postMessage({ type: "hotkeyCaptureStarted" }); };
   const keyDown = (event: KeyboardEvent<HTMLButtonElement>, id: string) => {
     event.preventDefault();
@@ -145,7 +139,27 @@ function ShortcutsPage({ payload, styles }: PageProps) {
     window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: clear ? 0 : event.keyCode, ctrlKey: clear ? false : event.ctrlKey, altKey: clear ? false : event.altKey, shiftKey: clear ? false : event.shiftKey, metaKey: clear ? false : event.metaKey });
     setRecording(null);
   };
-  return <Section icon={<KeyboardIcon size={18} />} title={t(payload, "shortcuts", "Keyboard shortcuts")} styles={styles}><div className={styles.list}>{payload.collections.hotkeys.map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} meta={hotkey.description} actions={<><Button appearance={recording === hotkey.id ? "primary" : "secondary"} onClick={() => start(hotkey.id)} onKeyDown={event => keyDown(event, hotkey.id)}>{recording === hotkey.id ? t(payload, "recordShortcut", "Press a shortcut…") : hotkey.value || t(payload, "recordShortcut", "Record")}</Button>{hotkey.value && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id: hotkey.id, keyCode: 0 })} />}</>} />)}</div></Section>;
+  const getValue = (hotkey: { id: string; value: string; deviceName?: string }) => hotkey.value || t(payload, "recordShortcut", "Record");
+  return <Section icon={<KeyboardIcon size={18} />} title={t(payload, "shortcuts", "Keyboard shortcuts")} styles={styles}>
+    <div className={styles.list}>
+      {payload.collections.hotkeys.map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} meta={hotkey.description} actions={<>
+        <Button appearance={recording === hotkey.id ? "primary" : "secondary"} onClick={() => start(hotkey.id)} onKeyDown={event => keyDown(event, hotkey.id)}>
+          {recording === hotkey.id ? t(payload, "recordShortcut", "Press a shortcut…") : hotkey.value || t(payload, "recordShortcut", "Record")}
+        </Button>
+        {hotkey.value && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id: hotkey.id, keyCode: 0 })} />}
+      </>}/>)}
+    </div>
+    {payload.collections.deviceHotkeys.length > 0 && <Section icon={<Volume2Icon size={18} />} title={t(payload, "deviceShortcuts", "Device shortcuts")} styles={styles}>
+      <div className={styles.list}>
+        {payload.collections.deviceHotkeys.map(hotkey => <ListRow key={hotkey.id} styles={styles} title={hotkey.label} meta={t(payload, "deviceShortcutDesc", "Switch to this device")} actions={<>
+          <Button appearance={recording === hotkey.id ? "primary" : "secondary"} onClick={() => start(hotkey.id)} onKeyDown={event => keyDown(event, hotkey.id)}>
+            {recording === hotkey.id ? t(payload, "recordShortcut", "Press a shortcut…") : getValue(hotkey)}
+          </Button>
+          {hotkey.value && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id: hotkey.id, keyCode: 0 })} />}
+        </>}/>)}
+      </div>
+    </Section>}
+  </Section>;
 }
 
 function ProfileHotkey({ payload, styles, profileIndex, value }: { payload: SettingsPayload; styles: Styles; profileIndex: number; value: string }) {

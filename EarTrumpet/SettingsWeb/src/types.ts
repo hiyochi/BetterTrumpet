@@ -71,6 +71,11 @@ export interface HotkeySetting {
   value: string;
 }
 
+export interface DeviceHotkeySetting extends HotkeySetting {
+  deviceId: string;
+  deviceName: string;
+}
+
 export interface VolumeProfile {
   index: number;
   name: string;
@@ -106,6 +111,7 @@ export interface SettingsCollections {
   hiddenApps: HiddenApp[];
   hiddenDevices: HiddenDevice[];
   hotkeys: HotkeySetting[];
+  deviceHotkeys: DeviceHotkeySetting[];
   profiles: VolumeProfile[];
   selectedProfileIndex: number;
   appRules: AppRule[];

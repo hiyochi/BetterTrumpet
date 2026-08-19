@@ -232,7 +232,7 @@ const fallbackPayload: SettingsPayload = {
     { id: "shortcuts", title: "Raccourcis", subtitle: "Raccourcis clavier.", migrated: true },
   ] }],
   labels: {}, values: {} as SettingsPayload["values"],
-  collections: { hiddenApps: [], hiddenDevices: [], hotkeys: [], profiles: [], selectedProfileIndex: -1, appRules: [], folderRules: [], themes: [], activeThemeName: "" },
+  collections: { hiddenApps: [], hiddenDevices: [], hotkeys: [], deviceHotkeys: [], profiles: [], selectedProfileIndex: -1, appRules: [], folderRules: [], themes: [], activeThemeName: "" },
   status: { version: "", health: "", updateText: "", updateDetail: "", updateAvailable: false, updateBusy: false, effectivePeakMeterFps: 60, ecoModeActive: false, monkeyUnlocked: false },
 };
 

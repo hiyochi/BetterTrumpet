@@ -1863,6 +1863,12 @@ Détails : {0}</value>
   <data name="WebSettingsClearShortcut" xml:space="preserve">
     <value>Effacer le raccourci</value>
   </data>
+  <data name="WebSettingsDeviceShortcuts" xml:space="preserve">
+    <value>Raccourcis périphériques</value>
+  </data>
+  <data name="WebSettingsDeviceShortcutDesc" xml:space="preserve">
+    <value>Passer à ce périphérique</value>
+  </data>
   <data name="WebSettingsEmpty" xml:space="preserve">
     <value>Aucune configuration pour le moment.</value>
   </data>
