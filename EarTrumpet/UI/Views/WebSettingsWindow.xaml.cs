@@ -537,7 +537,6 @@ namespace EarTrumpet.UI.Views
         private void PostState()
         {
             var legacy = GetPage<EarTrumpetLegacySettingsPageViewModel>();
-            var shortcuts = GetPage<EarTrumpetShortcutsPageViewModel>();
             var profiles = GetPage<EarTrumpetVolumeProfilesSettingsPageViewModel>();
             var colors = GetPage<EarTrumpetColorsSettingsPageViewModel>();
             var updates = GetPage<EarTrumpetUpdatesPageViewModel>();
@@ -685,7 +684,7 @@ namespace EarTrumpet.UI.Views
                 {
                     hiddenApps = legacy?.HiddenApps.Select(item => new { item.DeviceId, item.AppId, item.ExeName, item.DisplayName, item.DeviceName }).Cast<object>() ?? Enumerable.Empty<object>(),
                     hiddenDevices = App.Settings.GetHiddenDevices().Select(item => new { item.DeviceId, item.DisplayName }),
-                    hotkeys = BuildHotkeys(shortcuts),
+                    hotkeys = BuildHotkeys(),
                     deviceHotkeys = GetPlaybackDevices()?.Select(device => new
                     {
                         id = "device:" + device.Id,
@@ -780,16 +779,20 @@ namespace EarTrumpet.UI.Views
             return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
         }
 
-        private static object[] BuildHotkeys(EarTrumpetShortcutsPageViewModel shortcuts)
+        private static object[] BuildHotkeys()
         {
+            // Read from AppSettings (the live source of truth). The WPF viewmodels
+            // hold a snapshot taken when the settings pages were created and are
+            // never updated when the web bridge writes AppSettings directly, so
+            // preferring them here made recorded shortcuts never display.
             return new object[]
             {
-                new { id = "flyout", label = R("SettingsOpenEarTrumpetText"), description = R("SettingsOpenEarTrumpetText"), value = shortcuts?.OpenFlyoutHotkey.HotkeyText ?? App.Settings.FlyoutHotkey.ToString() },
-                new { id = "mixer", label = R("SettingsOpenMixerText"), description = R("SettingsOpenMixerText"), value = shortcuts?.OpenMixerHotkey.HotkeyText ?? App.Settings.MixerHotkey.ToString() },
-                new { id = "settings", label = R("SettingsOpenSettingsText"), description = R("SettingsOpenSettingsText"), value = shortcuts?.OpenSettingsHotkey.HotkeyText ?? App.Settings.SettingsHotkey.ToString() },
-                new { id = "volumeUp", label = R("SettingsAbsoluteVolumeUpText"), description = R("SettingsAbsoluteVolumeDesc"), value = shortcuts?.AbsoluteVolumeUpHotkey.HotkeyText ?? App.Settings.AbsoluteVolumeUpHotkey.ToString() },
-                new { id = "volumeDown", label = R("SettingsAbsoluteVolumeDownText"), description = R("SettingsAbsoluteVolumeDesc"), value = shortcuts?.AbsoluteVolumeDownHotkey.HotkeyText ?? App.Settings.AbsoluteVolumeDownHotkey.ToString() },
-                new { id = "switchDevice", label = R("SettingsSwitchDevice"), description = R("SettingsSwitchDevice"), value = shortcuts?.SwitchDeviceHotkey.HotkeyText ?? App.Settings.SwitchDeviceHotkey.ToString() },
+                new { id = "flyout", label = R("SettingsOpenEarTrumpetText"), description = R("SettingsOpenEarTrumpetText"), value = App.Settings.FlyoutHotkey.ToString() },
+                new { id = "mixer", label = R("SettingsOpenMixerText"), description = R("SettingsOpenMixerText"), value = App.Settings.MixerHotkey.ToString() },
+                new { id = "settings", label = R("SettingsOpenSettingsText"), description = R("SettingsOpenSettingsText"), value = App.Settings.SettingsHotkey.ToString() },
+                new { id = "volumeUp", label = R("SettingsAbsoluteVolumeUpText"), description = R("SettingsAbsoluteVolumeDesc"), value = App.Settings.AbsoluteVolumeUpHotkey.ToString() },
+                new { id = "volumeDown", label = R("SettingsAbsoluteVolumeDownText"), description = R("SettingsAbsoluteVolumeDesc"), value = App.Settings.AbsoluteVolumeDownHotkey.ToString() },
+                new { id = "switchDevice", label = R("SettingsSwitchDevice"), description = R("SettingsSwitchDevice"), value = App.Settings.SwitchDeviceHotkey.ToString() },
             };
         }
 
