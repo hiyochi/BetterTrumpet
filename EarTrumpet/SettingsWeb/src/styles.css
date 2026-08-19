@@ -3,6 +3,8 @@
   font-synthesis: none;
   letter-spacing: 0;
   color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @keyframes sage-shimmer {
@@ -10,9 +12,15 @@
   to { background-position: 150% 0; }
 }
 
+@keyframes sage-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 ::selection {
   color: #f7f5fb;
-  background: #7c5cd0;
+  background: #9b7bea;
+  text-shadow: none;
 }
 
 html,
@@ -31,22 +39,83 @@ body,
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
 input::placeholder {
-  opacity: 0.72;
+  opacity: 0.68;
+}
+
+/* Native <select> popup: match the dark glass theme instead of the OS light
+   list (which would otherwise show light text on a white background). */
+select option {
+  background-color: #221d31;
+  color: #f4f7f5;
+}
+
+select option:checked {
+  background-color: rgb(155 123 234 / 0.35);
+  color: #ffffff;
+}
+
+select option:hover {
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+/* Enhanced focus rings for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #9b7bea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(155, 123, 234, 0.15);
 }
 
 * {
   scrollbar-width: thin;
+  scrollbar-color: rgb(155 123 234 / 0.38) transparent;
+}
+
+/* Main pane: slim premium scrollbar. The thumb is a thin rounded accent line
+   that brightens on hover; the track stays transparent so there is no hard
+   reserved gutter column. */
+.settings-main {
+  scrollbar-width: thin;
   scrollbar-color: rgb(155 123 234 / 0.32) transparent;
 }
 
+.settings-main::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.settings-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-main::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  background: rgb(155 123 234 / 0.32);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  transition: background 200ms cubic-bezier(.33,1,.68,1), border-width 200ms cubic-bezier(.33,1,.68,1);
+}
+
+.settings-main::-webkit-scrollbar-thumb:hover {
+  background: rgb(177 150 241 / 0.55);
+  border-width: 1px;
+}
+
 *::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 
 *::-webkit-scrollbar-track {
@@ -54,15 +123,16 @@ input::placeholder {
 }
 
 *::-webkit-scrollbar-thumb {
-  min-height: 32px;
-  background: rgb(155 123 234 / 0.32);
+  min-height: 36px;
+  background: rgb(155 123 234 / 0.38);
   border: 2px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
+  transition: background 180ms cubic-bezier(.2,0,0,1);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgb(177 150 241 / 0.58);
+  background: rgb(177 150 241 / 0.62);
   border-width: 1px;
 }
 
@@ -70,6 +140,21 @@ input::placeholder {
   display: none;
   width: 0;
   height: 0;
+}
+
+.dither-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dither-field canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 
 @media (prefers-reduced-motion: reduce) {
