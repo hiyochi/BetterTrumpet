@@ -588,7 +588,8 @@ namespace EarTrumpet.UI.Views
                     ["focusLostScope"] = R("SettingsFocusLostScope"), ["focusLostAllApps"] = R("SettingsFocusLostAllApps"),
                     ["focusLostSelectedApps"] = R("SettingsFocusLostSelectedApps"), ["focusLostSelectedHint"] = R("SettingsFocusLostSelectedHint"),
                     ["recordShortcut"] = R("WebSettingsRecordShortcut"), ["clearShortcut"] = R("WebSettingsClearShortcut"),
-                    ["deviceShortcuts"] = R("WebSettingsDeviceShortcuts"), ["deviceShortcutDesc"] = R("WebSettingsDeviceShortcutDesc"),
+                    ["deviceShortcuts"] = R("WebSettingsDeviceShortcuts"), ["deviceShortcutsDesc"] = R("WebSettingsDeviceShortcutsDesc"),
+                    ["defaultDeviceBadge"] = R("WebSettingsDefaultDeviceBadge"),
                     ["profileCapture"] = R("SettingsSaveCurrentVolumes"), ["profileCaptureDescription"] = R("SettingsSaveCurrentVolumesDesc"),
                     ["profileName"] = R("SettingsThemeNamePlaceholder"), ["allDevices"] = R("SettingsQuickTrumpetAllDevices"),
                     ["confirmation"] = R("SettingsQuickTrumpetConfirmation"), ["savedProfiles"] = R("SettingsSavedProfiles"),
@@ -690,6 +691,7 @@ namespace EarTrumpet.UI.Views
                         id = "device:" + device.Id,
                         label = device.DisplayName,
                         description = R("WebSettingsDeviceShortcutDesc"),
+                        isDefault = string.Equals(device.Id, GetDefaultDeviceId(), StringComparison.OrdinalIgnoreCase),
                         value = App.Settings.GetDeviceHotkey(device.Id)?.ToString()
                     }).ToArray() ?? Array.Empty<object>(),
                     profiles = profiles?.Profiles.Select((profile, index) => new
@@ -743,6 +745,11 @@ namespace EarTrumpet.UI.Views
         private static System.Collections.ObjectModel.ObservableCollection<EarTrumpet.DataModel.Audio.IAudioDevice> GetPlaybackDevices()
         {
             return (Application.Current as App)?.AudioDeviceManager?.Devices;
+        }
+
+        private static string GetDefaultDeviceId()
+        {
+            return (Application.Current as App)?.AudioDeviceManager?.Default?.Id;
         }
 
         private static string GetString(JsonElement message, string name)

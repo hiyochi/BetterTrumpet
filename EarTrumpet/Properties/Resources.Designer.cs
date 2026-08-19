@@ -3252,6 +3252,12 @@ namespace EarTrumpet.Properties {
         public static string WebSettingsDeviceShortcutDesc {
             get { return ResourceManager.GetString("WebSettingsDeviceShortcutDesc", resourceCulture); }
         }
+        public static string WebSettingsDeviceShortcutsDesc {
+            get { return ResourceManager.GetString("WebSettingsDeviceShortcutsDesc", resourceCulture); }
+        }
+        public static string WebSettingsDefaultDeviceBadge {
+            get { return ResourceManager.GetString("WebSettingsDefaultDeviceBadge", resourceCulture); }
+        }
         public static string WebSettingsEmpty {
             get { return ResourceManager.GetString("WebSettingsEmpty", resourceCulture); }
         }

@@ -1869,6 +1869,12 @@ Détails : {0}</value>
   <data name="WebSettingsDeviceShortcutDesc" xml:space="preserve">
     <value>Passer à ce périphérique</value>
   </data>
+  <data name="WebSettingsDeviceShortcutsDesc" xml:space="preserve">
+    <value>Basculez le périphérique de sortie par défaut d'un seul raccourci.</value>
+  </data>
+  <data name="WebSettingsDefaultDeviceBadge" xml:space="preserve">
+    <value>Par défaut</value>
+  </data>
   <data name="WebSettingsEmpty" xml:space="preserve">
     <value>Aucune configuration pour le moment.</value>
   </data>

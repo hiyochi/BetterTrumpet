@@ -1893,6 +1893,12 @@ Details: {0}</value>
   <data name="WebSettingsDeviceShortcutDesc" xml:space="preserve">
     <value>Switch to this device</value>
   </data>
+  <data name="WebSettingsDeviceShortcutsDesc" xml:space="preserve">
+    <value>Switch the default playback device with one shortcut.</value>
+  </data>
+  <data name="WebSettingsDefaultDeviceBadge" xml:space="preserve">
+    <value>Default</value>
+  </data>
   <data name="WebSettingsEmpty" xml:space="preserve">
     <value>Nothing configured yet.</value>
   </data>

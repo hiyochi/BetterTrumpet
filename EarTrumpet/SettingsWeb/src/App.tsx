@@ -349,7 +349,7 @@ function pageSearchText(payload: SettingsPayload, page: SettingsPageDescriptor) 
   let dynamic: string[] = [];
   switch (page.id) {
     case "general": dynamic = [...payload.collections.hiddenApps.flatMap(item => [item.displayName, item.exeName, item.deviceName]), ...payload.collections.hiddenDevices.map(item => item.displayName)]; break;
-    case "shortcuts": dynamic = payload.collections.hotkeys.flatMap(item => [item.label, item.description, item.value]); break;
+    case "shortcuts": dynamic = [...payload.collections.hotkeys.flatMap(item => [item.label, item.description, item.value]), ...payload.collections.deviceHotkeys.flatMap(item => [item.label, item.value])]; break;
     case "profiles": dynamic = payload.collections.profiles.flatMap(item => [item.name, item.slug, item.details, item.hotkey]); break;
     case "app-rules": dynamic = [...payload.collections.appRules.flatMap(item => [item.displayName, item.exeName]), ...payload.collections.folderRules.map(item => item.folderPath)]; break;
     case "appearance": dynamic = payload.collections.themes.flatMap(item => [item.name, item.category]); break;
