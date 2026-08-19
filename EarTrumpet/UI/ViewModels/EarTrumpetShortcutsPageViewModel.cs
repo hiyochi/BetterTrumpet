@@ -27,7 +27,7 @@ namespace EarTrumpet.UI.ViewModels
         public EarTrumpetShortcutsPageViewModel(AppSettings settings) : base(null)
         {
             Title = Properties.Resources.ShortcutsPageText;
-            Subtitle = "Assign global hotkeys to quickly control audio.";
+            Subtitle = Properties.Resources.ShortcutsPageSubtitle;
             Glyph = "\xE765";
 
             OpenFlyoutHotkey = new HotkeyViewModel(settings.FlyoutHotkey, (newHotkey) => settings.FlyoutHotkey = newHotkey);

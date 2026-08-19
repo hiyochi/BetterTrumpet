@@ -3258,6 +3258,39 @@ namespace EarTrumpet.Properties {
         public static string WebSettingsDefaultDeviceBadge {
             get { return ResourceManager.GetString("WebSettingsDefaultDeviceBadge", resourceCulture); }
         }
+        public static string WebSettingsRestoreButton {
+            get { return ResourceManager.GetString("WebSettingsRestoreButton", resourceCulture); }
+        }
+        public static string WebSettingsNavigation {
+            get { return ResourceManager.GetString("WebSettingsNavigation", resourceCulture); }
+        }
+        public static string WebSettingsCollapseSidebar {
+            get { return ResourceManager.GetString("WebSettingsCollapseSidebar", resourceCulture); }
+        }
+        public static string WebSettingsExpandSidebar {
+            get { return ResourceManager.GetString("WebSettingsExpandSidebar", resourceCulture); }
+        }
+        public static string WebSettingsCloseNavigation {
+            get { return ResourceManager.GetString("WebSettingsCloseNavigation", resourceCulture); }
+        }
+        public static string WebSettingsOpenNavigation {
+            get { return ResourceManager.GetString("WebSettingsOpenNavigation", resourceCulture); }
+        }
+        public static string WebSettingsLoading {
+            get { return ResourceManager.GetString("WebSettingsLoading", resourceCulture); }
+        }
+        public static string WebSettingsPressShortcut {
+            get { return ResourceManager.GetString("WebSettingsPressShortcut", resourceCulture); }
+        }
+        public static string WebSettingsEcoActive {
+            get { return ResourceManager.GetString("WebSettingsEcoActive", resourceCulture); }
+        }
+        public static string WebSettingsProfileSelected {
+            get { return ResourceManager.GetString("WebSettingsProfileSelected", resourceCulture); }
+        }
+        public static string ShortcutsPageSubtitle {
+            get { return ResourceManager.GetString("ShortcutsPageSubtitle", resourceCulture); }
+        }
         public static string WebSettingsEmpty {
             get { return ResourceManager.GetString("WebSettingsEmpty", resourceCulture); }
         }

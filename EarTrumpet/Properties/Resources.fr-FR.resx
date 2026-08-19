@@ -1875,6 +1875,39 @@ Détails : {0}</value>
   <data name="WebSettingsDefaultDeviceBadge" xml:space="preserve">
     <value>Par défaut</value>
   </data>
+  <data name="WebSettingsRestoreButton" xml:space="preserve">
+    <value>Restaurer</value>
+  </data>
+  <data name="WebSettingsNavigation" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="WebSettingsCollapseSidebar" xml:space="preserve">
+    <value>Réduire la barre latérale</value>
+  </data>
+  <data name="WebSettingsExpandSidebar" xml:space="preserve">
+    <value>Déployer la barre latérale</value>
+  </data>
+  <data name="WebSettingsCloseNavigation" xml:space="preserve">
+    <value>Fermer la navigation</value>
+  </data>
+  <data name="WebSettingsOpenNavigation" xml:space="preserve">
+    <value>Ouvrir la navigation</value>
+  </data>
+  <data name="WebSettingsLoading" xml:space="preserve">
+    <value>Chargement des paramètres</value>
+  </data>
+  <data name="WebSettingsPressShortcut" xml:space="preserve">
+    <value>Appuyez · Échap efface</value>
+  </data>
+  <data name="WebSettingsEcoActive" xml:space="preserve">
+    <value>Éco</value>
+  </data>
+  <data name="WebSettingsProfileSelected" xml:space="preserve">
+    <value>Sélectionné</value>
+  </data>
+  <data name="ShortcutsPageSubtitle" xml:space="preserve">
+    <value>Attribuez des raccourcis clavier globaux pour tout contrôler.</value>
+  </data>
   <data name="WebSettingsEmpty" xml:space="preserve">
     <value>Aucune configuration pour le moment.</value>
   </data>

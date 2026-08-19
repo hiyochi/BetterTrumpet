@@ -463,7 +463,7 @@ export function App() {
               const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 8;
               setMainEdgeFade({ top: !atTop, bottom: !atBottom });
             }}>
-              <div className={mergeClasses(styles.mobileHeader, "mobile-header-polished")}><img className={styles.logo} src={appIcon} alt="" /><Text weight="semibold">{payload.appName}</Text><Button className={styles.mobileMenuButton} appearance="subtle" icon={<MenuIcon size={20} />} aria-label={mobileDrawerOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileDrawerOpen} title={mobileDrawerOpen ? "Close navigation" : "Open navigation"} onClick={() => setMobileDrawerOpen(value => !value)} /></div>
+              <div className={mergeClasses(styles.mobileHeader, "mobile-header-polished")}><img className={styles.logo} src={appIcon} alt="" /><Text weight="semibold">{payload.appName}</Text><Button className={styles.mobileMenuButton} appearance="subtle" icon={<MenuIcon size={20} />} aria-label={mobileDrawerOpen ? (payload.labels.closeNavigation || "Close navigation") : (payload.labels.openNavigation || "Open navigation")} aria-expanded={mobileDrawerOpen} title={mobileDrawerOpen ? (payload.labels.closeNavigation || "Close navigation") : (payload.labels.openNavigation || "Open navigation")} onClick={() => setMobileDrawerOpen(value => !value)} /></div>
               <div className={styles.content}>
                 {bridgeError && <MessageBar className={styles.message} intent="error"><MessageBarBody>{bridgeError}</MessageBarBody></MessageBar>}
                 {selectedPage && <SettingsPage page={selectedPage} payload={payload} styles={styles} setSetting={setSetting} action={action} openClassic={openClassic} isOpeningLegacy={isOpeningLegacy} />}
@@ -516,8 +516,8 @@ function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, 
           type="button"
           className={collapsed && onToggleCollapsed ? styles.logoButton : undefined}
           style={collapsed && onToggleCollapsed ? undefined : { display: "grid", placeItems: "center", padding: 0, border: "none", background: "transparent", cursor: "default" }}
-          aria-label={collapsed && onToggleCollapsed ? "Expand sidebar" : undefined}
-          title={collapsed && onToggleCollapsed ? "Expand sidebar" : undefined}
+          aria-label={collapsed && onToggleCollapsed ? (payload.labels.expandSidebar || "Expand sidebar") : undefined}
+          title={collapsed && onToggleCollapsed ? (payload.labels.expandSidebar || "Expand sidebar") : undefined}
           tabIndex={collapsed && onToggleCollapsed ? 0 : -1}
           onClick={collapsed && onToggleCollapsed ? onToggleCollapsed : undefined}
         >
@@ -547,7 +547,7 @@ function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, 
               transition={morph}
               style={{ marginLeft: "auto" }}
             >
-              <Button className={mergeClasses(styles.sidebarToggle, "sidebar-toggle-polished")} appearance="subtle" aria-label="Collapse sidebar" title="Collapse sidebar" onClick={onToggleCollapsed} icon={<IndentIncreaseIcon size={16} />} />
+              <Button className={mergeClasses(styles.sidebarToggle, "sidebar-toggle-polished")} appearance="subtle" aria-label={payload.labels.collapseSidebar || "Collapse sidebar"} title={payload.labels.collapseSidebar || "Collapse sidebar"} onClick={onToggleCollapsed} icon={<IndentIncreaseIcon size={16} />} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -562,17 +562,17 @@ function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, 
             transition={morph}
             style={{ overflow: "hidden", flexShrink: 0 }}
           >
-            <Input className={styles.search} appearance="filled-darker" contentBefore={<SearchIcon size={18} />} value={query} onChange={(_, data) => setQuery(data.value)} placeholder={payload.labels.searchPlaceholder || "Search settings"} aria-label={payload.labels.searchPlaceholder || "Search settings"} />
+            <Input className={styles.search} appearance="filled-darker" contentBefore={<SearchIcon size={18} />} value={query} onChange={(_, data) => setQuery(data.value)} placeholder={payload.labels.searchPlaceholder || "Search settings"} aria-label={payload.labels.searchPlaceholder || "Search settings"} onKeyDown={event => { if (event.key === "Escape" && query) { setQuery(""); } else if (event.key === "Enter") { const first = groups.flatMap(group => group.pages)[0]; if (first && query.trim()) navigate(first.id); } }} />
           </motion.div>
         )}
       </AnimatePresence>
       <div className={styles.navWrap}>
-        <nav className={styles.nav} aria-label={payload.labels.searchPlaceholder || "Settings"}>
+        <nav className={styles.nav} aria-label={payload.labels.navigation || "Settings"}>
           {groups.map(group => <div className={mergeClasses(styles.category, "category-polished")} key={group.title}>
             <motion.div initial={false} animate={collapsed ? { opacity: 0, filter: blur(6), height: 0, paddingBottom: 0, marginBottom: 0 } : { opacity: 1, filter: blur(0), height: "auto", paddingBottom: 0, marginBottom: 0 }} transition={morph} style={{ overflow: "hidden" }}>
               <Text className={mergeClasses(styles.categoryTitle, "category-title-polished")} size={200} weight="semibold">{group.title}</Text>
             </motion.div>
-            {group.pages.map(page => <Button key={page.id} appearance="subtle" className={mergeClasses(styles.navButton, "nav-button-polished", collapsed && styles.navButtonCollapsed, selectedPage?.id === page.id && styles.navButtonSelected, selectedPage?.id === page.id && "nav-button-selected-polished")} icon={pageIcon(page.id, mergeClasses(styles.navIcon, "nav-icon-polished", collapsed && styles.navIconCollapsed))} title={page.title} onClick={() => navigate(page.id)}><motion.span className={mergeClasses(styles.navLabel, collapsed && styles.navLabelCollapsed)} initial={false} animate={labelAnimate} transition={morph}>{page.title}</motion.span></Button>)}
+            {group.pages.map(page => <Button key={page.id} appearance="subtle" className={mergeClasses(styles.navButton, "nav-button-polished", collapsed && styles.navButtonCollapsed, selectedPage?.id === page.id && styles.navButtonSelected, selectedPage?.id === page.id && "nav-button-selected-polished")} icon={pageIcon(page.id, mergeClasses(styles.navIcon, "nav-icon-polished", collapsed && styles.navIconCollapsed))} title={page.title} aria-current={selectedPage?.id === page.id ? "page" : undefined} onClick={() => navigate(page.id)}><motion.span className={mergeClasses(styles.navLabel, collapsed && styles.navLabelCollapsed)} initial={false} animate={labelAnimate} transition={morph}>{page.title}</motion.span></Button>)}
           </div>)}
           {!groups.length && <Text className={styles.empty}>{payload.labels.noResults || "No settings match your search."}</Text>}
         </nav>
