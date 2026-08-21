@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   Button,
@@ -95,6 +96,40 @@ const useStyles = makeStyles({
     transitionProperty: "color, background-color, transform", transitionDuration: "180ms",
   },
   search: { marginBottom: 0, flexShrink: 0 },
+  searchBox: {
+    display: "flex", alignItems: "center", gap: "8px",
+    minHeight: "40px", padding: "0 12px", borderRadius: "14px",
+    backgroundColor: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.12)",
+    transitionProperty: "background-color", transitionDuration: "150ms",
+    ":hover": { backgroundColor: "rgba(255,255,255,.09)" },
+    ":focus-within": { backgroundColor: "rgba(255,255,255,.07)" },
+  },
+  searchBoxIcon: { color: "rgba(244,247,245,.5)", flexShrink: 0 },
+  searchInput: {
+    flex: 1, minWidth: 0, height: "100%", padding: 0,
+    backgroundColor: "transparent", border: "none", outline: "none", boxShadow: "none",
+    color: "#F4F7F5", fontSize: "13px", fontFamily: "inherit",
+  },
+  searchWrap: { position: "relative", zIndex: 30, flexShrink: 0 },
+  searchResults: {
+    position: "absolute", top: "100%", left: 0, right: 0, marginTop: "6px",
+    display: "grid", gap: "2px", padding: "6px",
+    border: "1px solid rgba(255,255,255,.12)", borderRadius: "18px",
+    backgroundColor: "#0b0d0c",
+    boxShadow: "0 18px 44px rgba(5,7,6,.65), inset 0 1px 0 rgba(255,255,255,.06)",
+    maxHeight: "46vh", overflowY: "auto", overscrollBehavior: "contain",
+    "@media (prefers-reduced-transparency: reduce)": { backgroundColor: "#12140f" },
+  },
+  searchResult: {
+    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "2px",
+    width: "100%", textAlign: "left", padding: "8px 10px", cursor: "pointer",
+    border: "1px solid transparent", borderRadius: "14px",
+    color: "rgba(244,247,245,.82)", backgroundColor: "transparent",
+    transitionProperty: "background-color", transitionDuration: "120ms",
+  },
+  searchResultActive: { backgroundColor: "rgba(155,123,234,.14)", border: "1px solid rgba(155,123,234,.28)", color: "#F4F7F5" },
+  searchResultLabel: { display: "block", width: "100%", fontSize: "13px", fontWeight: tokens.fontWeightSemibold, lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  searchResultMeta: { display: "block", width: "100%", fontSize: "11px", color: "rgba(244,247,245,.48)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   searchHidden: { visibility: "hidden", height: 0, marginBottom: 0, pointerEvents: "none" },
   navWrap: { position: "relative", flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" },
   nav: {
@@ -205,14 +240,41 @@ const useStyles = makeStyles({
   listMeta: { display: "block", marginTop: "3px", color: "rgba(244,247,245,.60)" },
   empty: { padding: "20px 24px", color: "rgba(244,247,245,.58)" },
 
-  // ── Theme presets ──
-  themeGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "12px", padding: "16px 20px" },
-  themeItem: { position: "relative", minWidth: 0 },
-  themeButton: { display: "grid", width: "100%", gap: "10px", justifyItems: "start", padding: "14px 44px 14px 14px", minHeight: "84px", border: "1px solid rgba(255,255,255,.12)", borderRadius: "18px", color: "#F4F7F5", backgroundColor: "rgba(255,255,255,.05)", transitionProperty: "background-color, border-color, transform", transitionDuration: "200ms" },
-  themeSelected: { border: `2px solid ${ACCENT}`, backgroundColor: ACCENT_DIM },
-  themeDelete: { position: "absolute", top: "10px", right: "10px", minWidth: "30px", width: "30px", height: "30px", padding: 0, borderRadius: "14px", transitionProperty: "transform, background-color", transitionDuration: "180ms" },
-  swatches: { display: "flex", gap: "5px" },
-  swatch: { width: "26px", height: "11px", borderRadius: "999px", border: "1px solid rgba(0,0,0,.15)", boxShadow: "inset 0 1px 2px rgba(0,0,0,.1)" },
+  // ── Accordion rows (profiles, app rules) ──
+  accList: { display: "grid" },
+  accItem: { borderTop: "1px solid rgba(255,255,255,.09)", "&:first-child": { borderTop: "none" } },
+  accHeader: {
+    display: "flex", alignItems: "center", gap: "12px", width: "100%", boxSizing: "border-box",
+    padding: "12px 24px", minHeight: "62px", cursor: "pointer",
+    "@media (max-width: 680px)": { flexWrap: "wrap" },
+  },
+  accCopy: { minWidth: 0, flex: 1 },
+  accInlineControls: { display: "inline-flex", alignItems: "center", gap: "10px", flexShrink: 0 },
+  accChevron: { flexShrink: 0, color: "rgba(244,247,245,.6)", transitionProperty: "transform", transitionDuration: "200ms", transitionTimingFunction: "cubic-bezier(.33,1,.68,1)", "@media (prefers-reduced-motion: reduce)": { transitionDuration: "0ms" } },
+  accChevronOpen: { transform: "rotate(180deg)" },
+  accDetail: {
+    display: "grid", margin: "0 8px 8px", overflow: "hidden",
+    border: "1px solid rgba(255,255,255,.07)", borderRadius: "14px",
+    backgroundColor: "rgba(255,255,255,.02)",
+  },
+  ruleBadges: { display: "flex", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px", "@media (max-width: 680px)": { justifyContent: "flex-start" } },
+
+  // ── Theme presets (horizontal chip flow) ──
+  themeFlow: { display: "flex", flexWrap: "wrap", gap: "8px", padding: "14px 16px" },
+  themeItem: { display: "inline-flex", alignItems: "center", gap: "2px", minWidth: 0 },
+  themeChip: {
+    display: "inline-flex", alignItems: "center", gap: "10px", textAlign: "left",
+    minHeight: "38px", padding: "6px 12px", cursor: "pointer",
+    border: "1px solid rgba(255,255,255,.10)", borderRadius: "14px",
+    color: "#F4F7F5", backgroundColor: "rgba(255,255,255,.04)",
+    transitionProperty: "background-color, border-color", transitionDuration: "180ms",
+    ":hover": { backgroundColor: "rgba(255,255,255,.08)" },
+  },
+  themeChipSelected: { border: `1px solid ${ACCENT}`, backgroundColor: ACCENT_DIM },
+  themeActiveMark: { flexShrink: 0, color: ACCENT_STRONG },
+  themeDelete: { minWidth: "28px", width: "28px", height: "28px", padding: 0, borderRadius: "14px", transitionProperty: "transform, background-color", transitionDuration: "180ms" },
+  swatches: { display: "flex", gap: "4px", flexShrink: 0 },
+  swatch: { width: "18px", height: "9px", borderRadius: "999px", border: "1px solid rgba(0,0,0,.15)", boxShadow: "inset 0 1px 2px rgba(0,0,0,.1)" },
   colorInput: { width: "42px", height: "34px", padding: "3px", border: "1px solid rgba(255,255,255,.14)", borderRadius: "14px", backgroundColor: "rgba(255,255,255,.06)", transitionProperty: "transform, border-color", transitionDuration: "180ms" },
 
   // ── Window chrome ──
@@ -242,6 +304,8 @@ const useStyles = makeStyles({
   skeletonShell: { display: "grid", gridTemplateColumns: "248px minmax(0, 1fr)", gap: "8px", padding: "6px 8px 8px", height: "100%", "@media (max-width: 680px)": { display: "block" } },
   skeletonSidebar: { backgroundColor: "#050706", borderRadius: "18px", padding: "12px 8px", display: "flex", flexDirection: "column", gap: "10px", "@media (max-width: 680px)": { display: "none" } },
   skeletonMain: { position: "relative", overflow: "hidden", padding: "48px 0", borderRadius: "18px" },
+  skeletonSplash: { position: "absolute", inset: 0, zIndex: 2, display: "grid", placeItems: "center", pointerEvents: "none" },
+  skeletonSplashLogo: { width: "56px", height: "56px", objectFit: "contain", filter: "drop-shadow(0 2px 12px rgba(155,123,234,.35))" },
   skeletonBlock: { backgroundColor: "rgba(255,255,255,.06)", borderRadius: "18px", position: "relative", overflow: "hidden" },
   skeletonShimmer: {
     position: "absolute", inset: 0,
@@ -330,11 +394,11 @@ const pageLabelKeys: Record<string, string[]> = {
   general: ["startupTitle", "startupDescription", "runAtStartup", "trayTitle", "trayDescription", "useLegacyIcon", "showAppTooltips", "showAppTooltipsDescription", "hiddenApps", "hiddenAppsDescription", "hiddenDevices", "restore", "restoreAll"],
   mouse: ["scrollWheelTitle", "scrollWheelDescription", "useScrollWheelInTray", "useScrollWheelInTrayDescription", "useGlobalMouseWheelHook", "useGlobalMouseWheelHookDescription", "volumeScaleTitle", "volumeScaleDescription", "useLogarithmicVolume", "useVolumeTickSound", "useVolumeTickSoundDescription", "deviceChangeTitle", "deviceChangeDescription", "notifyOnDeviceChange", "focusLostTitle", "focusLostDescription", "useFocusLostVolume", "focusLostAttenuate", "focusLostAttenuateHint", "focusLostFade", "focusLostFadeHint", "focusLostScope", "focusLostAllApps", "focusLostSelectedApps", "focusLostSelectedHint"],
   shortcuts: ["shortcuts", "recordShortcut", "clearShortcut"],
-  profiles: ["profileCapture", "profileCaptureDescription", "profileName", "allDevices", "confirmation", "savedProfiles", "appsOnly", "profileShortcut", "profileShortcutDescription", "apply", "export", "import", "delete"],
-  "app-rules": ["appRules", "appRulesDescription", "appPlaceholder", "browse", "addApp", "hardMute", "focusLostRule", "volumeBehavior", "modeNone", "modeLaunch", "modeLock", "targetVolume", "clearAllRules", "folderRules", "folderRulesEmpty", "addFolder", "changeFolder"],
-  appearance: ["appearance", "appearanceDescription", "dynamicAlbum", "dynamicAlbumDescription", "enableDynamicAlbum", "presets", "customColors", "customColorsDescription", "useCustomColors", "windowOpacity", "peakStyle", "randomize", "reset", "saveTheme", "sliderThumb", "sliderFill", "sliderTrack", "peakColor", "windowColor", "textColor", "accentColor", "deleteTheme"],
+  profiles: ["profileCapture", "profileCaptureDescription", "profileName", "allDevices", "confirmation", "savedProfiles", "appsOnly", "appsOnlyDescription", "profileShortcut", "profileShortcutDescription", "apply", "rename", "export", "import", "delete"],
+  "app-rules": ["appRules", "appRulesDescription", "appPlaceholder", "browse", "addApp", "hardMute", "focusLostRule", "volumeBehavior", "modeNone", "modeLaunch", "modeLock", "targetVolume", "clearAllRules", "folderRules", "folderRulesDescription", "folderRulesEmpty", "addFolder", "changeFolder"],
+  appearance: ["appearance", "appearanceDescription", "dynamicAlbum", "dynamicAlbumDescription", "enableDynamicAlbum", "presets", "customColors", "customColorsTweakHint", "windowOpacity", "peakStyle", "randomize", "reset", "saveTheme", "sliderThumb", "sliderFill", "sliderTrack", "peakColor", "windowColor", "textColor", "accentColor", "deleteTheme"],
   media: ["mediaPopup", "mediaPopupDescription", "enableMediaPopup", "interaction", "hoverDelay", "showWhenPaused", "rememberExpanded"],
-  performance: ["ecoMode", "ecoModeDescription", "enableEcoMode", "autoEcoMode", "animations", "smoothAnimation", "animationSpeed", "peakMeter", "refreshRate"],
+  performance: ["ecoMode", "ecoModeDescription", "enableEcoMode", "autoEcoMode", "animations", "smoothAnimation", "animationSpeed", "peakMeter", "refreshRate", "effectiveRate", "effectiveRateHint"],
   updates: ["updates", "updatesDescription", "autoUpdates", "notifyFor", "checkUpdate", "installUpdate", "updateChannel0", "updateChannel1", "updateChannel2", "updateChannel3"],
   privacy: ["privacy", "privacyDescription", "settingsData", "settingsDataDescription", "exportSettings", "importSettings"],
   about: ["about", "diagnostics", "diagnosticsDescription", "github", "feedback", "bugReport", "monkeySound", "monkeySoundDescription"],
@@ -342,6 +406,200 @@ const pageLabelKeys: Record<string, string[]> = {
 
 function normalizeSearch(value: string, locale: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase(locale);
+}
+
+// ── Deep search ──────────────────────────────────────────────────────────────
+// The search indexes every setting section (not just pages), scores matches
+// with word-prefix > substring > fuzzy-subsequence, folds accents while
+// preserving string offsets (so highlights line up), and supports multi-token
+// AND queries. Selecting a result navigates to the page and scrolls the
+// matched section into view with a brief flash.
+
+interface SearchHit {
+  key: string;
+  pageId: string;
+  anchor?: string;
+  title: string;
+  meta: string;
+  haystackFolded: string;
+  titleOriginal: string;
+}
+
+interface SearchSpec {
+  page: string;
+  anchor?: string;
+  keys: string[];
+  words?: string;
+}
+
+// Static index: every searchable section, with its resx label keys plus
+// bilingual synonym hints users are likely to type.
+const SEARCH_SPECS: SearchSpec[] = [
+  { page: "general", anchor: "startup", keys: ["startupTitle", "startupDescription", "runAtStartup"], words: "demarrage lance boot windows start launch demarrer" },
+  { page: "general", anchor: "tray", keys: ["trayTitle", "trayDescription", "useLegacyIcon", "showAppTooltips", "showAppTooltipsDescription"], words: "icone notification tray systraze tooltip infobulle legacy ancien icone" },
+  { page: "general", anchor: "hiddenApps", keys: ["hiddenApps", "hiddenAppsDescription", "restore", "restoreAll"], words: "cache masquer restaurer apps applications hidden restore" },
+  { page: "general", anchor: "hiddenDevices", keys: ["hiddenDevices", "restore"], words: "peripherique cache restaure hidden device" },
+  { page: "mouse", anchor: "wheel", keys: ["scrollWheelTitle", "scrollWheelDescription", "useScrollWheelInTray", "useGlobalMouseWheelHook", "useScrollWheelInTrayDescription", "useGlobalMouseWheelHookDescription"], words: "molette souris scroll wheel tray global survol" },
+  { page: "mouse", anchor: "scale", keys: ["volumeScaleTitle", "volumeScaleDescription", "useLogarithmicVolume", "useVolumeTickSound", "useVolumeTickSoundDescription"], words: "echelle logarithme log son tick bruit volume scale sound" },
+  { page: "mouse", anchor: "deviceChange", keys: ["deviceChangeTitle", "deviceChangeDescription", "notifyOnDeviceChange"], words: "notification changement peripherique default switch toast" },
+  { page: "mouse", anchor: "focusLost", keys: ["focusLostTitle", "focusLostDescription", "useFocusLostVolume", "focusLostAttenuate", "focusLostFade", "focusLostScope"], words: "perte focus arriere plan attenuer mute baisser volume background unfocus" },
+  { page: "shortcuts", anchor: "shortcuts", keys: ["shortcuts", "recordShortcut", "clearShortcut"], words: "raccourci clavier hotkey shortcut touche clavier" },
+  { page: "shortcuts", anchor: "deviceShortcuts", keys: ["deviceShortcuts", "deviceShortcutsDesc", "defaultDeviceBadge"], words: "raccourci peripherique basculer sortie device hotkey switch" },
+  { page: "profiles", anchor: "presets", keys: ["savedProfiles", "profileCaptureDescription", "allDevices", "confirmation", "appsOnly", "apply", "save"], words: "quicktrumpet preset profil sauvegarder appliquer configuration volumes preset save apply" },
+  { page: "app-rules", anchor: "rules", keys: ["appRules", "appRulesDescription", "hardMute", "focusLostRule", "volumeBehavior", "modeLaunch", "modeLock", "targetVolume"], words: "regle application mute sourdine verrouiller lancement lock launch per app regles" },
+  { page: "app-rules", anchor: "folders", keys: ["folderRules", "folderRulesDescription", "targetVolume", "addFolder"], words: "dossier folder volume par defaut demarrage dossier" },
+  { page: "appearance", anchor: "themes", keys: ["presets", "appearanceDescription"], words: "theme preset couleur palette apparence appearance theme dracula nord spotify" },
+  { page: "appearance", anchor: "colors", keys: ["customColors", "customColorsTweakHint", "windowOpacity", "peakStyle", "sliderThumb", "sliderFill", "sliderTrack", "peakColor", "windowColor", "textColor", "accentColor", "randomize", "reset", "saveTheme"], words: "couleur personnalisee opacite transparence slider barre texte glow custom color opacity tweak" },
+  { page: "appearance", anchor: "albumArt", keys: ["dynamicAlbum", "dynamicAlbumDescription", "enableDynamicAlbum"], words: "album art dynamique pochette spotify artwork dynamic" },
+  { page: "media", anchor: "mediaPopup", keys: ["mediaPopup", "mediaPopupDescription", "enableMediaPopup", "showWhenPaused"], words: "media popup media popup pause lecture hover survol lecteur" },
+  { page: "media", anchor: "mediaInteraction", keys: ["interaction", "hoverDelay", "showWhenPaused", "rememberExpanded"], words: "delai survol hover delay interaction etendu expanded" },
+  { page: "performance", anchor: "eco", keys: ["ecoMode", "ecoModeDescription", "enableEcoMode", "autoEcoMode", "effectiveRate"], words: "eco economie batterie cpu performance fps" },
+  { page: "performance", anchor: "animations", keys: ["animations", "smoothAnimation", "animationSpeed"], words: "animation fluide vitesse smooth speed transition" },
+  { page: "performance", anchor: "peakMeter", keys: ["peakMeter", "refreshRate", "effectiveRateHint"], words: "vumetre pic peak fps rafraichissement taux refresh rate" },
+  { page: "updates", anchor: "updates", keys: ["updates", "updatesDescription", "autoUpdates", "notifyFor", "checkUpdate", "installUpdate"], words: "mise a jour update canal channel verifier installer beta version" },
+  { page: "privacy", anchor: "telemetry", keys: ["privacy", "privacyDescription"], words: "telemetry donnees diagnostic vie privee privacy sentry anonyme" },
+  { page: "privacy", anchor: "data", keys: ["settingsData", "settingsDataDescription", "exportSettings", "importSettings"], words: "export import sauvegarde backup settings config" },
+  { page: "about", anchor: "about", keys: ["github", "feedback", "bugReport"], words: "a propos version github contact bug bug report feedback" },
+  { page: "about", anchor: "diagnostics", keys: ["diagnostics", "diagnosticsDescription"], words: "diagnostic logs support zip bundle sante health" },
+];
+
+// Fold accents per-character so folded.length === original.length and every
+// match offset maps straight back onto the original string.
+function fold(value: string) {
+  let out = "";
+  for (const ch of value) out += ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return out;
+}
+
+// Fuzzy matching rules: short tokens must appear literally (prefix or
+// substring); longer tokens may match as a subsequence only when it is
+// reasonably compact, and every kept token must clear MIN_TOKEN_SCORE.
+// This keeps "album art" from degenerating into "anything containing a/l/b/u/m".
+const FUZZY_MIN_TOKEN_LENGTH = 4;
+const MIN_TOKEN_SCORE = 24;
+
+function fuzzySubsequenceScore(foldedHay: string, token: string) {
+  let first = -1;
+  let last = -1;
+  let gaps = 0;
+  let matched = 0;
+  for (const ch of token) {
+    const found = foldedHay.indexOf(ch, last + 1);
+    if (found === -1) return -1;
+    if (first === -1) first = found;
+    if (matched > 0) gaps += found - last - 1;
+    last = found;
+    matched++;
+  }
+  // Hard span cap: the whole match must fit within a window proportional to
+  // the token length, so scattered letters across a long surface are out.
+  if (last - first + 1 > token.length * 4) return -1;
+  const score = 44 - Math.round((gaps / Math.max(1, token.length)) * 18);
+  return score >= MIN_TOKEN_SCORE ? score : -1;
+}
+
+function tokenScore(foldedHay: string, token: string) {
+  const direct = foldedHay.indexOf(token);
+  if (direct === 0 || foldedHay[direct - 1] === " ") return 100 - Math.min(20, token.length);
+  if (direct !== -1) return 70;
+  if (token.length >= FUZZY_MIN_TOKEN_LENGTH) return fuzzySubsequenceScore(foldedHay, token);
+  return -1;
+}
+
+function buildSearchIndex(payload: SettingsPayload): SearchHit[] {
+  const hits: SearchHit[] = [];
+  const pageTitle = new Map(payload.categories.flatMap(category => category.pages).map(page => [page.id, page.title]));
+  const push = (pageId: string, anchor: string | undefined, title: string, fields: string[]) => {
+    const meta = pageTitle.get(pageId) ?? "";
+    hits.push({
+      key: `${pageId}:${anchor ?? ""}:${title}`,
+      pageId,
+      anchor,
+      title,
+      meta,
+      titleOriginal: title,
+      haystackFolded: fold([title, ...fields].join(" ")),
+    });
+  };
+  for (const spec of SEARCH_SPECS) {
+    const titleKey = spec.keys[0];
+    const title = payload.labels[titleKey] ?? titleKey;
+    const fields = [...spec.keys.slice(1).map(key => payload.labels[key] ?? ""), spec.words ?? ""];
+    push(spec.page, spec.anchor, title, fields);
+  }
+  // Dynamic data: devices, presets, rules, themes.
+  for (const device of payload.collections.deviceHotkeys) {
+    push("shortcuts", "deviceShortcuts", device.label, [device.value ?? "", "hotkey raccourci device"]);
+  }
+  for (const profile of payload.collections.profiles) {
+    push("profiles", "presets", profile.name, [profile.details, "quicktrumpet preset profil"]);
+  }
+  for (const rule of payload.collections.appRules) {
+    push("app-rules", "rules", rule.displayName || rule.exeName, [rule.exeName, "regle rule mute"]);
+  }
+  for (const folder of payload.collections.folderRules) {
+    push("app-rules", "folders", folder.folderPath.split("\\").filter(Boolean).pop() ?? folder.folderPath, [folder.folderPath, "dossier folder"]);
+  }
+  for (const theme of payload.collections.themes) {
+    push("appearance", "themes", theme.name, [theme.category, "theme couleur"]);
+  }
+  return hits;
+}
+
+function searchSettings(index: SearchHit[], rawQuery: string): SearchHit[] {
+  const query = fold(rawQuery.trim());
+  if (!query) return [];
+  const tokens = query.split(/\s+/).filter(Boolean);
+  const scored: { hit: SearchHit; score: number }[] = [];
+  for (const hit of index) {
+    let total = 0;
+    let allMatched = true;
+    for (const token of tokens) {
+      const score = tokenScore(hit.haystackFolded, token);
+      if (score < MIN_TOKEN_SCORE) { allMatched = false; break; }
+      total += score;
+    }
+    if (!allMatched) continue;
+    // Exact multi-word phrase beats everything else.
+    if (tokens.length > 1 && hit.haystackFolded.includes(query)) total += 80;
+    // All tokens found in the title itself is a strong relevance signal.
+    const titleFolded = fold(hit.titleOriginal);
+    if (tokens.every(token => titleFolded.includes(token))) total += 40;
+    scored.push({ hit, score: total });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, 9).map(entry => entry.hit);
+}
+
+// Wrap every occurrence of the query tokens inside the label for display.
+function HighlightedLabel({ text, query }: { text: string; query: string }) {
+  const tokens = fold(query).split(/\s+/).filter(token => token.length > 0);
+  if (!tokens.length) return <>{text}</>;
+  const foldedChars: string[] = [];
+  for (const ch of text) foldedChars.push(ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+  const folded = foldedChars.join("");
+  const ranges: [number, number][] = [];
+  for (const token of tokens) {
+    let from = 0;
+    for (;;) {
+      const at = folded.indexOf(token, from);
+      if (at === -1) break;
+      const overlaps = ranges.some(([start, end]) => at < end && at + token.length > start);
+      if (!overlaps) ranges.push([at, at + token.length]);
+      from = at + token.length;
+    }
+  }
+  if (!ranges.length) return <>{text}</>;
+  ranges.sort((a, b) => a[0] - b[0]);
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  ranges.forEach(([start, end], index) => {
+    if (start > cursor) parts.push(text.slice(cursor, start));
+    parts.push(<mark key={index} className="search-mark">{text.slice(start, end)}</mark>);
+    cursor = end;
+  });
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
 }
 
 function pageSearchText(payload: SettingsPayload, page: SettingsPageDescriptor) {
@@ -371,6 +629,7 @@ function LoadingSkeleton({ styles }: { styles: ReturnType<typeof useStyles> }) {
       </div>
       <div className={styles.skeletonMain}>
         <div className={styles.atmosphere}><DitherField live={false} /></div>
+        <div className={styles.skeletonSplash}><img src={appIcon} alt="" className={mergeClasses(styles.skeletonSplashLogo, "sage-pulse")} /></div>
         <div style={{ width: "100%", maxWidth: 820, boxSizing: "border-box", margin: "0 auto", padding: "40px 32px 80px", position: "relative", zIndex: 1 }}>
           <div style={{ marginBottom: 28 }}>
             <div className={styles.skeletonBlock} style={{ height: 26, width: "32%", marginBottom: 8 }}><div className={styles.skeletonShimmer} /></div>
@@ -389,6 +648,7 @@ function LoadingSkeleton({ styles }: { styles: ReturnType<typeof useStyles> }) {
 
 export function App() {
   const styles = useStyles();
+  const reduceMotion = useReducedMotion();
   const [payload, setPayload] = useState<SettingsPayload | null>(null);
   const [selectedId, setSelectedId] = useState("general");
   const [query, setQuery] = useState("");
@@ -398,6 +658,8 @@ export function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mainEdgeFade, setMainEdgeFade] = useState({ top: false, bottom: false });
+  const [resultIndex, setResultIndex] = useState(0);
+  const [pendingAnchor, setPendingAnchor] = useState<{ anchor: string; pageId: string; nonce: number } | null>(null);
 
   useEffect(() => {
     const webview = window.chrome?.webview;
@@ -411,6 +673,9 @@ export function App() {
         const firstPage = data.categories.flatMap(category => category.pages)[0];
         if (firstPage) setSelectedId(current => data.categories.flatMap(category => category.pages).some(page => page.id === current) ? current : firstPage.id);
         requestAnimationFrame(() => requestAnimationFrame(() => webview.postMessage({ type: "rendered" })));
+      } else if (event.data.type === "status") {
+        const { effectivePeakMeterFps, ecoModeActive } = event.data.data;
+        setPayload(current => current ? { ...current, status: { ...current.status, effectivePeakMeterFps, ecoModeActive } } : current);
       } else if (event.data.type === "error") {
         setIsOpeningLegacy(false);
         setBridgeError(event.data.message);
@@ -431,6 +696,25 @@ export function App() {
 
   const groups = useMemo(() => groupPages(payload ?? fallbackPayload), [payload]);
   const normalizedQuery = normalizeSearch(deferredQuery.trim(), payload?.locale ?? "fr-FR");
+  const searchIndex = useMemo(() => buildSearchIndex(payload ?? fallbackPayload), [payload]);
+  const searchResults = useMemo(() => searchSettings(searchIndex, deferredQuery), [searchIndex, deferredQuery]);
+  useEffect(() => { setResultIndex(0); }, [deferredQuery]);
+
+  // After navigating to a search hit, scroll its section into view and flash it.
+  useEffect(() => {
+    if (!pendingAnchor || !payload) return;
+    if (selectedId !== pendingAnchor.pageId) return;
+    const nonce = pendingAnchor.nonce;
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => {
+      const element = document.getElementById(pendingAnchor.anchor);
+      setPendingAnchor(current => current?.nonce === nonce ? null : current);
+      if (!element) return;
+      element.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      element.classList.add("search-flash");
+      window.setTimeout(() => element.classList.remove("search-flash"), 1800);
+    }));
+    return () => cancelAnimationFrame(frame);
+  }, [pendingAnchor, payload, selectedId, reduceMotion]);
   const filteredGroups = useMemo(() => groups.map(group => ({ ...group, pages: group.pages.filter(page => !normalizedQuery || pageSearchText(payload ?? fallbackPayload, page).includes(normalizedQuery)) })).filter(group => group.pages.length), [groups, normalizedQuery, payload]);
   const allPages = (payload ?? fallbackPayload).categories.flatMap(category => category.pages);
   const visiblePages = filteredGroups.flatMap(group => group.pages);
@@ -442,6 +726,11 @@ export function App() {
   };
   const action = (name: string, data: Record<string, unknown> = {}) => window.chrome?.webview?.postMessage({ type: "action", action: name, ...data });
   const openClassic = (pageId?: string) => { setBridgeError(null); setIsOpeningLegacy(true); window.chrome?.webview?.postMessage({ type: "openLegacy", pageId: pageId ?? null }); };
+  const openResult = (hit: SearchHit) => {
+    setSelectedId(hit.pageId);
+    setQuery("");
+    if (hit.anchor) setPendingAnchor({ anchor: hit.anchor, pageId: hit.pageId, nonce: Date.now() });
+  };
 
   return (
     <FluentProvider className={styles.provider} theme={sageGlassDarkTheme}>
@@ -449,13 +738,25 @@ export function App() {
         if (event.button === 0) window.chrome?.webview?.postMessage({ type: "windowAction", action: "drag" });
       }} />
       <WindowControls labels={{ minimize: payload?.labels.minimize || "Minimize", close: payload?.labels.close || "Close" }} styles={styles} />
+      <AnimatePresence initial={false}>
       {payload ? (
+        <motion.div key="shell" style={{ height: "100%", position: "relative", isolation: "isolate" }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(6px)" }} transition={{ duration: reduceMotion ? 0 : 0.24, ease: morphEase }}>
         <>
         <div className={mergeClasses(styles.shell, sidebarCollapsed && styles.shellCollapsed)}>
-          <aside className={mergeClasses(styles.sidebar, "sidebar-polished", sidebarCollapsed && styles.sidebarCollapsed)}>
-            <SidebarBody styles={styles} payload={payload} groups={filteredGroups} selectedPage={selectedPage} collapsed={sidebarCollapsed} query={query} setQuery={setQuery} isOpeningLegacy={isOpeningLegacy} openClassic={() => openClassic()} navigate={setSelectedId} onToggleCollapsed={() => setSidebarCollapsed(value => !value)} />
-          </aside>
-          <main className={styles.main}>
+          <motion.aside
+            className={mergeClasses(styles.sidebar, "sidebar-polished", sidebarCollapsed && styles.sidebarCollapsed)}
+            initial={reduceMotion ? false : { x: -14, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.32, ease: morphEase, delay: 0.04 }}
+          >
+            <SidebarBody styles={styles} payload={payload} groups={filteredGroups} selectedPage={selectedPage} collapsed={sidebarCollapsed} query={query} setQuery={setQuery} isOpeningLegacy={isOpeningLegacy} openClassic={() => openClassic()} navigate={setSelectedId} onToggleCollapsed={() => setSidebarCollapsed(value => !value)} results={searchResults} resultIndex={resultIndex} setResultIndex={setResultIndex} onOpenResult={openResult} />
+          </motion.aside>
+          <motion.main
+            className={styles.main}
+            initial={reduceMotion ? false : { y: 16, opacity: 0, scale: 0.992 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ duration: 0.36, ease: morphEase, delay: 0.08 }}
+          >
             <div className={styles.atmosphere}><DitherField live={!payload.status.ecoModeActive} /></div>
             <div className={mergeClasses(styles.mainScroll, "settings-main")} onScroll={event => {
               const el = event.currentTarget;
@@ -466,29 +767,41 @@ export function App() {
               <div className={mergeClasses(styles.mobileHeader, "mobile-header-polished")}><img className={styles.logo} src={appIcon} alt="" /><Text weight="semibold">{payload.appName}</Text><Button className={styles.mobileMenuButton} appearance="subtle" icon={<MenuIcon size={20} />} aria-label={mobileDrawerOpen ? (payload.labels.closeNavigation || "Close navigation") : (payload.labels.openNavigation || "Open navigation")} aria-expanded={mobileDrawerOpen} title={mobileDrawerOpen ? (payload.labels.closeNavigation || "Close navigation") : (payload.labels.openNavigation || "Open navigation")} onClick={() => setMobileDrawerOpen(value => !value)} /></div>
               <div className={styles.content}>
                 {bridgeError && <MessageBar className={styles.message} intent="error"><MessageBarBody>{bridgeError}</MessageBarBody></MessageBar>}
-                {selectedPage && <SettingsPage page={selectedPage} payload={payload} styles={styles} setSetting={setSetting} action={action} openClassic={openClassic} isOpeningLegacy={isOpeningLegacy} />}
+                {selectedPage && <motion.div key={selectedPage.id} initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : 0.22, ease: morphEase }}><SettingsPage page={selectedPage} payload={payload} styles={styles} setSetting={setSetting} action={action} openClassic={openClassic} isOpeningLegacy={isOpeningLegacy} /></motion.div>}
                 {!selectedPage && <Text className={styles.searchEmpty}>{payload.labels.noResults || "No settings match your search."}</Text>}
               </div>
             </div>
             <div className={mergeClasses(styles.mainFade, styles.mainFadeTop, mainEdgeFade.top && styles.mainFadeVisible)} aria-hidden="true" />
             <div className={mergeClasses(styles.mainFade, styles.mainFadeBottom, mainEdgeFade.bottom && styles.mainFadeVisible)} aria-hidden="true" />
-          </main>
+          </motion.main>
         </div>
         <div className={mergeClasses(styles.drawerBackdrop, mobileDrawerOpen && styles.drawerBackdropOpen)} onClick={() => setMobileDrawerOpen(false)} aria-hidden="true" />
         <aside className={mergeClasses(styles.mobileDrawer, "sidebar-polished", mobileDrawerOpen && styles.mobileDrawerOpen)} aria-hidden={!mobileDrawerOpen} aria-label="Settings navigation">
-          <SidebarBody styles={styles} payload={payload} groups={filteredGroups} selectedPage={selectedPage} collapsed={false} query={query} setQuery={setQuery} isOpeningLegacy={isOpeningLegacy} openClassic={() => { setMobileDrawerOpen(false); openClassic(); }} navigate={id => { setSelectedId(id); setMobileDrawerOpen(false); }} />
+          <SidebarBody styles={styles} payload={payload} groups={filteredGroups} selectedPage={selectedPage} collapsed={false} query={query} setQuery={setQuery} isOpeningLegacy={isOpeningLegacy} openClassic={() => { setMobileDrawerOpen(false); openClassic(); }} navigate={id => { setSelectedId(id); setMobileDrawerOpen(false); }} results={searchResults} resultIndex={resultIndex} setResultIndex={setResultIndex} onOpenResult={hit => { setMobileDrawerOpen(false); openResult(hit); }} />
         </aside>
         </>
+        </motion.div>
       ) : (
-        <LoadingSkeleton styles={styles} />
+        // Opaque overlay: during the handoff it stays mounted ABOVE the shell
+        // (absolute, full-window) and blurs/fades away, so the reveal is a
+        // single smooth dissolve instead of two stacked layouts popping.
+        <motion.div
+          key="skeleton"
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 60, backgroundColor: "#050706" }}
+          exit={{ opacity: 0, filter: "blur(8px)" }}
+          transition={{ duration: reduceMotion ? 0 : 0.3, ease: morphEase }}
+        >
+          <LoadingSkeleton styles={styles} />
+        </motion.div>
       )}
+      </AnimatePresence>
     </FluentProvider>
   );
 }
 
 const morphEase: [number, number, number, number] = [0.33, 1, 0.68, 1];
 
-function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, setQuery, isOpeningLegacy, openClassic, navigate, onToggleCollapsed }: {
+function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, setQuery, isOpeningLegacy, openClassic, navigate, onToggleCollapsed, results = [], resultIndex = 0, setResultIndex, onOpenResult }: {
   styles: ReturnType<typeof useStyles>;
   payload: SettingsPayload;
   groups: { title: string; pages: SettingsPageDescriptor[] }[];
@@ -500,6 +813,10 @@ function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, 
   openClassic: () => void;
   navigate: (id: string) => void;
   onToggleCollapsed?: () => void;
+  results?: SearchHit[];
+  resultIndex?: number;
+  setResultIndex?: (index: number) => void;
+  onOpenResult?: (hit: SearchHit) => void;
 }) {
   const reduceMotion = useReducedMotion();
   const duration = reduceMotion ? 0 : 0.22;
@@ -556,13 +873,59 @@ function SidebarBody({ styles, payload, groups, selectedPage, collapsed, query, 
         {!collapsed && (
           <motion.div
             key="search"
+            className={styles.searchWrap}
             initial={{ opacity: 0, filter: blur(8), maxHeight: 0, marginBottom: 0 }}
             animate={{ opacity: 1, filter: blur(0), maxHeight: 48, marginBottom: 14 }}
             exit={{ opacity: 0, filter: blur(8), maxHeight: 0, marginBottom: 0 }}
             transition={morph}
-            style={{ overflow: "hidden", flexShrink: 0 }}
+            style={{ overflow: "visible", flexShrink: 0 }}
           >
-            <Input className={styles.search} appearance="filled-darker" contentBefore={<SearchIcon size={18} />} value={query} onChange={(_, data) => setQuery(data.value)} placeholder={payload.labels.searchPlaceholder || "Search settings"} aria-label={payload.labels.searchPlaceholder || "Search settings"} onKeyDown={event => { if (event.key === "Escape" && query) { setQuery(""); } else if (event.key === "Enter") { const first = groups.flatMap(group => group.pages)[0]; if (first && query.trim()) navigate(first.id); } }} />
+            <div className={`${styles.searchBox} search-box`}>
+              <SearchIcon size={16} className={`${styles.searchBoxIcon} search-box-icon`} />
+              <input
+                className={`${styles.searchInput} search-input-native`}
+                value={query}
+                onChange={event => setQuery(event.currentTarget.value)}
+                placeholder={payload.labels.searchPlaceholder || "Search settings"}
+                aria-label={payload.labels.searchPlaceholder || "Search settings"}
+                spellCheck={false}
+                autoComplete="off"
+                onKeyDown={event => {
+                  const hasResults = query.trim() && results.length > 0;
+                  if (event.key === "Escape" && query) {
+                    setQuery("");
+                  } else if (event.key === "ArrowDown" && hasResults && setResultIndex) {
+                    event.preventDefault();
+                    setResultIndex(Math.min(results.length - 1, resultIndex + 1));
+                  } else if (event.key === "ArrowUp" && hasResults && setResultIndex) {
+                    event.preventDefault();
+                    setResultIndex(Math.max(0, resultIndex - 1));
+                  } else if (event.key === "Enter") {
+                    if (hasResults && onOpenResult) { onOpenResult(results[Math.min(resultIndex, results.length - 1)]); }
+                    else if (query.trim()) { const first = groups.flatMap(group => group.pages)[0]; if (first) navigate(first.id); }
+                  }
+                }}
+              />
+              {query.trim() && results.length > 0 && <kbd className="search-hint-kbd">↵</kbd>}
+            </div>
+            {query.trim() && results.length > 0 && onOpenResult && (
+              <div className={styles.searchResults} role="listbox" aria-label={payload.labels.searchPlaceholder || "Search results"}>
+                {results.map((hit, index) => (
+                  <button
+                    key={hit.key}
+                    type="button"
+                    role="option"
+                    aria-selected={index === resultIndex}
+                    className={mergeClasses(styles.searchResult, index === resultIndex && styles.searchResultActive)}
+                    onMouseEnter={() => setResultIndex?.(index)}
+                    onClick={() => onOpenResult(hit)}
+                  >
+                    <span className={styles.searchResultLabel}><HighlightedLabel text={hit.titleOriginal} query={query} /></span>
+                    <span className={styles.searchResultMeta}>{hit.meta}{hit.anchor ? " ›" : ""}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

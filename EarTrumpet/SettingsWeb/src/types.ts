@@ -145,6 +145,7 @@ export interface SettingsPayload {
 
 export type HostMessage =
   | { type: "state"; data: SettingsPayload }
+  | { type: "status"; data: { effectivePeakMeterFps: number; ecoModeActive: boolean } }
   | { type: "settingChanged"; key: SettingKey; value: SettingValue }
   | { type: "error"; message: string };
 

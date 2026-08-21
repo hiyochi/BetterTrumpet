@@ -1,14 +1,9 @@
 /* Polish enhancements for Sage Glass settings */
 
-/* Section cards with backdrop blur and enhanced shadows */
+/* Section cards: static glass, no hover brightening */
 .section-polished {
   backdrop-filter: blur(16px);
   transition-timing-function: cubic-bezier(.2,0,0,1);
-}
-
-.section-polished:hover {
-  border-color: rgba(255,255,255,.16) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 20px 48px rgba(10, 8, 15, 0.38) !important;
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -17,27 +12,14 @@
   }
 }
 
-/* Setting rows with cursor and enhanced interactions */
+/* Setting rows are read-only surfaces: no hover, no cursor games */
 .setting-row-polished {
-  cursor: pointer;
-  transition-timing-function: cubic-bezier(.2,0,0,1);
-}
-
-.setting-row-polished:hover {
-  background-color: rgba(255,255,255,.06) !important;
-  transform: translateX(2px);
-}
-
-.setting-row-polished:active {
-  background-color: rgba(255,255,255,.08) !important;
-  transform: translateX(2px) scale(0.995);
-  transition-duration: 80ms;
+  transition: none;
 }
 
 .setting-row-polished:focus-within {
   outline: 2px solid #9b7bea;
   outline-offset: -2px;
-  background-color: rgba(155, 123, 234, 0.08) !important;
 }
 
 /* Select with cursor and interactions */
@@ -60,20 +42,13 @@
   transform: scale(0.98);
 }
 
-/* Control row hover */
-.control-row-polished:hover {
-  background-color: rgba(255,255,255,.03) !important;
-}
+/* Control and action rows: static surfaces */
 
-/* Action row hover */
-.action-row-polished:hover {
-  background-color: rgba(255,255,255,.02) !important;
-}
+/* Theme chip rows keep a minimal hover: they are buttons */
 
-/* List row hover */
-.list-row-polished:hover {
-  background-color: rgba(255,255,255,.04) !important;
-  transform: translateX(2px);
+/* List rows: static, no hover */
+.list-row-polished {
+  transition: none;
 }
 
 /* Theme button with cursor, timing and shadows */
@@ -141,39 +116,47 @@
   transform: scale(0.98);
 }
 
-/* Caption chrome: ghost buttons, no floating pills */
+/* Caption chrome: quiet ghost buttons, tuned down to live in the shell.
+   Barely-there at rest, whisper on hover; the close button keeps only a
+   muted red veil instead of a full-bleed system-red block. */
 .window-button-polished {
+  min-width: 36px !important;
+  width: 36px !important;
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  margin-right: 2px;
+  border-radius: 10px !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   backdrop-filter: none;
-  padding: 0 !important;
-  min-width: 44px;
-  min-height: 32px;
-  transition: color 160ms cubic-bezier(.33,1,.68,1), background-color 160ms cubic-bezier(.33,1,.68,1) !important;
+  color: rgba(244, 247, 245, .38) !important;
+  transition: color 140ms cubic-bezier(.33,1,.68,1), background-color 140ms cubic-bezier(.33,1,.68,1) !important;
+}
+
+.window-button-polished svg {
+  transform: scale(.82);
 }
 
 .window-button-polished:hover {
-  color: #F4F7F5 !important;
-  background-color: rgba(255,255,255,.1) !important;
-  transform: none;
+  color: rgba(244, 247, 245, .85) !important;
+  background-color: rgba(255, 255, 255, .07) !important;
   box-shadow: none !important;
 }
 
 .window-button-polished:active {
-  background-color: rgba(255,255,255,.14) !important;
-  transform: none;
+  background-color: rgba(255, 255, 255, .1) !important;
 }
 
 .close-button-polished:hover {
-  color: #fff !important;
-  background-color: #c42b1c !important;
+  color: rgba(255, 226, 220, .92) !important;
+  background-color: rgba(150, 34, 26, .55) !important;
   box-shadow: none !important;
 }
 
 .close-button-polished:active {
-  color: #fff !important;
-  background-color: #a4262c !important;
+  background-color: rgba(130, 28, 22, .65) !important;
 }
 
 /* Mobile header with backdrop blur */
@@ -354,4 +337,128 @@
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 7px;
   padding: 3px 8px 4px;
+}
+
+/* --- Summary chips (rule badges) ------------------------------------ */
+
+.chip-polished {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #c6cdd4;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+  padding: 2px 9px 3px;
+  white-space: nowrap;
+}
+
+/* Accordion headers: clickable but calm — cursor only, no brightening */
+.acc-header-polished {
+  transition: none;
+}
+
+.acc-header-polished:focus-visible {
+  outline: 2px solid #9b7bea;
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acc-header-polished,
+  [class*="accChevron"] {
+    transition: none !important;
+  }
+}
+
+/* --- Search field + results dropdown -------------------------------- */
+
+/* Native input: Fluent's component is deliberately not used here — its
+   focus-within outline + ::after underline drew double frames. */
+.search-input-native::placeholder {
+  color: rgba(244, 247, 245, .42);
+}
+
+/* Focus state: quiet violet border + diffuse halo + accent icon.
+   One layer, one color, no double frames. */
+.search-box {
+  transition: border-color 160ms cubic-bezier(.33,1,.68,1), box-shadow 160ms cubic-bezier(.33,1,.68,1), background-color 160ms cubic-bezier(.33,1,.68,1);
+}
+
+.search-box:focus-within {
+  border-color: rgba(155, 123, 234, .55);
+  box-shadow: 0 0 0 3px rgba(155, 123, 234, .13);
+  background-color: rgba(255, 255, 255, .09);
+}
+
+.search-box:focus-within .search-box-icon {
+  color: #b196f1;
+}
+
+.search-hint-kbd {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(244, 247, 245, .55);
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 6px;
+  padding: 3px 7px;
+  margin-right: 2px;
+}
+
+.search-mark {
+  color: #b196f1;
+  background: transparent;
+  font-weight: 700;
+}
+
+/* Flash on the section reached from a search result */
+@keyframes search-flash-pulse {
+  0% { outline-color: rgba(155, 123, 234, .85); }
+  100% { outline-color: rgba(155, 123, 234, 0); }
+}
+
+.search-flash {
+  outline: 2px solid rgba(155, 123, 234, .85);
+  outline-offset: 4px;
+  animation: search-flash-pulse 1.8s ease-out forwards;
+  scroll-margin-top: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-flash {
+    animation: none;
+    outline-color: rgba(155, 123, 234, .5);
+  }
+}
+
+/* --- Compact theme chips --------------------------------------------- */
+
+.theme-row-polished {
+  cursor: pointer;
+  transition-timing-function: cubic-bezier(.2, 0, 0, 1);
+}
+
+.theme-row-polished:hover {
+  background-color: rgba(255, 255, 255, .09) !important;
+  border-color: rgba(255, 255, 255, .18) !important;
+}
+
+.theme-row-polished:focus-visible {
+  outline: 2px solid #9b7bea;
+  outline-offset: 2px;
+}
+
+.theme-row-polished:active {
+  transform: scale(0.995);
+  transition-duration: 80ms;
+}
+
+.truncate-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

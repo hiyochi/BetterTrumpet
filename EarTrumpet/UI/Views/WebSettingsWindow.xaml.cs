@@ -15,6 +15,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 using System.Windows.Shell;
 
 namespace EarTrumpet.UI.Views
@@ -67,9 +68,11 @@ namespace EarTrumpet.UI.Views
             }
 
             Loaded += async (_, __) => await InitializeWebViewAsync();
+            Loaded += (_, __) => StartSplashPulse();
             Closed += (_, __) =>
             {
                 ResumeHotkeys();
+                StopStatusTimer();
                 Trace.WriteLine("WebSettingsWindow Closed");
             };
 
@@ -157,6 +160,7 @@ namespace EarTrumpet.UI.Views
                 };
 
                 _isInitialized = true;
+                StartStatusTimer();
                 // The virtual-host mapping is served through Chromium's HTTP
                 // cache, which can keep serving a stale index.html after a
                 // rebuild (the page URL itself never changes). A version query
@@ -172,9 +176,76 @@ namespace EarTrumpet.UI.Views
             }
         }
 
-        private void Core_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+        private bool _splashHidden;
+
+        private void StartSplashPulse()
         {
-            if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) ||
+            if (!SystemParameters.ClientAreaAnimation) return;
+            var pulse = new DoubleAnimation(1, 0.7, TimeSpan.FromMilliseconds(1100))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
+            };
+            SplashLogo.BeginAnimation(UIElement.OpacityProperty, pulse);
+        }
+
+        private void HideSplash()
+        {
+            if (_splashHidden) return;
+            _splashHidden = true;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (SystemParameters.ClientAreaAnimation)
+                {
+                    var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(320))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                    };
+                    fade.Completed += (_, __) => LoadingSplash.Visibility = Visibility.Collapsed;
+                    LoadingSplash.BeginAnimation(UIElement.OpacityProperty, fade);
+                }
+                else
+                {
+                    LoadingSplash.Visibility = Visibility.Collapsed;
+                }
+            }));
+        }
+
+        private System.Windows.Threading.DispatcherTimer _statusTimer;
+
+        // Live status for the performance page: effective peak-meter FPS follows
+        // eco mode and battery rules, so it can change while the window is open.
+        private void StartStatusTimer()
+        {
+            if (_statusTimer != null) return;
+            _statusTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _statusTimer.Tick += (_, __) =>
+            {
+                if (_isInitialized && SettingsWebView.CoreWebView2 != null)
+                {
+                    PostMessage(new
+                    {
+                        type = "status",
+                        data = new
+                        {
+                            effectivePeakMeterFps = App.Settings.EffectivePeakMeterFps,
+                            ecoModeActive = App.Settings.IsEffectiveEcoMode,
+                        },
+                    });
+                }
+            };
+            _statusTimer.Start();
+        }
+
+        private void StopStatusTimer()
+        {
+            _statusTimer?.Stop();
+            _statusTimer = null;
+        }
+
+        private void Core_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
+        {            if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) ||
                 !string.Equals(uri.Host, SettingsHostName, StringComparison.OrdinalIgnoreCase))
             {
                 e.Cancel = true;
@@ -239,7 +310,9 @@ namespace EarTrumpet.UI.Views
                         SetHotkey(root);
                         break;
                     case "rendered":
-                        // The React app owns its loading skeleton; nothing to hide here.
+                        // The React app has painted its first real frame:
+                        // fade the branded splash away.
+                        HideSplash();
                         break;
                 }
             }
@@ -461,6 +534,10 @@ namespace EarTrumpet.UI.Views
                     SelectProfile(profiles, message);
                     profiles.SelectedProfileApplyAppsOnly = GetBoolean(message, "value");
                     break;
+                case "profileRename" when profiles != null:
+                    SelectProfile(profiles, message);
+                    profiles.RenameSelectedProfile(GetString(message, "name"));
+                    break;
                 case "appRuleAdd":
                     var typedExe = GetString(message, "exeName").Trim().Trim('"');
                     var exeName = Path.GetFileNameWithoutExtension(typedExe);
@@ -622,6 +699,9 @@ namespace EarTrumpet.UI.Views
                     ["profileName"] = R("SettingsThemeNamePlaceholder"), ["allDevices"] = R("SettingsQuickTrumpetAllDevices"),
                     ["confirmation"] = R("SettingsQuickTrumpetConfirmation"), ["savedProfiles"] = R("SettingsSavedProfiles"),
                     ["apply"] = R("SettingsProfileApply"), ["delete"] = R("SettingsProfileDelete"),
+                    ["save"] = R("WebSettingsSave"), ["rename"] = R("WebSettingsRename"),
+                    ["emptyProfilesHint"] = R("WebSettingsQuickTrumpetEmptyHint"),
+                    ["appsOnlyDescription"] = R("SettingsQuickTrumpetAppsOnlyDesc"),
                     ["export"] = R("SettingsProfileExport"), ["import"] = R("SettingsProfileImport"),
                     ["appsOnly"] = R("SettingsQuickTrumpetAppsOnly"), ["appRules"] = R("AppRulesListHeaderText"),
                     ["appRulesDescription"] = R("AppRulesListHeaderDesc"), ["addApp"] = R("AppRulesAddRuleButtonText"),
@@ -630,6 +710,7 @@ namespace EarTrumpet.UI.Views
                     ["targetVolume"] = R("AppRulesTargetVolumeText"), ["modeNone"] = R("AppRulesModeNoneText"),
                     ["modeLaunch"] = R("AppRulesModeLaunchText"), ["modeLock"] = R("AppRulesModeLockText"),
                     ["clearAllRules"] = R("AppRulesClearAllButtonText"), ["folderRules"] = R("FolderVolumeRulesHeaderText"),
+                    ["folderRulesDescription"] = R("FolderVolumeRulesHeaderDesc"),
                     ["addFolder"] = R("FolderVolumeRulesAddButtonText"), ["folderRulesEmpty"] = R("FolderVolumeRulesEmptyText"),
                     ["mediaPopup"] = R("SettingsMediaPopup"), ["mediaPopupDescription"] = R("SettingsMediaPopupDesc"),
                     ["enableMediaPopup"] = R("SettingsEnableMediaPopup"), ["interaction"] = R("SettingsInteraction"),
@@ -639,10 +720,12 @@ namespace EarTrumpet.UI.Views
                     ["autoEcoMode"] = R("SettingsAutoEcoMode"), ["animations"] = R("SettingsAnimations"),
                     ["smoothAnimation"] = R("SettingsSmoothVolumeAnimation"), ["animationSpeed"] = R("SettingsAnimationSpeedLabel"),
                     ["peakMeter"] = R("SettingsPeakMeter"), ["refreshRate"] = R("SettingsRefreshRate"),
+                    ["effectiveRate"] = R("WebSettingsEffectiveRate"), ["effectiveRateHint"] = R("WebSettingsEffectiveRateHint"),
                     ["appearanceDescription"] = R("SettingsColorPaletteDesc"),
                     ["dynamicAlbum"] = R("SettingsDynamicAlbumArt"), ["dynamicAlbumDescription"] = R("SettingsDynamicAlbumArtDesc"),
                     ["enableDynamicAlbum"] = R("SettingsEnableDynamicAlbumArt"), ["presets"] = R("SettingsTabPresets"),
                     ["customColors"] = R("SettingsCustomColors"), ["customColorsDescription"] = R("SettingsCustomColorsDesc"),
+                    ["customColorsTweakHint"] = R("WebSettingsCustomColorsTweakHint"),
                     ["useCustomColors"] = R("SettingsUseCustomSliderColors"), ["windowOpacity"] = R("SettingsWindowOpacity"),
                     ["peakStyle"] = R("SettingsPeakMeterStyle"), ["randomize"] = R("SettingsRandomizeTooltip"),
                     ["reset"] = R("SettingsResetToDefault"), ["saveTheme"] = R("SettingsSaveTheme"),
@@ -806,7 +889,16 @@ namespace EarTrumpet.UI.Views
         {
             var deviceCount = profile.Devices?.Count ?? 0;
             var appCount = profile.Devices?.Sum(device => device.Apps?.Count ?? 0) ?? 0;
-            return $"{deviceCount} device(s) · {appCount} app(s)";
+            var deviceNames = profile.Devices?
+                .Select(device => device.DisplayName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .ToList() ?? new System.Collections.Generic.List<string>();
+            string devicesLabel;
+            if (deviceNames.Count == 0) devicesLabel = $"{deviceCount} device(s)";
+            else if (deviceNames.Count == 1) devicesLabel = deviceNames[0];
+            else if (deviceNames.Count == 2) devicesLabel = $"{deviceNames[0]}, {deviceNames[1]}";
+            else devicesLabel = $"{deviceNames[0]} +{deviceNames.Count - 1}";
+            return $"{devicesLabel} · {appCount} app(s)";
         }
 
         private static string ToHex(System.Windows.Media.Color color)
@@ -986,6 +1078,8 @@ namespace EarTrumpet.UI.Views
 
         private void ShowLoadError()
         {
+            _splashHidden = true;
+            LoadingSplash.Visibility = Visibility.Collapsed;
             ErrorOverlay.Visibility = Visibility.Visible;
         }
 

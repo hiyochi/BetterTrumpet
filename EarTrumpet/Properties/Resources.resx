@@ -136,7 +136,7 @@
     <value>Open settings</value>
   </data>
   <data name="TrayOpenSettingsNew" xml:space="preserve">
-    <value>Open settings (new)</value>
+    <value>Open settings (beta)</value>
   </data>
   <data name="TrayShowOnboarding" xml:space="preserve">
     <value>Show onboarding</value>
@@ -1392,6 +1392,30 @@ Open [https://eartrumpet.app/jmp/fixfonts] now?</value>
   <data name="SettingsQuickTrumpetAppsOnly" xml:space="preserve">
     <value>Only apply app volumes and mute states</value>
   </data>
+  <data name="SettingsQuickTrumpetAppsOnlyDesc" xml:space="preserve">
+    <value>Only matching app volumes change; devices keep their volume.</value>
+  </data>
+  <data name="WebSettingsSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="WebSettingsRename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="WebSettingsCustomColorsTweakHint" xml:space="preserve">
+    <value>The selected preset lands here; tweak any channel to make it yours.</value>
+  </data>
+  <data name="WebSettingsEffectiveRate" xml:space="preserve">
+    <value>Effective rate</value>
+  </data>
+  <data name="WebSettingsEffectiveRateHint" xml:space="preserve">
+    <value>Actual rendering rate right now.</value>
+  </data>
+  <data name="WebSettingsQuickTrumpetEmptyHint" xml:space="preserve">
+    <value>Capture your current mix as your first preset.</value>
+  </data>
+  <data name="FolderVolumeRulesHeaderDesc" xml:space="preserve">
+    <value>Starting volume for apps launched from a folder.</value>
+  </data>
   <!-- Settings - About page -->
   <data name="SettingsAboutSubtitle" xml:space="preserve">
     <value>Version info, telemetry, and diagnostics.</value>
@@ -1796,6 +1820,9 @@ Details: {0}</value>
   </data>
   <data name="PresetCategoryRetro" xml:space="preserve">
     <value>Retro</value>
+  </data>
+  <data name="PresetCategoryAtmosphere" xml:space="preserve">
+    <value>Atmosphere</value>
   </data>
   <data name="PresetCategoryDeveloper" xml:space="preserve">
     <value>Developer</value>

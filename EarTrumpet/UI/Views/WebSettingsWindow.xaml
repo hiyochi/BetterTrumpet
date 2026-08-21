@@ -24,6 +24,37 @@
                       AllowExternalDrop="False"
                       DefaultBackgroundColor="0" />
 
+        <!-- Branded splash covering the WebView2 cold-start phase. The window
+             itself is Transparent + non-layered, which paints black until the
+             first web frame; this layer shows the shell color instead and is
+             faded out when the React app reports it has rendered. -->
+        <Grid x:Name="LoadingSplash"
+              Background="#050706"
+              IsHitTestVisible="False">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <Image x:Name="SplashLogo"
+                       Width="64"
+                       Height="64"
+                       HorizontalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Source="pack://application:,,,/Assets/icon.png" />
+                <TextBlock Margin="0,16,0,20"
+                           HorizontalAlignment="Center"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="#F4F7F5"
+                           Opacity="0.9"
+                           Text="{x:Static resx:Resources.WebSettingsLoading}" />
+                <ProgressBar Width="160"
+                             Height="3"
+                             BorderThickness="0"
+                             Background="#18FFFFFF"
+                             Foreground="#9B7BEA"
+                             IsIndeterminate="True" />
+            </StackPanel>
+        </Grid>
+
         <Grid x:Name="ErrorOverlay"
               Visibility="Collapsed"
               Background="Transparent">

@@ -354,25 +354,19 @@ namespace EarTrumpet.UI.Views
 
         private void CategoryBrands_Click(object sender, MouseButtonEventArgs e)
         {
-            SetAppearanceCategory("Brand");
-            e.Handled = true;
-        }
-
-        private void CategoryRetro_Click(object sender, MouseButtonEventArgs e)
-        {
-            SetAppearanceCategory("Retro / Gaming");
+            SetAppearanceCategory("Apps");
             e.Handled = true;
         }
 
         private void CategoryDev_Click(object sender, MouseButtonEventArgs e)
         {
-            SetAppearanceCategory("Developer");
+            SetAppearanceCategory("Editors");
             e.Handled = true;
         }
 
-        private void CategoryNature_Click(object sender, MouseButtonEventArgs e)
+        private void CategoryAtmosphere_Click(object sender, MouseButtonEventArgs e)
         {
-            SetAppearanceCategory("Nature / Premium");
+            SetAppearanceCategory("Atmosphere");
             e.Handled = true;
         }
 

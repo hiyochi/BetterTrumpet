@@ -1345,14 +1345,14 @@
                                         </Border.Style>
                                         <TextBlock Text="{x:Static resx:Resources.PresetCategoryBrands}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
                                     </Border>
-                                    <!-- Retro -->
+                                    <!-- Apps -->
                                     <Border Height="28" Padding="10,0" CornerRadius="5" Cursor="Hand" Margin="2"
-                                            MouseLeftButtonDown="CategoryRetro_Click">
+                                            MouseLeftButtonDown="CategoryBrands_Click">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="Transparent" />
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedCategory}" Value="Retro / Gaming">
+                                                    <DataTrigger Binding="{Binding SelectedCategory}" Value="Apps">
                                                         <Setter Property="Background" Value="#18FFFFFF" />
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -1361,16 +1361,16 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <TextBlock Text="{x:Static resx:Resources.PresetCategoryRetro}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
+                                        <TextBlock Text="{x:Static resx:Resources.PresetCategoryBrands}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
                                     </Border>
-                                    <!-- Developer -->
+                                    <!-- Editors -->
                                     <Border Height="28" Padding="10,0" CornerRadius="5" Cursor="Hand" Margin="2"
                                             MouseLeftButtonDown="CategoryDev_Click">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="Transparent" />
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedCategory}" Value="Developer">
+                                                    <DataTrigger Binding="{Binding SelectedCategory}" Value="Editors">
                                                         <Setter Property="Background" Value="#18FFFFFF" />
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -1381,14 +1381,14 @@
                                         </Border.Style>
                                         <TextBlock Text="{x:Static resx:Resources.PresetCategoryDeveloper}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
                                     </Border>
-                                    <!-- Nature -->
+                                    <!-- Atmosphere -->
                                     <Border Height="28" Padding="10,0" CornerRadius="5" Cursor="Hand" Margin="2"
-                                            MouseLeftButtonDown="CategoryNature_Click">
+                                            MouseLeftButtonDown="CategoryAtmosphere_Click">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="Transparent" />
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SelectedCategory}" Value="Nature / Premium">
+                                                    <DataTrigger Binding="{Binding SelectedCategory}" Value="Atmosphere">
                                                         <Setter Property="Background" Value="#18FFFFFF" />
                                                     </DataTrigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
@@ -1397,7 +1397,7 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <TextBlock Text="{x:Static resx:Resources.PresetCategoryNature}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
+                                        <TextBlock Text="{x:Static resx:Resources.PresetCategoryAtmosphere}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
                                     </Border>
                                     <!-- Accessibility -->
                                     <Border Height="28" Padding="10,0" CornerRadius="5" Cursor="Hand" Margin="2"

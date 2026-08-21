@@ -237,6 +237,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.SliderThumbColor = value;
                 RaisePropertyChanged(nameof(SliderThumbColor));
                 RaisePropertyChanged(nameof(SliderThumbColorHex));
@@ -265,6 +266,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.SliderTrackFillColor = value;
                 RaisePropertyChanged(nameof(SliderTrackFillColor));
                 RaisePropertyChanged(nameof(SliderTrackFillColorHex));
@@ -293,6 +295,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.SliderTrackBackgroundColor = value;
                 RaisePropertyChanged(nameof(SliderTrackBackgroundColor));
                 RaisePropertyChanged(nameof(SliderTrackBackgroundColorHex));
@@ -321,6 +324,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.PeakMeterColor = value;
                 RaisePropertyChanged(nameof(PeakMeterColor));
                 RaisePropertyChanged(nameof(PeakMeterColorHex));
@@ -350,6 +354,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.WindowBackgroundColor = value;
                 RaisePropertyChanged(nameof(WindowBackgroundColor));
                 RaisePropertyChanged(nameof(WindowBackgroundColorHex));
@@ -380,6 +385,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.TextColor = value;
                 RaisePropertyChanged(nameof(TextColorValue));
                 RaisePropertyChanged(nameof(TextColorHex));
@@ -409,6 +415,7 @@ namespace EarTrumpet.UI.ViewModels
             }
             set
             {
+                EnsureCustomColorsActive();
                 _settings.AccentGlowColor = value;
                 RaisePropertyChanged(nameof(AccentGlowColor));
                 RaisePropertyChanged(nameof(AccentGlowColorHex));
@@ -652,6 +659,21 @@ namespace EarTrumpet.UI.ViewModels
         }
         
         /// <summary>
+        /// Tweaking any color channel implies a custom look: activate the custom
+        /// color mode first so the change is visible immediately, matching
+        /// ApplyPickedColor's behavior for the classic UI pickers.
+        /// </summary>
+        private void EnsureCustomColorsActive()
+        {
+            if (!_settings.UseCustomSliderColors)
+            {
+                _settings.UseCustomSliderColors = true;
+                RaisePropertyChanged(nameof(UseCustomSliderColors));
+                BackupOriginalThemeRefs();
+            }
+        }
+
+        /// <summary>
         /// Called by the ColorPicker when a color is selected
         /// </summary>
         public void ApplyPickedColor(Color color, string propertyName)
@@ -711,6 +733,18 @@ namespace EarTrumpet.UI.ViewModels
             if (UseDynamicAlbumArtTheme)
             {
                 UseDynamicAlbumArtTheme = false;
+            }
+
+            // A preset carries its own acrylic character: apply its window opacity
+            // so themes differ in translucency, not just hue. Null leaves the
+            // user's current opacity untouched. The acrylic tint itself is refreshed
+            // by ApplyExtendedThemeColors during the color transition.
+            if (theme.WindowBackgroundOpacity.HasValue)
+            {
+                _settings.WindowBackgroundOpacity = theme.WindowBackgroundOpacity.Value;
+                _pendingWindowBackgroundOpacity = _settings.WindowBackgroundOpacity;
+                RaisePropertyChanged(nameof(WindowBackgroundOpacity));
+                RaisePropertyChanged(nameof(PendingWindowBackgroundOpacity));
             }
 
             // Snapshot current colors
@@ -1063,7 +1097,7 @@ namespace EarTrumpet.UI.ViewModels
 
             var theme = new ColorTheme(name, "Custom",
                 SliderThumbColor, SliderTrackFillColor, SliderTrackBackgroundColor, PeakMeterColor,
-                WindowBackgroundColor, TextColorValue, AccentGlowColor)
+                WindowBackgroundColor, TextColorValue, AccentGlowColor, _settings.WindowBackgroundOpacity)
             { IsCustom = true };
 
             CustomThemes.Add(theme);

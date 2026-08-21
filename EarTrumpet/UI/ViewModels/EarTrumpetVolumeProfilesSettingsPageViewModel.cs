@@ -198,6 +198,17 @@ namespace EarTrumpet.UI.ViewModels
             }
         }
 
+        public void RenameSelectedProfile(string newName)
+        {
+            if (_selectedProfile == null || string.IsNullOrWhiteSpace(newName)) return;
+            var name = newName.Trim();
+            if (string.Equals(_selectedProfile.Name, name, StringComparison.Ordinal)) return;
+
+            _profileService.RenameProfile(_selectedProfile, name);
+            RaisePropertyChanged(nameof(Profiles));
+            Trace.WriteLine($"VolumeProfilesVM: Renamed profile to '{name}'");
+        }
+
         private void ApplySelectedProfile()
         {
             if (_selectedProfile == null) return;
