@@ -17,6 +17,21 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes sage-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.78; }
+  50% { transform: scale(1.07); opacity: 1; }
+}
+
+.sage-pulse {
+  animation: sage-pulse 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sage-pulse {
+    animation: none;
+  }
+}
+
 ::selection {
   color: #f7f5fb;
   background: #9b7bea;
@@ -31,6 +46,21 @@ body,
   margin: 0;
   overflow: hidden;
   background: transparent;
+}
+
+/* The settings surface behaves like a native app: text is not selectable
+   with the mouse. Editable fields keep selection. */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 * {

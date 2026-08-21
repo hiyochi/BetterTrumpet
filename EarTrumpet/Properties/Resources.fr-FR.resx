@@ -136,7 +136,7 @@
     <value>Ouvrir les paramètres</value>
   </data>
   <data name="TrayOpenSettingsNew" xml:space="preserve">
-    <value>Ouvrir les paramètres (new)</value>
+    <value>Ouvrir les paramètres (beta)</value>
   </data>
   <data name="TrayShowOnboarding" xml:space="preserve">
     <value>Relancer l'accueil</value>
@@ -269,6 +269,9 @@
   </data>
   <data name="FolderVolumeRulesHeaderText" xml:space="preserve">
     <value>Volumes par dossier</value>
+  </data>
+  <data name="FolderVolumeRulesHeaderDesc" xml:space="preserve">
+    <value>Volume de départ pour les apps lancées depuis un dossier.</value>
   </data>
   <data name="FolderVolumeRulesAddButtonText" xml:space="preserve">
     <value>Ajouter un dossier</value>
@@ -1326,6 +1329,27 @@ Voulez-vous ouvrir [https://eartrumpet.app/jmp/fixfonts] maintenant?</value>
   <data name="SettingsQuickTrumpetAppsOnly" xml:space="preserve">
     <value>Appliquer uniquement les volumes et mutes des applis</value>
   </data>
+  <data name="SettingsQuickTrumpetAppsOnlyDesc" xml:space="preserve">
+    <value>Seuls les volumes des applications correspondantes changent ; les périphériques gardent leur volume.</value>
+  </data>
+  <data name="WebSettingsSave" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="WebSettingsRename" xml:space="preserve">
+    <value>Renommer</value>
+  </data>
+  <data name="WebSettingsCustomColorsTweakHint" xml:space="preserve">
+    <value>Le preset sélectionné atterrit ici ; ajustez chaque canal pour le rendre vôtre.</value>
+  </data>
+  <data name="WebSettingsEffectiveRate" xml:space="preserve">
+    <value>Taux effectif</value>
+  </data>
+  <data name="WebSettingsEffectiveRateHint" xml:space="preserve">
+    <value>Taux de rendu réel en ce moment.</value>
+  </data>
+  <data name="WebSettingsQuickTrumpetEmptyHint" xml:space="preserve">
+    <value>Capturez votre mix actuel comme premier préreglage.</value>
+  </data>
   <!-- Settings - About page -->
   <data name="SettingsAboutSubtitle" xml:space="preserve">
     <value>Informations, télémétrie et diagnostics.</value>
@@ -1730,6 +1754,9 @@ Détails : {0}</value>
   </data>
   <data name="PresetCategoryRetro" xml:space="preserve">
     <value>Rétro</value>
+  </data>
+  <data name="PresetCategoryAtmosphere" xml:space="preserve">
+    <value>Atmosphère</value>
   </data>
   <data name="PresetCategoryDeveloper" xml:space="preserve">
     <value>Développeur</value>

@@ -17,6 +17,10 @@ namespace EarTrumpet.UI.ViewModels
         public Color TextColor { get; set; }
         public Color AccentGlowColor { get; set; }
 
+        // Per-theme acrylic character: null leaves the user's opacity untouched,
+        // a value re-tints the flyout acrylic when the theme is applied.
+        public double? WindowBackgroundOpacity { get; set; }
+
         // Is this a user-created custom theme?
         public bool IsCustom { get; set; }
 
@@ -33,7 +37,7 @@ namespace EarTrumpet.UI.ViewModels
         /// Full constructor with category + extended colors
         /// </summary>
         public ColorTheme(string name, string category, Color thumb, Color fill, Color background, Color peak,
-                          Color windowBg, Color text, Color accentGlow)
+                          Color windowBg, Color text, Color accentGlow, double? windowBgOpacity = null)
         {
             Name = name;
             Category = category;
@@ -44,6 +48,7 @@ namespace EarTrumpet.UI.ViewModels
             WindowBackgroundColor = windowBg;
             TextColor = text;
             AccentGlowColor = accentGlow;
+            WindowBackgroundOpacity = windowBgOpacity;
         }
 
         /// <summary>
@@ -62,6 +67,7 @@ namespace EarTrumpet.UI.ViewModels
                 WindowBg = $"#{WindowBackgroundColor.R:X2}{WindowBackgroundColor.G:X2}{WindowBackgroundColor.B:X2}",
                 Text = $"#{TextColor.R:X2}{TextColor.G:X2}{TextColor.B:X2}",
                 Glow = $"#{AccentGlowColor.R:X2}{AccentGlowColor.G:X2}{AccentGlowColor.B:X2}",
+                Opacity = WindowBackgroundOpacity,
             }, Newtonsoft.Json.Formatting.Indented);
         }
 
@@ -71,6 +77,12 @@ namespace EarTrumpet.UI.ViewModels
         public static ColorTheme FromJson(string json)
         {
             var obj = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(json);
+            double? opacity = null;
+            if (obj.Opacity != null)
+            {
+                opacity = (double?)System.Convert.ChangeType((object)obj.Opacity, typeof(double), System.Globalization.CultureInfo.InvariantCulture);
+                if (opacity.HasValue) opacity = System.Math.Max(0.05, System.Math.Min(1.0, opacity.Value));
+            }
             return new ColorTheme(
                 (string)obj.Name,
                 (string)(obj.Category ?? "Custom"),
@@ -81,7 +93,11 @@ namespace EarTrumpet.UI.ViewModels
                 ParseHex((string)(obj.WindowBg ?? "#000000")),
                 ParseHex((string)(obj.Text ?? "#FFFFFF")),
                 ParseHex((string)(obj.Glow ?? (string)obj.Fill))
-            ) { IsCustom = true };
+            )
+            {
+                IsCustom = true,
+                WindowBackgroundOpacity = opacity,
+            };
         }
 
         private static Color ParseHex(string hex)

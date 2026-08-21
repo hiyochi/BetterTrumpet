@@ -2780,6 +2780,30 @@ namespace EarTrumpet.Properties {
         public static string SettingsQuickTrumpetAppsOnly {
             get { return ResourceManager.GetString("SettingsQuickTrumpetAppsOnly", resourceCulture); }
         }
+        public static string SettingsQuickTrumpetAppsOnlyDesc {
+            get { return ResourceManager.GetString("SettingsQuickTrumpetAppsOnlyDesc", resourceCulture); }
+        }
+        public static string WebSettingsSave {
+            get { return ResourceManager.GetString("WebSettingsSave", resourceCulture); }
+        }
+        public static string WebSettingsRename {
+            get { return ResourceManager.GetString("WebSettingsRename", resourceCulture); }
+        }
+        public static string WebSettingsCustomColorsTweakHint {
+            get { return ResourceManager.GetString("WebSettingsCustomColorsTweakHint", resourceCulture); }
+        }
+        public static string WebSettingsEffectiveRate {
+            get { return ResourceManager.GetString("WebSettingsEffectiveRate", resourceCulture); }
+        }
+        public static string WebSettingsEffectiveRateHint {
+            get { return ResourceManager.GetString("WebSettingsEffectiveRateHint", resourceCulture); }
+        }
+        public static string WebSettingsQuickTrumpetEmptyHint {
+            get { return ResourceManager.GetString("WebSettingsQuickTrumpetEmptyHint", resourceCulture); }
+        }
+        public static string FolderVolumeRulesHeaderDesc {
+            get { return ResourceManager.GetString("FolderVolumeRulesHeaderDesc", resourceCulture); }
+        }
         public static string SettingsAboutSubtitle {
             get { return ResourceManager.GetString("SettingsAboutSubtitle", resourceCulture); }
         }
@@ -3161,6 +3185,9 @@ namespace EarTrumpet.Properties {
         }
         public static string PresetCategoryRetro {
             get { return ResourceManager.GetString("PresetCategoryRetro", resourceCulture); }
+        }
+        public static string PresetCategoryAtmosphere {
+            get { return ResourceManager.GetString("PresetCategoryAtmosphere", resourceCulture); }
         }
         public static string PresetCategoryDeveloper {
             get { return ResourceManager.GetString("PresetCategoryDeveloper", resourceCulture); }
