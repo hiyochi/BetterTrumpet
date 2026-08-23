@@ -1,11 +1,13 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using EarTrumpet.UI.ViewModels;
 
@@ -20,8 +22,9 @@ namespace EarTrumpet.UI.Controls
         private const string TrackBackgroundBrushRef = ":Theme=Control{Theme}SliderTrackFillDisabled, :HighContrast=ControlText, Flyout:Theme=FlyoutThemeTrackRightBackground, Flyout:HighContrast=ControlText";
         private const string PeakMeterBrushRef = "Theme=SystemAccent, HighContrast=HotTrack";
         
-        // Default smoothing factor for volume slider animation when clicking on track
-        // Lower = slower/smoother animation, Higher = faster (0.0 - 1.0)
+        // Default smoothing factor for volume slider animation when clicking on track.
+        // This value is kept for settings compatibility; it is mapped to a real duration
+        // below so the animation feels consistent regardless of the render rate.
         private const double DefaultVolumeSmoothingFactor = 0.08;
         
         // Get the smoothing factor from settings (or use default)
@@ -89,6 +92,7 @@ namespace EarTrumpet.UI.Controls
         private Border _peakMeter1;
         private Border _peakMeter2;
         private Thumb _thumb;
+        private Track _track;
         private RepeatButton _sliderLeft;
         private RepeatButton _sliderRight;
         private Point _lastMousePosition;
@@ -104,8 +108,16 @@ namespace EarTrumpet.UI.Controls
         private bool _isAnimating;
         
         // Smooth animation state for volume slider
+        private const double DragHandoffDurationMs = 50.0;
+        private double _renderedValue;
+        private double _volumeAnimationStartValue;
         private double _targetValue;
+        private double _volumeAnimationDurationMs;
+        private long _volumeAnimationStartTimestamp;
+        private DoubleAnimation _volumeTrackAnimation;
         private bool _isAnimatingValue;
+        private bool _isDragHandoffAnimating;
+        private long _trackMouseDownTimestamp;
         private bool _isDragging;
         private bool _clickedOnTrack; // Track if initial click was on track (not thumb)
         
@@ -135,6 +147,7 @@ namespace EarTrumpet.UI.Controls
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             _thumb = (Thumb)GetTemplateChild("SliderThumb");
+            _track = (Track)GetTemplateChild("PART_Track");
             _peakMeter1 = (Border)GetTemplateChild("PeakMeter1");
             _peakMeter2 = (Border)GetTemplateChild("PeakMeter2");
             _sliderLeft = (RepeatButton)GetTemplateChild("SliderLeft");
@@ -143,6 +156,7 @@ namespace EarTrumpet.UI.Controls
             // Initialize current widths
             _currentWidth1 = 0;
             _currentWidth2 = 0;
+            _renderedValue = Value;
             
             // Initialize peak meter style
             ApplyPeakMeterStyle();
@@ -208,6 +222,7 @@ namespace EarTrumpet.UI.Controls
         
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            CompleteVolumeAnimation();
             StopAnimation();
             
             // Unsubscribe from settings changes
@@ -493,6 +508,103 @@ namespace EarTrumpet.UI.Controls
                 CompositionTarget.Rendering -= OnRendering;
             }
         }
+
+        private void CompleteVolumeAnimation()
+        {
+            if (_isAnimatingValue)
+            {
+                _isAnimatingValue = false;
+                _isDragHandoffAnimating = false;
+                StopVolumeTrackAnimation();
+                Value = _targetValue;
+                ApplyRenderedTrackValue(_targetValue);
+            }
+        }
+
+        private void StopVolumeTrackAnimation()
+        {
+            if (_track != null)
+            {
+                _track.BeginAnimation(Track.ValueProperty, null);
+            }
+
+            _volumeTrackAnimation = null;
+        }
+
+        private void StartVolumeTrackAnimation(double startValue, double targetValue, double durationMs)
+        {
+            if (_track == null)
+            {
+                _volumeTrackAnimation = null;
+                return;
+            }
+
+            var animation = new DoubleAnimation(startValue, targetValue, TimeSpan.FromMilliseconds(durationMs))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.HoldEnd,
+            };
+
+            _volumeTrackAnimation = animation;
+            animation.Completed += (sender, args) => OnVolumeTrackAnimationCompleted(animation);
+            _track.BeginAnimation(Track.ValueProperty, animation, HandoffBehavior.SnapshotAndReplace);
+        }
+
+        private void OnVolumeTrackAnimationCompleted(DoubleAnimation animation)
+        {
+            if (!ReferenceEquals(animation, _volumeTrackAnimation))
+            {
+                return;
+            }
+
+            _isAnimatingValue = false;
+            _isDragHandoffAnimating = false;
+            StopVolumeTrackAnimation();
+            Value = _targetValue;
+            ApplyRenderedTrackValue(_targetValue);
+        }
+
+        private void ApplyRenderedTrackValue(double value)
+        {
+            _renderedValue = value;
+
+            if (_track != null && Math.Abs(_track.Value - value) > 0.001)
+            {
+                _track.Value = value;
+            }
+        }
+
+        private void CommitAnimatedVolumeValue(double value)
+        {
+            var direction = Math.Sign(_targetValue - _volumeAnimationStartValue);
+            var committedValue = direction < 0 ? Math.Ceiling(value) : Math.Floor(value);
+            committedValue = Bound(committedValue);
+
+            // Keep the audio binding integer-granular, but let the template Track
+            // render the fractional position so the thumb remains visually smooth.
+            if (Math.Abs(Value - committedValue) > 0.001)
+            {
+                Value = committedValue;
+            }
+
+            _renderedValue = value;
+        }
+
+        private void ApplyManualAnimatedVolumeValue(double value)
+        {
+            CommitAnimatedVolumeValue(value);
+            ApplyRenderedTrackValue(value);
+        }
+
+        private double GetVolumeAnimationDurationMs()
+        {
+            var speed = Math.Max(0.02, Math.Min(0.5, VolumeSmoothingFactor));
+            var normalizedSpeed = (speed - 0.02) / 0.48;
+
+            // Keep the interaction quick at normal settings while leaving enough
+            // time at the slowest setting for the movement to remain readable.
+            return 320.0 - (normalizedSpeed * 220.0);
+        }
         
         private void OnRendering(object sender, EventArgs e)
         {
@@ -561,22 +673,37 @@ namespace EarTrumpet.UI.Controls
                 }
             }
             
-            // Animate volume slider value when clicking on track (not dragging)
-            // This always runs for responsive feel
-            if (_isAnimatingValue && !_isDragging)
+            // Animate the initial track click and the short handoff into dragging.
+            // This always runs for responsive feel, including while the drag state
+            // is already active during the handoff.
+            if (_isAnimatingValue)
             {
                 didWork = true;
-                var newValue = Lerp(Value, _targetValue, VolumeSmoothingFactor);
-                
-                // Stop animating when close enough to target
-                if (Math.Abs(newValue - _targetValue) < 0.5)
+
+                if (_track != null && _volumeTrackAnimation != null)
                 {
-                    Value = _targetValue;
-                    _isAnimatingValue = false;
+                    // WPF owns the fractional visual value through its render-timed
+                    // animation clock. Only commit the integer audio value here.
+                    CommitAnimatedVolumeValue(_track.Value);
                 }
                 else
                 {
-                    Value = newValue;
+                    var elapsedMs = (Stopwatch.GetTimestamp() - _volumeAnimationStartTimestamp) * 1000.0 / Stopwatch.Frequency;
+                    var progress = Math.Max(0.0, Math.Min(1.0, elapsedMs / _volumeAnimationDurationMs));
+                    var easedProgress = EaseOutCubic(progress);
+                    var newValue = _volumeAnimationStartValue + ((_targetValue - _volumeAnimationStartValue) * easedProgress);
+
+                    if (progress >= 1.0)
+                    {
+                        _isAnimatingValue = false;
+                        _isDragHandoffAnimating = false;
+                        Value = _targetValue;
+                        ApplyRenderedTrackValue(_targetValue);
+                    }
+                    else
+                    {
+                        ApplyManualAnimatedVolumeValue(newValue);
+                    }
                 }
             }
             
@@ -593,6 +720,12 @@ namespace EarTrumpet.UI.Controls
         private static double Lerp(double current, double target, double factor)
         {
             return current + (target - current) * factor;
+        }
+
+        private static double EaseOutCubic(double progress)
+        {
+            var inverseProgress = 1.0 - progress;
+            return 1.0 - (inverseProgress * inverseProgress * inverseProgress);
         }
         
         protected override Size ArrangeOverride(Size arrangeBounds)
@@ -635,7 +768,8 @@ namespace EarTrumpet.UI.Controls
             // Ensure animation loop is running
             StartAnimation();
             
-            // Touch down on track - animate smoothly
+            // Touch down on track - animate smoothly, then commit the target
+            // when the interaction ends or the flyout unloads.
             _clickedOnTrack = true;
             _isDragging = false;
             SetPositionByControlPoint(e.GetTouchPoint(this).Position, animate: true);
@@ -661,18 +795,26 @@ namespace EarTrumpet.UI.Controls
                 StartAnimation();
 
                 // Only start dragging if we KNOW we clicked on the thumb
-                // Otherwise (clicked on track, or thumb not found), animate smoothly
+                // Otherwise (clicked on track, or thumb not found), animate
+                // quickly toward the target. MouseUp/Unloaded commits the
+                // final value if the flyout closes before the render loop ends.
                 if (_thumb != null && _thumb.IsMouseOver)
                 {
                     // Click on thumb - start dragging immediately
                     _clickedOnTrack = false;
+                    _isDragHandoffAnimating = false;
+                    _isAnimatingValue = false;
+                    StopVolumeTrackAnimation();
                     _isDragging = true;
                 }
                 else
                 {
-                    // Click on track (or thumb not found) - animate smoothly to target
+                    // Click on track (or thumb not found) - animate smoothly.
                     _clickedOnTrack = true;
+                    _isDragHandoffAnimating = false;
                     _isDragging = false;
+                    _isAnimatingValue = false;
+                    _trackMouseDownTimestamp = Stopwatch.GetTimestamp();
                     SetPositionByControlPoint(_lastMousePosition, animate: true);
                 }
 
@@ -696,6 +838,7 @@ namespace EarTrumpet.UI.Controls
             {
                 _isDragging = false;
                 _clickedOnTrack = false;
+                _isDragHandoffAnimating = false;
                 
                 // If the point is outside of the control, clear the hover state.
                 Rect rcSlider = new Rect(0, 0, ActualWidth, ActualHeight);
@@ -730,17 +873,40 @@ namespace EarTrumpet.UI.Controls
                 
                 if (_clickedOnTrack)
                 {
-                    // User clicked on track - they're now dragging after the initial click
-                    // Stop animation and switch to instant updates
                     _clickedOnTrack = false;
                     _isDragging = true;
-                    _isAnimatingValue = false;
+
+                    var heldMs = (Stopwatch.GetTimestamp() - _trackMouseDownTimestamp) * 1000.0 / Stopwatch.Frequency;
+                    if (heldMs >= DragHandoffDurationMs)
+                    {
+                        // The press had time to start its glide: bridge it into the
+                        // drag with the short catch-up animation.
+                        _isDragHandoffAnimating = true;
+                        SetPositionByControlPoint(mousePosition, animate: true);
+                    }
+                    else
+                    {
+                        // The pointer moved immediately after pressing: this is a
+                        // drag, not a click-to-jump. Follow the cursor directly so
+                        // a far-away press cannot fire a confusing catch-up slide.
+                        _isDragHandoffAnimating = false;
+                        SetPositionByControlPoint(mousePosition, animate: false);
+                    }
                 }
-                
-                if (_isDragging)
+                else if (_isDragging)
                 {
-                    // When dragging, we want instant updates (no animation)
-                    SetPositionByControlPoint(mousePosition, animate: false);
+                    if (_isDragHandoffAnimating && GetRemainingHandoffDurationMs() <= 16.0)
+                    {
+                        // Budget spent: finish as a plain direct drag instead of
+                        // restarting micro-animations on every move.
+                        _isDragHandoffAnimating = false;
+                    }
+
+                    // Keep the original handoff deadline if the pointer moves
+                    // again. Restarting a fresh 50 ms animation here makes the
+                    // thumb perpetually lag behind a continuously moving cursor.
+                    SetPositionByControlPoint(mousePosition, animate: _isDragHandoffAnimating,
+                        preserveHandoffTiming: _isDragHandoffAnimating);
                 }
             }
         }
@@ -766,7 +932,22 @@ namespace EarTrumpet.UI.Controls
 
         public void SetPositionByControlPoint(Point point, bool animate = false)
         {
-            var percent = point.X / ActualWidth;
+            SetPositionByControlPoint(point, animate, preserveHandoffTiming: false);
+        }
+
+        private void SetPositionByControlPoint(Point point, bool animate, bool preserveHandoffTiming)
+        {
+            var thumbWidth = _thumb?.ActualWidth ?? 0;
+            var trackWidth = ActualWidth - thumbWidth;
+            double percent;
+            if (trackWidth > 0)
+            {
+                percent = (point.X - thumbWidth / 2.0) / trackWidth;
+            }
+            else
+            {
+                percent = point.X / ActualWidth;
+            }
             var newValue = Bound((Maximum - Minimum) * percent);
             
             // Only animate if requested AND smooth animation is enabled in settings
@@ -775,26 +956,59 @@ namespace EarTrumpet.UI.Controls
                 // Ensure animation loop is running
                 StartAnimation();
                 
-                // Smooth animation to target value
+                // Retarget from the value currently rendered so a second click feels
+                // continuous instead of jumping back to the previous target.
+                _volumeAnimationStartValue = preserveHandoffTiming && _track != null
+                    ? _track.Value
+                    : _renderedValue;
                 _targetValue = newValue;
+                if (!preserveHandoffTiming)
+                {
+                    _volumeAnimationDurationMs = _isDragHandoffAnimating
+                        ? DragHandoffDurationMs
+                        : GetVolumeAnimationDurationMs();
+                    _volumeAnimationStartTimestamp = Stopwatch.GetTimestamp();
+                }
+                else if (_track != null)
+                {
+                    _volumeAnimationDurationMs = GetRemainingHandoffDurationMs();
+                }
+
                 _isAnimatingValue = true;
+                StartVolumeTrackAnimation(_volumeAnimationStartValue, _targetValue, _volumeAnimationDurationMs);
             }
             else
             {
                 // Instant update (for dragging or when animation is disabled)
+                _isAnimatingValue = false;
+                _isDragHandoffAnimating = false;
+                StopVolumeTrackAnimation();
                 Value = newValue;
+                ApplyRenderedTrackValue(newValue);
             }
+        }
+
+        private double GetRemainingHandoffDurationMs()
+        {
+            var elapsedMs = (Stopwatch.GetTimestamp() - _volumeAnimationStartTimestamp) * 1000.0 / Stopwatch.Frequency;
+            return Math.Max(1.0, DragHandoffDurationMs - elapsedMs);
         }
 
         protected override void OnValueChanged(double oldValue, double newValue)
         {
             base.OnValueChanged(oldValue, newValue);
 
+            if (!_isAnimatingValue)
+            {
+                _renderedValue = newValue;
+            }
+
             // Play tick sound when value changes (only if user is interacting)
-            // Check if we're actually dragging to avoid sound on programmatic changes
+            // Dragging and click-glide animations both count as interaction;
+            // purely programmatic changes stay silent.
             try
             {
-                if (_isDragging && Math.Abs(newValue - oldValue) > 0.5)
+                if ((_isDragging || _isAnimatingValue) && Math.Abs(newValue - oldValue) > 0.5)
                 {
                     PlayVolumeTickSound(newValue);
                 }
