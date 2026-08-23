@@ -160,6 +160,7 @@ function ShortcutsPage({ payload, styles }: PageProps) {
           {hotkey.value && <ClearButton id={hotkey.id} />}
         </>} />)}
       </div>
+      <ToggleRow payload={payload} styles={styles} settingKey="showDeviceSwitchNotification" label={t(payload, "showDeviceSwitchNotification", "Show notification when switching devices")} description={t(payload, "showDeviceSwitchNotificationDescription", "Display a toast notification when switching the default device via hotkey.")} setSetting={setSetting} />
     </Section>}
   </>;
 }

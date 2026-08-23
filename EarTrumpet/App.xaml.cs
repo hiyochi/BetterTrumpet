@@ -1049,7 +1049,11 @@ namespace EarTrumpet
             var next = list[(idx + 1) % list.Count];
             _deviceManager.Default = next;
             Trace.WriteLine($"CycleDefaultDevice: switched to '{next.DisplayName}'");
-            ShowDeviceChangeNotification(next.DisplayName);
+
+            if (Settings?.ShowDeviceSwitchNotification == true)
+            {
+                ShowDeviceChangeNotification(next.DisplayName);
+            }
         }
 
         private void RegisterDeviceHotkeys()
@@ -1077,7 +1081,11 @@ namespace EarTrumpet
                 {
                     _deviceManager.Default = device;
                     Trace.WriteLine($"DeviceHotkey: switched to '{device.DisplayName}'");
-                    ShowDeviceChangeNotification(device.DisplayName);
+
+                    if (Settings?.ShowDeviceSwitchNotification == true)
+                    {
+                        ShowDeviceChangeNotification(device.DisplayName);
+                    }
                     return;
                 }
             }
@@ -1099,7 +1107,7 @@ namespace EarTrumpet
             }
         }
 
-        private void ShowDeviceChangeNotification(string deviceName)
+        public void ShowDeviceChangeNotification(string deviceName)
         {
             if (Settings?.NotifyOnDeviceHotkeyChange == true)
             {

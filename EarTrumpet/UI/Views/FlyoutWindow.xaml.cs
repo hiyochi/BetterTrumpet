@@ -68,10 +68,11 @@ namespace EarTrumpet.UI.Views
             Themes.Manager.Current.NotifyThemeChanged();
 
             // Force immediate acrylic refresh after theme notification to ensure backdrop renders correctly
-            Dispatcher.BeginInvoke(new System.Action(() =>
+            // OPTIMIZATION: Use InvokeAsync instead of BeginInvoke for better performance
+            _ = Dispatcher.InvokeAsync(() =>
             {
                 EnableAcrylicIfApplicable(WindowsTaskbar.Current);
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }, System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         private void OnStateChanged(object sender, object e)
@@ -174,13 +175,14 @@ else
                 // WPF's TransformToDevice can lag behind the native DPI after a
                 // display-scale change. Reposition after Windows has applied the
                 // new monitor DPI to the HWND.
-                Dispatcher.BeginInvoke((Action)(() =>
+                // OPTIMIZATION: Use InvokeAsync instead of BeginInvoke for better performance
+                _ = Dispatcher.InvokeAsync(() =>
                 {
                     if (_viewModel.State == FlyoutViewState.Open || _viewModel.State == FlyoutViewState.Opening)
                     {
                         PositionWindowRelativeToTaskbar(WindowsTaskbar.Current);
                     }
-                }), System.Windows.Threading.DispatcherPriority.Loaded);
+                }, System.Windows.Threading.DispatcherPriority.Loaded);
             }
 
             return IntPtr.Zero;

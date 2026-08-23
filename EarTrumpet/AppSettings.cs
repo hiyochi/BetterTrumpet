@@ -1349,6 +1349,13 @@ namespace EarTrumpet
             set => _settings.Set("UseMonkeyTickSound", MonkeyTickSoundUnlocked && value);
         }
 
+        // Show notification when switching device via hotkey
+        public bool ShowDeviceSwitchNotification
+        {
+            get => _settings.Get("ShowDeviceSwitchNotification", true);
+            set => _settings.Set("ShowDeviceSwitchNotification", value);
+        }
+
         // Peak meter FPS: 20 (performance), 30 (balanced), or 60 (smooth). Default 30
         // Note: 30fps is a good balance between smoothness and CPU usage
         // Most users won't notice the difference from 60fps for peak meters

@@ -9,6 +9,7 @@ using System.Text;
 using EarTrumpet.DataModel.Audio;
 using EarTrumpet.DataModel.WindowsAudio;
 using EarTrumpet.DataModel.AppInformation;
+using System.Windows;
 
 namespace EarTrumpet.Actions.DataModel.Processing
 {
@@ -29,6 +30,17 @@ namespace EarTrumpet.Actions.DataModel.Processing
                 if (dev != null)
                 {
                     mgr.Default = dev;
+
+                    // Notify on hotkey device change if setting is enabled
+                    try
+                    {
+                        var app = System.Windows.Application.Current as EarTrumpet.App;
+                        app?.ShowDeviceChangeNotification(dev.DisplayName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine($"ActionProcessor failed to show notification: {ex}");
+                    }
                 }
             }
             else if (a is SetAppVolumeAction)

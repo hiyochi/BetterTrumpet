@@ -171,7 +171,8 @@ namespace EarTrumpet.UI.Controls
             // default theme while sliders present at startup stay themed (a global ThemeChanged
             // re-applies over them). Re-apply after the theme system finishes so custom colors
             // always win, regardless of Loaded ordering.
-            Dispatcher.BeginInvoke(new Action(ApplyCustomColors), System.Windows.Threading.DispatcherPriority.Loaded);
+            // OPTIMIZATION: Use InvokeAsync instead of BeginInvoke for better performance
+            _ = Dispatcher.InvokeAsync(ApplyCustomColors, System.Windows.Threading.DispatcherPriority.Loaded);
             
             // Subscribe to settings changes for live preview
             if (App.Settings != null)
