@@ -411,13 +411,23 @@ namespace EarTrumpet.UI.ViewModels
         {
             _deviceManager.UpdatePeakValues();
 
-            _currentDispatcher.BeginInvoke((Action)(() =>
+            if (_currentDispatcher.CheckAccess())
             {
                 foreach (var device in AllDevices)
                 {
                     device.UpdatePeakValueForeground();
                 }
-            }));
+            }
+            else
+            {
+                _currentDispatcher.InvokeAsync(() =>
+                {
+                    foreach (var device in AllDevices)
+                    {
+                        device.UpdatePeakValueForeground();
+                    }
+                });
+            }
         }
 
         public void MoveAppToDevice(IAppItemViewModel app, DeviceViewModel dev)

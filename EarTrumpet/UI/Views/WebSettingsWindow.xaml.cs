@@ -389,6 +389,9 @@ namespace EarTrumpet.UI.Views
                 case "notifyOnDeviceChange":
                     App.Settings.NotifyOnDefaultDeviceChange = valueElement.GetBoolean();
                     break;
+                case "showDeviceSwitchNotification":
+                    App.Settings.ShowDeviceSwitchNotification = valueElement.GetBoolean();
+                    break;
                 case "useFocusLostVolume":
                     App.Settings.UseFocusLostVolume = valueElement.GetBoolean();
                     break;
@@ -762,6 +765,7 @@ namespace EarTrumpet.UI.Views
                     useLogarithmicVolume = App.Settings.UseLogarithmicVolume,
                     useVolumeTickSound = App.Settings.UseVolumeTickSound,
                     notifyOnDeviceChange = App.Settings.NotifyOnDefaultDeviceChange,
+                    showDeviceSwitchNotification = App.Settings.ShowDeviceSwitchNotification,
                     useFocusLostVolume = App.Settings.UseFocusLostVolume,
                     focusLostAttenuatePercent = App.Settings.FocusLostAttenuatePercent,
                     focusLostFadeDurationMs = App.Settings.FocusLostFadeDurationMs,
