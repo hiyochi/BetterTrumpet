@@ -38,6 +38,12 @@ namespace EarTrumpet.UI.ViewModels
             set => _settings.NotifyOnDefaultDeviceChange = value;
         }
 
+        public bool NotifyOnDeviceHotkeyChange
+        {
+            get => _settings.NotifyOnDeviceHotkeyChange;
+            set => _settings.NotifyOnDeviceHotkeyChange = value;
+        }
+
         public bool UseFocusLostVolume
         {
             get => _settings.UseFocusLostVolume;

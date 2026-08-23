@@ -48,6 +48,8 @@ namespace EarTrumpet.UI.ViewModels
             _peakMeterTimer = new Timer(1000.0 / fps);
             _peakMeterTimer.AutoReset = true;
             _peakMeterTimer.Elapsed += PeakMeterTimer_Elapsed;
+            // OPTIMIZATION: Don't start timer immediately - it will be started when flyout opens
+            // _peakMeterTimer.Start(); // REMOVED - was burning CPU 24/7
 
             // Update timer interval when eco mode or FPS setting changes
             if (_settings != null)

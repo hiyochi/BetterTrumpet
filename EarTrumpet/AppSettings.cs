@@ -1905,6 +1905,12 @@ namespace EarTrumpet
             set => _settings.Set("NotifyOnDefaultDeviceChange", value);
         }
 
+        public bool NotifyOnDeviceHotkeyChange
+        {
+            get => _settings.Get("NotifyOnDeviceHotkeyChange", true);
+            set => _settings.Set("NotifyOnDeviceHotkeyChange", value);
+        }
+
         public bool UseFocusLostVolume
         {
             get => _settings.Get("UseFocusLostVolume", false);

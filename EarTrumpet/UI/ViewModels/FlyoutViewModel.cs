@@ -231,6 +231,7 @@ private readonly Action _returnFocusToTray;
 
         private void OnHiddenAppsChanged()
         {
+            // OPTIMIZATION: Check if already on UI thread to avoid unnecessary BeginInvoke
             if (_currentDispatcher.CheckAccess())
             {
                 RebuildRestoreHiddenAppsMenu();
@@ -243,6 +244,7 @@ private readonly Action _returnFocusToTray;
 
         private void OnHiddenDevicesChanged()
         {
+            // OPTIMIZATION: Check if already on UI thread to avoid unnecessary BeginInvoke
             if (_currentDispatcher.CheckAccess())
             {
                 RebuildRestoreHiddenDevicesMenu();
@@ -389,11 +391,19 @@ private readonly Action _returnFocusToTray;
 
         private void InvalidateWindowSize()
         {
-            // We must be async because otherwise SetWindowPos will pump messages before the UI has updated.
-            _currentDispatcher.BeginInvoke((Action)(() =>
+            // OPTIMIZATION: Check if already on UI thread to avoid unnecessary BeginInvoke overhead
+            if (_currentDispatcher.CheckAccess())
             {
                 WindowSizeInvalidated?.Invoke(this, null);
-            }));
+            }
+            else
+            {
+                // We must be async because otherwise SetWindowPos will pump messages before the UI has updated.
+                _currentDispatcher.BeginInvoke((Action)(() =>
+                {
+                    WindowSizeInvalidated?.Invoke(this, null);
+                }));
+            }
         }
 
         public void ChangeState(FlyoutViewState state)
@@ -651,6 +661,7 @@ private readonly Action _returnFocusToTray;
                     // Dispose managed resources
                     _mh?.Dispose();
                     _deBounceTimer?.Stop();
+                    _deBounceTimer?.Dispose();
 
                     // Unsubscribe events
                     _mainViewModel.DefaultChanged -= OnDefaultPlaybackDeviceChanged;
@@ -667,9 +678,11 @@ private readonly Action _returnFocusToTray;
             }
         }
 
-        ~FlyoutViewModel()
-        {
-            Dispose(false);
-        }
+        // OPTIMIZATION: Removed finalizer - proper Dispose pattern is sufficient
+        // Finalizers force GC Gen 2 promotion and should only be used for unmanaged resources
+        // ~FlyoutViewModel()
+        // {
+        //     Dispose(false);
+        // }
     }
 }
