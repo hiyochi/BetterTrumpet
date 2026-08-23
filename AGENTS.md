@@ -157,7 +157,7 @@ Notes:
 
 ## Current Branch Notes
 
-Merge state (2026-08-18): branch `xammen/settingsss` merged `origin/master` (Cursor fixes: focus-lost volume policy, device-change notifications, mixer size persistence, zh-CN/zh-TW i18n, diagnostics hardening). x86 Release build passes with `FileVersion=3.2.3` and `SettingsWeb` copied to `Build/Release/SettingsWeb`. The master features (focus-lost, device-change notify, app-rule focus-lost) are now exposed in the React settings UI too. The local `nuget.exe` in the repo root is corrupted — restore with `dotnet msbuild -t:Restore` instead. Dev loop: `docs/DEV-BUILD-RUN.md` (kill instances, `dotnet build` Debug x86 with the GitVersion workaround flags, launch `Build\Debug\BetterTrumpet.exe`, verify with `--ping` and the log tail).
+Merge state (2026-08-18): branch `xammen/settingsss` merged `origin/master` (Cursor fixes: focus-lost volume policy, device-change notifications, mixer size persistence, zh-CN/zh-TW i18n, diagnostics hardening). x86 Release build passes with `FileVersion=3.2.3` and `SettingsWeb` copied to `Build/Release/SettingsWeb`. The master features (focus-lost, device-change notify, app-rule focus-lost) are now exposed in the React settings UI too. The local `nuget.exe` in the repo root works again (NuGet 7.9.0) — it used to be corrupted by the `* text eol=crlf` rule in `.gitattributes`, which ran the CRLF filter over every tracked binary; `dotnet msbuild -t:Restore` remains a fine alternative. Dev loop: `docs/DEV-BUILD-RUN.md` (kill instances, `dotnet build` Debug x86 with the GitVersion workaround flags, launch `Build\Debug\BetterTrumpet.exe`, verify with `--ping` and the log tail).
 
 Recent work in `master` includes:
 

@@ -1,6 +1,16 @@
-[core]
-* text eol=crlf
+* text=auto eol=crlf
 
+# Binaries: `text=auto` lets git's own detection bail out, and the explicit
+# `binary` entries below keep the CRLF filter off them no matter what.
+*.exe binary
+*.dll binary
+*.nupkg binary
+*.msi binary
+*.msix binary
+*.appx binary
+*.pdb binary
+*.snk binary
+*.winmd binary
 *.png binary
 *.jpg binary
 *.jpeg binary
