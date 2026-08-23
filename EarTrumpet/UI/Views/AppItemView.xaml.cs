@@ -15,6 +15,8 @@ namespace EarTrumpet.UI.Views
     {
         private const int MuteStateAnimationDurationMs = 185;
         private const int HideAnimationDurationMs = 140;
+        private const int EntranceAnimationDurationMs = 220;
+        private const double EntranceSlideOffsetPx = 8;
         private const double HideSlideOffsetPx = -12;
 
         private IAppItemViewModel App => DataContext as IAppItemViewModel;
@@ -226,11 +228,13 @@ namespace EarTrumpet.UI.Views
                 return;
             }
 
-            Opacity = 0;
-            RenderTransform = new TranslateTransform(0, 8);
-
-            var duration = new Duration(TimeSpan.FromMilliseconds(220));
+            var duration = new Duration(TimeSpan.FromMilliseconds(EntranceAnimationDurationMs));
             var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            AnimateContainerEntrance(duration, easing);
+
+            Opacity = 0;
+            RenderTransform = new TranslateTransform(0, EntranceSlideOffsetPx);
 
             BeginAnimation(OpacityProperty, new DoubleAnimation(1, duration)
             {
@@ -241,6 +245,38 @@ namespace EarTrumpet.UI.Views
             {
                 EasingFunction = easing
             });
+        }
+
+        private void AnimateContainerEntrance(Duration duration, IEasingFunction easing)
+        {
+            var container = _container;
+            if (container == null)
+            {
+                return;
+            }
+
+            var targetHeight = container.DesiredSize.Height > 0
+                ? container.DesiredSize.Height
+                : container.ActualHeight;
+            if (targetHeight <= 0)
+            {
+                return;
+            }
+
+            container.BeginAnimation(HeightProperty, null);
+            container.ClipToBounds = true;
+            container.Height = 0;
+
+            var heightAnimation = new DoubleAnimation(targetHeight, duration)
+            {
+                EasingFunction = easing
+            };
+            heightAnimation.Completed += (s, e) =>
+            {
+                container.BeginAnimation(HeightProperty, null);
+                container.Height = double.NaN;
+            };
+            container.BeginAnimation(HeightProperty, heightAnimation);
         }
 
         private void BeginHideAnimation()
@@ -288,6 +324,11 @@ namespace EarTrumpet.UI.Views
             BeginAnimation(OpacityProperty, null);
             Opacity = 1;
             RenderTransform = null;
+            if (_container != null)
+            {
+                _container.BeginAnimation(HeightProperty, null);
+                _container.Height = double.NaN;
+            }
             var scale = EnsureGridScaleTransform();
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
             scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
