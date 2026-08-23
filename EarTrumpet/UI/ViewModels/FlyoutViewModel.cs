@@ -661,7 +661,6 @@ private readonly Action _returnFocusToTray;
                     // Dispose managed resources
                     _mh?.Dispose();
                     _deBounceTimer?.Stop();
-                    _deBounceTimer?.Dispose();
 
                     // Unsubscribe events
                     _mainViewModel.DefaultChanged -= OnDefaultPlaybackDeviceChanged;
