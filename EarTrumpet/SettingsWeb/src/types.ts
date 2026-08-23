@@ -9,6 +9,7 @@ export type SettingKey =
   | "useLogarithmicVolume"
   | "useVolumeTickSound"
   | "notifyOnDeviceChange"
+  | "showDeviceSwitchNotification"
   | "useFocusLostVolume"
   | "focusLostAttenuatePercent"
   | "focusLostFadeDurationMs"

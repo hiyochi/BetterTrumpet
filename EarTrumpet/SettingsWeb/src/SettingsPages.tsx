@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { Button, Input, Spinner, Switch, Text, mergeClasses } from "@fluentui/react-components";
 import {
@@ -119,15 +119,45 @@ function MousePage({ payload, styles, setSetting }: PageProps) {
   return <><Section icon={<MouseIcon size={18} />} title={t(payload, "scrollWheelTitle", "Mouse wheel")} description={t(payload, "scrollWheelDescription", "Control volume with the wheel")} anchor="wheel" styles={styles}><ToggleRow payload={payload} styles={styles} settingKey="useScrollWheelInTray" label={t(payload, "useScrollWheelInTray", "Change volume over the tray icon")} description={t(payload, "useScrollWheelInTrayDescription", "Scroll over the notification icon.")} /><ToggleRow payload={payload} styles={styles} settingKey="useGlobalMouseWheelHook" label={t(payload, "useGlobalMouseWheelHook", "Change volume while the interface is open")} description={t(payload, "useGlobalMouseWheelHookDescription", "The wheel controls volume from the interface.")} /></Section><Section icon={<Volume2Icon size={18} />} title={t(payload, "volumeScaleTitle", "Volume scale")} description={t(payload, "volumeScaleDescription", "Volume step distribution")} anchor="scale" styles={styles}><ToggleRow payload={payload} styles={styles} settingKey="useLogarithmicVolume" label={t(payload, "useLogarithmicVolume", "Use logarithmic scale")} /><ToggleRow payload={payload} styles={styles} settingKey="useVolumeTickSound" label={t(payload, "useVolumeTickSound", "Play a sound while adjusting")} description={t(payload, "useVolumeTickSoundDescription", "Play a light tick while changing volume.")} /></Section><Section icon={<ArrowLeftRightIcon size={18} />} title={t(payload, "deviceChangeTitle", "Device change")} description={t(payload, "deviceChangeDescription", "Toast when the default playback device switches")} anchor="deviceChange" styles={styles}><ToggleRow payload={payload} styles={styles} settingKey="notifyOnDeviceChange" label={t(payload, "notifyOnDeviceChange", "Show a notification when the default device changes")} /></Section><Section icon={<EyeOffIcon size={18} />} title={t(payload, "focusLostTitle", "Focus lost")} description={t(payload, "focusLostDescription", "Mute or reduce apps when another window is in front")} anchor="focusLost" styles={styles}><ToggleRow payload={payload} styles={styles} settingKey="useFocusLostVolume" label={t(payload, "useFocusLostVolume", "Lower volume of apps that lose focus")} setSetting={setSetting} />{focusLostEnabled && <><RangeRow styles={styles} label={t(payload, "focusLostAttenuate", "Background volume (0% mutes)")} description={t(payload, "focusLostAttenuateHint", "Locked and keep-muted rules are left alone.")} value={Number(payload.values.focusLostAttenuatePercent)} min={0} max={100} suffix="%" onCommit={value => setSetting("focusLostAttenuatePercent", value)} /><RangeRow styles={styles} label={t(payload, "focusLostFade", "Fade duration")} description={t(payload, "focusLostFadeHint", "0 ms is immediate.")} value={Number(payload.values.focusLostFadeDurationMs)} min={0} max={5000} step={100} suffix=" ms" onCommit={value => setSetting("focusLostFadeDurationMs", value)} /><SelectRow styles={styles} label={t(payload, "focusLostScope", "Applications affected")} description={t(payload, "focusLostSelectedHint", "Use the Focus lost checkbox on an app rule to select an application.")} value={Number(payload.values.focusLostSelectedAppsOnly)} options={[{ value: 0, label: t(payload, "focusLostAllApps", "All applications") }, { value: 1, label: t(payload, "focusLostSelectedApps", "Only applications selected in App rules") }]} onChange={value => setSetting("focusLostSelectedAppsOnly", value === 1)} /></>}</Section></>;
 }
 
-function ShortcutsPage({ payload, styles }: PageProps) {
+function ShortcutsPage({ payload, styles, setSetting }: PageProps) {
   const [recording, setRecording] = useState<string | null>(null);
+  const recordingRef = useRef<string | null>(null);
+
+  // Sync ref with state so cleanup can access current value
+  useEffect(() => {
+    recordingRef.current = recording;
+  }, [recording]);
+
+  // Cleanup: ensure hotkeys resume if component unmounts during capture
+  useEffect(() => {
+    return () => {
+      if (recordingRef.current) {
+        window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" });
+      }
+    };
+  }, []);
+
   // NOTE: capture state is intentionally NOT reset by bridge "state" messages:
   // states now arrive spontaneously (default-device changes) and would exit
   // an in-progress capture. Capture ends on keydown (record/clear) or blur.
-  const start = (id: string) => { setRecording(id); window.chrome?.webview?.postMessage({ type: "hotkeyCaptureStarted" }); };
-  const cancel = (id: string) => { if (recording === id) { setRecording(null); window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" }); } };
+  const start = (id: string) => {
+    // If already recording another hotkey, end that capture first
+    if (recordingRef.current && recordingRef.current !== id) {
+      window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" });
+    }
+    setRecording(id);
+    window.chrome?.webview?.postMessage({ type: "hotkeyCaptureStarted" });
+  };
+
+  const cancel = (id: string) => {
+    if (recordingRef.current === id) {
+      setRecording(null);
+      window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" });
+    }
+  };
+
   const keyDown = (event: KeyboardEvent<HTMLButtonElement>, id: string) => {
-    if (recording !== id) return; // focused-but-idle buttons must not record or clear
+    if (recordingRef.current !== id) return; // focused-but-idle buttons must not record or clear
     event.preventDefault();
     const modifierOnly = ["Control", "Shift", "Alt", "Meta"].includes(event.key);
     if (modifierOnly) return;
@@ -167,10 +197,30 @@ function ShortcutsPage({ payload, styles }: PageProps) {
 
 function ProfileHotkey({ payload, styles, profileIndex, value, rowClassName }: { payload: SettingsPayload; styles: Styles; profileIndex: number; value: string; rowClassName?: string }) {
   const [recording, setRecording] = useState(false);
+  const recordingRef = useRef(false);
   const id = `profile:${profileIndex}`;
-  const start = () => { setRecording(true); window.chrome?.webview?.postMessage({ type: "hotkeyCaptureStarted" }); };
+
+  // Sync ref with state
+  useEffect(() => {
+    recordingRef.current = recording;
+  }, [recording]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingRef.current) {
+        window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" });
+      }
+    };
+  }, []);
+
+  const start = () => {
+    setRecording(true);
+    window.chrome?.webview?.postMessage({ type: "hotkeyCaptureStarted" });
+  };
+
   const keyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!recording) return;
+    if (!recordingRef.current) return;
     event.preventDefault();
     if (["Control", "Shift", "Alt", "Meta"].includes(event.key)) return;
     const clear = event.key === "Escape" || event.key === "Backspace" || event.key === "Delete";
@@ -178,7 +228,15 @@ function ProfileHotkey({ payload, styles, profileIndex, value, rowClassName }: {
     setRecording(false);
     event.currentTarget.blur();
   };
-  return <div className={rowClassName ?? styles.actionRow} onClick={event => event.stopPropagation()}><Button appearance={recording ? "primary" : "secondary"} onClick={start} onKeyDown={keyDown} onBlur={() => { if (recording) { setRecording(false); window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" }); } }}>{recording ? t(payload, "pressShortcut", "Press keys · Esc clears") : value || t(payload, "recordShortcut", "Record")}</Button>{value && !recording && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: 0 })} />}</div>;
+
+  const handleBlur = () => {
+    if (recordingRef.current) {
+      setRecording(false);
+      window.chrome?.webview?.postMessage({ type: "hotkeyCaptureEnded" });
+    }
+  };
+
+  return <div className={rowClassName ?? styles.actionRow} onClick={event => event.stopPropagation()}><Button appearance={recording ? "primary" : "secondary"} onClick={start} onKeyDown={keyDown} onBlur={handleBlur}>{recording ? t(payload, "pressShortcut", "Press keys · Esc clears") : value || t(payload, "recordShortcut", "Record")}</Button>{value && !recording && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: 0 })} />}</div>;
 }
 
 function ProfilesPage({ payload, styles, action }: PageProps) {
