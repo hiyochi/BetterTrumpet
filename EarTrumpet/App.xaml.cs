@@ -475,6 +475,20 @@ namespace EarTrumpet
                         catch (Exception ex) { Trace.WriteLine($"Startup: Changelog failed: {ex.Message}"); }
 
                         Trace.WriteLine($"Startup: Complete in {Duration.TotalMilliseconds:F0}ms");
+
+                        // Send anonymous telemetry ping in background (never blocks startup)
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                var telemetry = new TelemetryService(Settings);
+                                await telemetry.SendStartupPingAsync();
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine($"Telemetry: Background ping failed: {ex.Message}");
+                            }
+                        });
                     }));
                 });
             });

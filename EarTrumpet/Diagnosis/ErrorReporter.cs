@@ -10,11 +10,11 @@ namespace EarTrumpet.Diagnosis
     class ErrorReporter
     {
         // ═══════════════════════════════════════════════════════════════
-        // SENTRY DSN — Replace with your project's DSN from sentry.io
-        // Free plan: 5K events/month, 1 user, 30 days retention
-        // Set to empty string to disable Sentry entirely
+        // SENTRY DSN — DISABLED
+        // BetterTrumpet uses anonymous telemetry (TelemetryService) instead
+        // of Sentry for crash reporting. Set to empty string to keep disabled.
         // ═══════════════════════════════════════════════════════════════
-        private const string SentryDsn = "https://7a99ae65aeea77906126eb19b94782a6@o4511055986884608.ingest.de.sentry.io/4511055991668816";
+        private const string SentryDsn = "";
 
         private static ErrorReporter s_instance;
         private readonly CircularBufferTraceListener _listener;

@@ -633,6 +633,17 @@ namespace EarTrumpet.UI.Views
                 case "settingsImport" when privacy != null:
                     privacy.ImportSettingsCommand.Execute(null);
                     break;
+                case "openUrl":
+                    var url = GetString(message, "url");
+                    if (!string.IsNullOrWhiteSpace(url))
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = url,
+                            UseShellExecute = true
+                        });
+                    }
+                    break;
                 default:
                     return;
             }
@@ -742,8 +753,10 @@ namespace EarTrumpet.UI.Views
                     ["accentColor"] = R("SettingsAccentGlowColor"), ["updates"] = R("SettingsUpdates"),
                     ["updatesDescription"] = R("SettingsUpdatesDesc"), ["autoUpdates"] = R("AutoUpdateCheckboxText"),
                     ["notifyFor"] = R("SettingsNotifyFor"), ["checkUpdate"] = R("SettingsCheckUpdate"),
-                    ["installUpdate"] = R("SettingsInstallUpdate"), ["privacy"] = R("PrivacyCheckboxText"),
-                    ["privacyDescription"] = R("SettingsTelemetryDesc"), ["settingsData"] = R("SettingsExportImport"),
+                    ["installUpdate"] = R("SettingsInstallUpdate"), ["privacyPageTitle"] = R("PrivacySettingsPageText"),
+                    ["privacyPageSubtitle"] = R("PrivacySettingsPageSubtitle"), ["privacy"] = R("PrivacyCheckboxText"),
+                    ["privacyDescription"] = R("SettingsTelemetryDesc"), ["privacyPolicy"] = R("PrivacyPolicyText"),
+                    ["settingsData"] = R("SettingsExportImport"),
                     ["settingsDataDescription"] = R("SettingsExportImportDesc"), ["exportSettings"] = R("SettingsExportSettings"),
                     ["importSettings"] = R("SettingsImportSettings"),
                     ["diagnostics"] = R("SettingsSendDiagnostics"), ["diagnosticsDescription"] = R("SettingsSendDiagnosticsDesc"),

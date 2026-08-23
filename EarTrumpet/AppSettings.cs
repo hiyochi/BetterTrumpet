@@ -1311,6 +1311,12 @@ namespace EarTrumpet
             }
         }
 
+        public string TelemetryAnonymousId
+        {
+            get => _settings.Get("TelemetryAnonymousId", string.Empty);
+            set => _settings.Set("TelemetryAnonymousId", value);
+        }
+
         public bool UseLogarithmicVolume
         {
             get => _settings.Get("UseLogarithmicVolume", false);
