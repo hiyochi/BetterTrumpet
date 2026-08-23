@@ -121,20 +121,15 @@ namespace EarTrumpet.UI.Helpers
         {
             if (!_isVisible) return;
 
-            var data = MakeData();
-            data.uFlags |= NotifyIconFlags.NIF_INFO;
-            data.szInfoTitle = title ?? string.Empty;
-            data.szInfo = message ?? string.Empty;
-            data.dwInfoFlags = 0;
-            if (!Shell32.Shell_NotifyIconW(Shell32.NotifyIconMessage.NIM_MODIFY, ref data))
-            {
-                Trace.WriteLine($"ShellNotifyIcon ShowNotification Failed: {(uint)Marshal.GetLastWin32Error()}");
-            }
+            // Use custom toast notification instead of native Windows notification
+            // This allows proper stacking when multiple notifications appear quickly
+            var fullMessage = string.IsNullOrEmpty(title) ? message : $"{title}\n{message}";
+            EarTrumpet.UI.Views.ToastNotificationManager.Show(fullMessage, "\xE767");
         }
 
         public void ShowToast(string message, string icon = null)
         {
-            ShowNotification("BetterTrumpet", message);
+            EarTrumpet.UI.Views.ToastNotificationManager.Show(message, icon ?? "\xE767");
         }
 
         private NOTIFYICONDATAW MakeData()

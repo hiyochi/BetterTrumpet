@@ -145,6 +145,10 @@ namespace EarTrumpet.UI.Views
                 core.Settings.AreDevToolsEnabled = IsDebugBuild();
                 core.Settings.IsStatusBarEnabled = false;
                 core.Settings.IsZoomControlEnabled = false;
+
+                // Disable all browser shortcuts (Ctrl+F, Ctrl+G, F5, etc.)
+                core.Settings.AreBrowserAcceleratorKeysEnabled = false;
+
                 core.SetVirtualHostNameToFolderMapping(
                     SettingsHostName,
                     bundlePath,

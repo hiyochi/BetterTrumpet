@@ -107,6 +107,20 @@ namespace EarTrumpet.UI.Views
             TranslateTransform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, slideDown);
         }
 
+        public void AnimateToPosition(double newTop)
+        {
+            var topAnimation = new DoubleAnimation
+            {
+                From = Top,
+                To = newTop,
+                Duration = TimeSpan.FromMilliseconds(250),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            topAnimation.Completed += (s, e) => Top = newTop;
+            BeginAnimation(TopProperty, topAnimation);
+        }
+
         public static ToastNotification Show(string message, string icon = "\xE946")
         {
             var toast = new ToastNotification(message, icon);

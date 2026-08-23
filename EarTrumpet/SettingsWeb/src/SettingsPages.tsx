@@ -128,6 +128,34 @@ function ShortcutsPage({ payload, styles, setSetting }: PageProps) {
     recordingRef.current = recording;
   }, [recording]);
 
+  // Global keydown listener when recording
+  useEffect(() => {
+    if (!recording) return;
+
+    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const modifierOnly = ["Control", "Shift", "Alt", "Meta"].includes(event.key);
+      if (modifierOnly) return;
+
+      const clear = event.key === "Escape" || event.key === "Backspace" || event.key === "Delete";
+      window.chrome?.webview?.postMessage({
+        type: "setHotkey",
+        id: recording,
+        keyCode: clear ? 0 : event.keyCode,
+        ctrlKey: clear ? false : event.ctrlKey,
+        altKey: clear ? false : event.altKey,
+        shiftKey: clear ? false : event.shiftKey,
+        metaKey: clear ? false : event.metaKey
+      });
+      setRecording(null);
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown, true); // useCapture=true
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
+  }, [recording]);
+
   // Cleanup: ensure hotkeys resume if component unmounts during capture
   useEffect(() => {
     return () => {
@@ -156,19 +184,9 @@ function ShortcutsPage({ payload, styles, setSetting }: PageProps) {
     }
   };
 
-  const keyDown = (event: KeyboardEvent<HTMLButtonElement>, id: string) => {
-    if (recordingRef.current !== id) return; // focused-but-idle buttons must not record or clear
-    event.preventDefault();
-    const modifierOnly = ["Control", "Shift", "Alt", "Meta"].includes(event.key);
-    if (modifierOnly) return;
-    const clear = event.key === "Escape" || event.key === "Backspace" || event.key === "Delete";
-    window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: clear ? 0 : event.keyCode, ctrlKey: clear ? false : event.ctrlKey, altKey: clear ? false : event.altKey, shiftKey: clear ? false : event.shiftKey, metaKey: clear ? false : event.metaKey });
-    setRecording(null);
-    event.currentTarget.blur(); // drop focus so stray keys cannot re-record or clear
-  };
   const HotkeyButton = ({ id, value }: { id: string; value: string }) => (
-    <Button className={value && recording !== id ? "hotkey-button-polished" : undefined} appearance={recording === id ? "primary" : "secondary"} onClick={() => start(id)} onKeyDown={event => keyDown(event, id)} onBlur={() => cancel(id)}>
-      {recording === id ? t(payload, "pressShortcut", "Press keys Â· Esc clears") : value ? <span className="hotkey-chips">{value.split("+").map((part, index) => <kbd key={index}>{part.trim()}</kbd>)}</span> : t(payload, "recordShortcut", "Record")}
+    <Button className={value && recording !== id ? "hotkey-button-polished" : undefined} appearance={recording === id ? "primary" : "secondary"} onClick={() => start(id)} onBlur={() => cancel(id)}>
+      {recording === id ? t(payload, "pressShortcut", "Press keys · Esc clears") : value ? <span className="hotkey-chips">{value.split("+").map((part, index) => <kbd key={index}>{part.trim()}</kbd>)}</span> : t(payload, "recordShortcut", "Record")}
     </Button>
   );
   const ClearButton = ({ id }: { id: string }) => (
@@ -205,6 +223,34 @@ function ProfileHotkey({ payload, styles, profileIndex, value, rowClassName }: {
     recordingRef.current = recording;
   }, [recording]);
 
+  // Global keydown listener when recording
+  useEffect(() => {
+    if (!recording) return;
+
+    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const modifierOnly = ["Control", "Shift", "Alt", "Meta"].includes(event.key);
+      if (modifierOnly) return;
+
+      const clear = event.key === "Escape" || event.key === "Backspace" || event.key === "Delete";
+      window.chrome?.webview?.postMessage({
+        type: "setHotkey",
+        id,
+        keyCode: clear ? 0 : event.keyCode,
+        ctrlKey: !clear && event.ctrlKey,
+        altKey: !clear && event.altKey,
+        shiftKey: !clear && event.shiftKey,
+        metaKey: !clear && event.metaKey
+      });
+      setRecording(false);
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown, true);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
+  }, [recording, id]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -219,16 +265,6 @@ function ProfileHotkey({ payload, styles, profileIndex, value, rowClassName }: {
     window.chrome?.webview?.postMessage({ type: "hotkeyCaptureStarted" });
   };
 
-  const keyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!recordingRef.current) return;
-    event.preventDefault();
-    if (["Control", "Shift", "Alt", "Meta"].includes(event.key)) return;
-    const clear = event.key === "Escape" || event.key === "Backspace" || event.key === "Delete";
-    window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: clear ? 0 : event.keyCode, ctrlKey: !clear && event.ctrlKey, altKey: !clear && event.altKey, shiftKey: !clear && event.shiftKey, metaKey: !clear && event.metaKey });
-    setRecording(false);
-    event.currentTarget.blur();
-  };
-
   const handleBlur = () => {
     if (recordingRef.current) {
       setRecording(false);
@@ -236,7 +272,7 @@ function ProfileHotkey({ payload, styles, profileIndex, value, rowClassName }: {
     }
   };
 
-  return <div className={rowClassName ?? styles.actionRow} onClick={event => event.stopPropagation()}><Button appearance={recording ? "primary" : "secondary"} onClick={start} onKeyDown={keyDown} onBlur={handleBlur}>{recording ? t(payload, "pressShortcut", "Press keys · Esc clears") : value || t(payload, "recordShortcut", "Record")}</Button>{value && !recording && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: 0 })} />}</div>;
+  return <div className={rowClassName ?? styles.actionRow} onClick={event => event.stopPropagation()}><Button appearance={recording ? "primary" : "secondary"} onClick={start} onBlur={handleBlur}>{recording ? t(payload, "pressShortcut", "Press keys · Esc clears") : value || t(payload, "recordShortcut", "Record")}</Button>{value && !recording && <Button appearance="subtle" icon={<Trash2Icon size={17} />} aria-label={t(payload, "clearShortcut", "Clear shortcut")} onClick={() => window.chrome?.webview?.postMessage({ type: "setHotkey", id, keyCode: 0 })} />}</div>;
 }
 
 function ProfilesPage({ payload, styles, action }: PageProps) {
