@@ -5,4 +5,4 @@ compatibility_date = "2024-11-01"
 # Create with: wrangler kv:namespace create VOTES
 [[kv_namespaces]]
 binding = "VOTES"
-id = "KV_NAMESPACE_ID"
+id = "25bbe460d992413f8cdc57ad4eb5cd19"

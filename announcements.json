@@ -1,6 +1,6 @@
 {
-  "voteEndpoint": "",
-  "resultsUrl": "",
+  "voteEndpoint": "https://bettertrumpet-votes.mohammed-jaouan.workers.dev/vote",
+  "resultsUrl": "https://bettertrumpet-votes.mohammed-jaouan.workers.dev/results",
   "announcements": [
     {
       "id": "2026-08-25-whats-new-feed",
