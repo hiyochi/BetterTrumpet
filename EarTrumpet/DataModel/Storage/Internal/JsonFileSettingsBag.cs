@@ -46,6 +46,8 @@ namespace EarTrumpet.DataModel.Storage.Internal
                 try
                 {
                     var raw = _data[key];
+                    if (raw == null)
+                        return defaultValue;
 
                     // Direct type match
                     if (raw is T typed)
