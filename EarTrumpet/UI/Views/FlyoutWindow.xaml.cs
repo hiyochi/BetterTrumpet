@@ -168,6 +168,25 @@ else
             }
         }
 
+        /// <summary>
+        /// Recomputes the flyout size/position against the taskbar. Used after a
+        /// row entrance animation settles: the measure that ran while the new row
+        /// was still growing (height 0 → natural) left the window too short, which
+        /// makes the list scrollable until the flyout is reopened. Deferred past
+        /// the current layout pass so the settled row's natural height is visible
+        /// to the measure that sizes the window.
+        /// </summary>
+        public void RequestReposition()
+        {
+            _ = Dispatcher.InvokeAsync(() =>
+            {
+                if (_viewModel.State == FlyoutViewState.Open || _viewModel.State == FlyoutViewState.Opening)
+                {
+                    PositionWindowRelativeToTaskbar(WindowsTaskbar.Current);
+                }
+            }, System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
         private IntPtr OnWindowMessage(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (message == WM_DPICHANGED)

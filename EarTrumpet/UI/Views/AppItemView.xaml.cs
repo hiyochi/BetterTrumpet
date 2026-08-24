@@ -275,6 +275,12 @@ namespace EarTrumpet.UI.Views
             {
                 container.BeginAnimation(HeightProperty, null);
                 container.Height = double.NaN;
+
+                // The flyout sizes its Win32 window from a measured layout; the
+                // measure that ran while this row was still growing (0 → natural)
+                // left the window too short, so the list became scrollable until a
+                // reopen. Ask the flyout to re-size now that the row has settled.
+                (Window.GetWindow(this) as FlyoutWindow)?.RequestReposition();
             };
             container.BeginAnimation(HeightProperty, heightAnimation);
         }
