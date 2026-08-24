@@ -949,7 +949,10 @@ namespace EarTrumpet.UI.Controls
             {
                 percent = point.X / ActualWidth;
             }
-            var newValue = Bound((Maximum - Minimum) * percent);
+            // percent is normalized against the track, so it has to be mapped back onto
+            // [Minimum, Maximum]. Minimum happens to be 0 today, but dropping it here makes
+            // the mapping silently depend on that.
+            var newValue = Bound(Minimum + (Maximum - Minimum) * percent);
             
             // Only animate if requested AND smooth animation is enabled in settings
             if (animate && IsSmoothAnimationEnabled)
