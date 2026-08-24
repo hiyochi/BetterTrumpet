@@ -91,6 +91,7 @@ namespace EarTrumpet.UI.ViewModels
 
         private readonly DeviceCollectionViewModel _mainViewModel;
         private readonly DispatcherTimer _deBounceTimer;
+        private readonly DispatcherTimer _invalidateSizeDebounceTimer;
         private readonly Dispatcher _currentDispatcher = Dispatcher.CurrentDispatcher;
 private readonly Action _returnFocusToTray;
         private readonly AppSettings _settings;
@@ -124,6 +125,11 @@ private readonly Action _returnFocusToTray;
             // rapid hide and show cycle.  This time represents the minimum time between which the flyout may be opened.
             _deBounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
             _deBounceTimer.Tick += OnDeBounceTimerTick;
+
+            // Coalesce rapid InvalidateWindowSize calls during device churn so the
+            // VirtualizingStackPanel never sees a partially-populated ObservableCollection.
+            _invalidateSizeDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _invalidateSizeDebounceTimer.Tick += OnInvalidateSizeDebounceTick;
 
             ExpandCollapse = new RelayCommand(() =>
             {
@@ -391,14 +397,24 @@ private readonly Action _returnFocusToTray;
 
         private void InvalidateWindowSize()
         {
-            // OPTIMIZATION: Check if already on UI thread to avoid unnecessary BeginInvoke overhead
+            // Debounce: rapid collection changes during device churn fire many Add/Remove
+            // events in quick succession. Each one triggers layout; if Verify() runs between
+            // two InsertItem calls the VirtualizingStackPanel throws InvalidOperationException.
+            // Coalescing to a single invalidation per 16 ms frame prevents the race.
+            _invalidateSizeDebounceTimer.Stop();
+            _invalidateSizeDebounceTimer.Start();
+        }
+
+        private void OnInvalidateSizeDebounceTick(object sender, EventArgs e)
+        {
+            _invalidateSizeDebounceTimer.Stop();
+
             if (_currentDispatcher.CheckAccess())
             {
                 WindowSizeInvalidated?.Invoke(this, null);
             }
             else
             {
-                // We must be async because otherwise SetWindowPos will pump messages before the UI has updated.
                 _currentDispatcher.BeginInvoke((Action)(() =>
                 {
                     WindowSizeInvalidated?.Invoke(this, null);
@@ -661,6 +677,7 @@ private readonly Action _returnFocusToTray;
                     // Dispose managed resources
                     _mh?.Dispose();
                     _deBounceTimer?.Stop();
+                    _invalidateSizeDebounceTimer?.Stop();
 
                     // Unsubscribe events
                     _mainViewModel.DefaultChanged -= OnDefaultPlaybackDeviceChanged;
