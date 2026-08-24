@@ -457,7 +457,7 @@ const SEARCH_SPECS: SearchSpec[] = [
   { page: "performance", anchor: "animations", keys: ["animations", "smoothAnimation", "animationSpeed"], words: "animation fluide vitesse smooth speed transition" },
   { page: "performance", anchor: "peakMeter", keys: ["peakMeter", "refreshRate", "effectiveRateHint"], words: "vumetre pic peak fps rafraichissement taux refresh rate" },
   { page: "updates", anchor: "updates", keys: ["updates", "updatesDescription", "autoUpdates", "notifyFor", "checkUpdate", "installUpdate"], words: "mise a jour update canal channel verifier installer beta version" },
-  { page: "privacy", anchor: "telemetry", keys: ["privacy", "privacyDescription"], words: "telemetry donnees diagnostic vie privee privacy sentry anonyme" },
+  { page: "privacy", anchor: "telemetry", keys: ["privacy", "privacyDescription", "whatsNewFeed", "whatsNewFeedDesc"], words: "telemetry donnees diagnostic vie privee privacy sentry anonyme whats new feed annonces nouveautes messages news" },
   { page: "privacy", anchor: "data", keys: ["settingsData", "settingsDataDescription", "exportSettings", "importSettings"], words: "export import sauvegarde backup settings config" },
   { page: "about", anchor: "about", keys: ["github", "feedback", "bugReport"], words: "a propos version github contact bug bug report feedback" },
   { page: "about", anchor: "diagnostics", keys: ["diagnostics", "diagnosticsDescription"], words: "diagnostic logs support zip bundle sante health" },

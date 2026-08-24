@@ -1350,10 +1350,21 @@ namespace EarTrumpet
 
         // What's-new announcements feed (privacy setting: some users don't want
         // pushed news/polls fetched in the background).
+        public event Action AnnouncementsEnabledChanged;
+
         public bool AnnouncementsEnabled
         {
             get => _settings.Get("AnnouncementsEnabled", true);
-            set => _settings.Set("AnnouncementsEnabled", value);
+            set
+            {
+                var current = _settings.Get("AnnouncementsEnabled", true);
+                if (current == value)
+                {
+                    return;
+                }
+                _settings.Set("AnnouncementsEnabled", value);
+                AnnouncementsEnabledChanged?.Invoke();
+            }
         }
 
         public bool HasCompletedOnboarding

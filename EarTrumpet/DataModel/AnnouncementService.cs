@@ -77,7 +77,7 @@ namespace EarTrumpet.DataModel
     /// </summary>
     public class AnnouncementService
     {
-        private const string FeedUrl = "https://raw.githubusercontent.com/xammen/BetterTrumpet/master/announcements.json";
+        private const string FeedUrl = "https://votes.bettertrumpet.com/feed";
         private const string VoterIdSalt = "BetterTrumpet.Votes.v1";
         private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(6);
         private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(10);
@@ -181,6 +181,7 @@ namespace EarTrumpet.DataModel
         public void Stop()
         {
             _timer.Stop();
+            _started = false;
         }
 
         /// <summary>Periodic pass: feed, then live results and pending retries.</summary>

@@ -31,23 +31,31 @@ serves live results. No server to manage, free tier.
 
 ## Wire it to the app
 
-In `announcements.json` (repo root, pushed to GitHub):
+In `announcements.json` (repo root):
 
 ```json
 {
-  "voteEndpoint": "https://<your-worker>.workers.dev/vote",
-  "resultsUrl": "https://<your-worker>.workers.dev/results",
+  "voteEndpoint": "https://votes.bettertrumpet.com/vote",
+  "resultsUrl": "https://votes.bettertrumpet.com/results",
   "announcements": [ ... ]
 }
 ```
 
-- **`voteEndpoint`** — where votes are POSTed (`{app, version, announcementId,
-  voterId, answers, votedAt}`). `voterId` is a salted HMAC of the per-install
-  id, so the collector can dedupe but never link votes to a person.
-- **`resultsUrl`** — where the app fetches live totals (`{updatedAt, results}`).
-  When set, the What's new page shows the real totals with a **Live** badge.
-  When empty, the app falls back to the counts embedded in the feed items
-  (owner-maintained) — useful while testing without the worker.
+### Updating the feed (recommended: via the worker, no CDN lag)
+
+The app reads the feed from `https://votes.bettertrumpet.com/feed`, served
+from KV with `cache-control: no-store` — updates are instant, no GitHub raw
+cache lag. After editing `announcements.json`, push it with a curl:
+
+```bash
+curl -X PUT https://votes.bettertrumpet.com/feed \
+  -H "content-type: application/json" \
+  -H "x-feed-key: <FEED_KEY>" \
+  --data-binary @announcements.json
+```
+
+`FEED_KEY` is a Worker secret (`wrangler secret put FEED_KEY`). Without the
+header the PUT is rejected (403).
 
 ## Credibility rules (enforced server-side)
 

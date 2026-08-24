@@ -75,6 +75,27 @@ function json(data, status = 200) {
   });
 }
 
+
+async function handleGetFeed(env) {
+  await prepare(env);
+  const feed = await env.VOTES.get("feed:json", "json");
+  if (!feed) return json({ error: "feed not set yet — PUT /feed with x-feed-key" }, 404);
+  return new Response(JSON.stringify(feed), {
+    status: 200,
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+  });
+}
+
+async function handlePutFeed(request, env) {
+  const key = request.headers.get("x-feed-key") || "";
+  if (!env.FEED_KEY || key !== env.FEED_KEY) return json({ error: "forbidden" }, 403);
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "invalid json" }, 400); }
+  if (!body || !Array.isArray(body.announcements)) return json({ error: "announcements array required" }, 400);
+  await env.VOTES.put("feed:json", JSON.stringify(body));
+  return json({ ok: true });
+}
+
 async function handleVote(request, env) {
   await prepare(env);
   let body;
@@ -147,6 +168,8 @@ export default {
     const url = new URL(request.url);
     try {
       if (request.method === "POST" && url.pathname === "/vote") return await handleVote(request, env);
+      if (request.method === "GET" && url.pathname === "/feed") return await handleGetFeed(env);
+      if (request.method === "PUT" && url.pathname === "/feed") return await handlePutFeed(request, env);
       if (request.method === "GET" && url.pathname === "/results") return await handleResults(env);
       if (request.method === "GET" && url.pathname === "/health") return json({ ok: true });
       return json({ error: "not found" }, 404);

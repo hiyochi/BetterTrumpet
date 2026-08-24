@@ -467,6 +467,18 @@ namespace EarTrumpet
                                 // The tray menu is rebuilt on each right-click, so the
                                 // badge is picked up automatically; nothing to do here.
                             };
+                            Settings.AnnouncementsEnabledChanged += () =>
+                            {
+                                // Toggling the privacy switch takes effect immediately.
+                                if (Settings.AnnouncementsEnabled)
+                                {
+                                    _announcementService?.Start();
+                                }
+                                else
+                                {
+                                    _announcementService?.Stop();
+                                }
+                            };
                             _announcementService.Start();
                         }));
                         if (!HasIdentity)
