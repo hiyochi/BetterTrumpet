@@ -286,3 +286,11 @@ votes-worker/.wrangler/
 ## ---- Release artifacts (2026-08-25, purged) ----
 /.chocolatey/
 /release-checksums-*.txt
+
+## ---- Root leftovers (2026-08-25, purged) ----
+/menu.mp4
+/music.mp4
+/issues_open.json
+/issues_closed.json
+/bettertrumpet.html
+/downloads-dashboard.html
