@@ -119,9 +119,8 @@ private readonly Action _returnFocusToTray;
             _mainViewModel.VisibleDevices.CollectionChanged += AllDevices_CollectionChanged;
             _settings.HiddenAppsChanged += OnHiddenAppsChanged;
             _settings.HiddenDevicesChanged += OnHiddenDevicesChanged;
-            AllDevices_CollectionChanged(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
-// This timer is used to enable clicking on the tray icon while the flyout is open, and not causing a
+            // This timer is used to enable clicking on the tray icon while the flyout is open, and not causing a
             // rapid hide and show cycle.  This time represents the minimum time between which the flyout may be opened.
             _deBounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
             _deBounceTimer.Tick += OnDeBounceTimerTick;
@@ -130,6 +129,8 @@ private readonly Action _returnFocusToTray;
             // VirtualizingStackPanel never sees a partially-populated ObservableCollection.
             _invalidateSizeDebounceTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
             _invalidateSizeDebounceTimer.Tick += OnInvalidateSizeDebounceTick;
+
+            AllDevices_CollectionChanged(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
             ExpandCollapse = new RelayCommand(() =>
             {
