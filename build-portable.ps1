@@ -12,6 +12,14 @@ Get-ChildItem $src -Directory | Where-Object { Get-ChildItem $_.FullName -File -
     Copy-Item $_.FullName -Destination (Join-Path $dst $_.Name) -Recurse
 }
 
+# Copy WebView2 content folders (settings UI + announcements page)
+foreach ($folder in @('SettingsWeb', 'AnnouncementsWeb', 'runtimes')) {
+    $srcFolder = Join-Path $src $folder
+    if (Test-Path $srcFolder) {
+        Copy-Item $srcFolder -Destination (Join-Path $dst $folder) -Recurse
+    }
+}
+
 # Create portable marker file
 Set-Content (Join-Path $dst 'portable.marker') 'BetterTrumpet Portable Mode'
 

@@ -84,6 +84,9 @@ Source: "Build\Release\uk-UA\*"; DestDir: "{app}\uk-UA"; Flags: ignoreversion re
 Source: "Build\Release\vi-VN\*"; DestDir: "{app}\vi-VN"; Flags: ignoreversion recursesubdirs
 Source: "Build\Release\zh-CN\*"; DestDir: "{app}\zh-CN"; Flags: ignoreversion recursesubdirs
 Source: "Build\Release\zh-TW\*"; DestDir: "{app}\zh-TW"; Flags: ignoreversion recursesubdirs
+Source: "Build\Release\SettingsWeb\*"; DestDir: "{app}\SettingsWeb"; Flags: ignoreversion recursesubdirs
+Source: "Build\Release\AnnouncementsWeb\*"; DestDir: "{app}\AnnouncementsWeb"; Flags: ignoreversion recursesubdirs
+Source: "Build\Release\runtimes\*"; DestDir: "{app}\runtimes"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\BetterTrumpet"; Filename: "{app}\BetterTrumpet.exe"
