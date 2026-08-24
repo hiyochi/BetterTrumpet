@@ -474,6 +474,9 @@ namespace EarTrumpet.UI.Views
                 case "isTelemetryEnabled" when privacy != null:
                     privacy.IsTelemetryEnabled = valueElement.GetBoolean();
                     break;
+                case "announcementsEnabled":
+                    App.Settings.AnnouncementsEnabled = valueElement.GetBoolean();
+                    break;
                 case "autoCheckForUpdates" when updates != null:
                     updates.AutoCheckForUpdates = valueElement.GetBoolean();
                     break;
