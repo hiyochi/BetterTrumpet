@@ -698,8 +698,8 @@ namespace EarTrumpet
             }
 
             // Fresh fetch + live totals so an early open never shows stale data.
+            // (CheckForAnnouncementsAsync now also refreshes results + retries votes.)
             _announcementService.CheckForAnnouncementsAsync();
-            _ = _announcementService.UpdateResultsAsync();
 
             var window = new UI.Views.AnnouncementsWindow(_announcementService);
             window.Show();

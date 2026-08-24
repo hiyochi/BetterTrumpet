@@ -183,12 +183,10 @@ namespace EarTrumpet.DataModel
             _timer.Stop();
         }
 
-        /// <summary>Periodic pass: feed, live results, pending vote retries.</summary>
-        private async void PeriodicCheck()
+        /// <summary>Periodic pass: feed, then live results and pending retries.</summary>
+        private void PeriodicCheck()
         {
             CheckForAnnouncementsAsync();
-            await UpdateResultsAsync();
-            await RetryPendingVotesAsync();
         }
 
         /// <summary>Fetch and parse the remote feed, filtering by the local version.</summary>
@@ -233,6 +231,11 @@ namespace EarTrumpet.DataModel
             {
                 Trace.WriteLine($"AnnouncementService: Check failed — {ex.Message}");
             }
+
+            // resultsUrl is only known after the feed is parsed — results and
+            // pending retries must run AFTER the fetch, not before it.
+            await UpdateResultsAsync();
+            await RetryPendingVotesAsync();
         }
 
         /// <summary>
