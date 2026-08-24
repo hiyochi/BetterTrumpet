@@ -8,13 +8,12 @@
   :root {
     --shell: #050706;
     --text: #F4F7F5;
-    --text-2: rgba(244,247,245,.62);
-    --text-3: rgba(244,247,245,.48);
+    --text-2: rgba(244,247,245,.64);
+    --text-3: rgba(244,247,245,.45);
     --accent: #9b7bea;
     --accent-strong: #b196f1;
     --accent-weak: rgba(155,123,234,.16);
     --hairline: rgba(255,255,255,.10);
-    --hairline-strong: rgba(255,255,255,.14);
     --hairline-weak: rgba(255,255,255,.08);
     --card: rgba(22,18,32,.68);
     --card-solid: #1d1928;
@@ -53,23 +52,22 @@
   }
   @media (prefers-reduced-transparency: reduce) {
     .stage { background: linear-gradient(145deg, #3d3750, #2a2540); }
-    .section { background: var(--card-solid); backdrop-filter: none; }
+    .feed { background: var(--card-solid); backdrop-filter: none; }
   }
 
   /* ---- Ink dither field (crisp pass only; bloom leaks on older WebView2) ---- */
   .dither { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .dither canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .dither-crisp { image-rendering: pixelated; opacity: .6; }
+  .dither-crisp { image-rendering: pixelated; opacity: .55; }
 
-  /* ---- Chrome row (settings-style, no native title bar) ---- */
+  /* ---- Chrome row: bare logo, no card treatment ---- */
   .chrome {
     position: relative; z-index: 2;
     display: flex; align-items: center; gap: 10px;
-    height: 40px; padding: 0 12px 0 14px;
+    height: 40px; padding: 0 12px 0 16px;
     background: #050706;
   }
-  .chrome-logo, .chrome-logo img { width: 28px; height: 28px; border-radius: 9px; flex: none; }
-  .chrome-logo { box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
+  .chrome-logo { width: 24px; height: 24px; flex: none; }
   .chrome-title {
     flex: 1; min-width: 0;
     font-size: 13px; font-weight: 600; letter-spacing: -.01em;
@@ -78,23 +76,23 @@
   }
   .chrome-actions { display: flex; gap: 4px; }
   .winbtn {
-    width: 36px; height: 28px; border-radius: 10px;
+    width: 34px; height: 26px; border-radius: 9px;
     border: none; background: transparent;
-    color: rgba(244,247,245,.45);
+    color: rgba(244,247,245,.42);
     display: grid; place-items: center; cursor: pointer;
     transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
   }
   .winbtn:hover { background: rgba(255,255,255,.07); color: rgba(244,247,245,.9); }
   .winbtn-close:hover { background: rgba(150,34,26,.55); color: #fff; }
-  .winbtn svg { width: 14px; height: 14px; }
+  .winbtn svg { width: 13px; height: 13px; }
 
-  /* ---- Shell + page header ---- */
-  .shell { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 12px 22px 14px; }
-  .page-title { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
-  .page-desc { margin: 2px 0 12px; color: var(--text-2); font-size: 12px; }
+  /* ---- Shell + page header (small, editorial) ---- */
+  .shell { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 14px 24px 20px; }
+  .page-title { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.015em; line-height: 1.2; }
+  .page-desc { margin: 3px 0 14px; color: var(--text-2); font-size: 12px; }
 
-  /* ---- One section card, accordion rows (settings-style) ---- */
-  .section {
+  /* ---- Feed: one quiet list, plain text, hairline separators ---- */
+  .feed {
     position: relative;
     background: var(--card);
     border: 1px solid var(--hairline);
@@ -103,145 +101,108 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 28px rgba(10,8,15,.22);
     overflow: hidden;
   }
-  .row + .row { border-top: 1px solid rgba(255,255,255,.09); }
+  .item { padding: 13px 20px 14px; }
+  .item + .item { border-top: 1px solid rgba(255,255,255,.08); }
 
-  .row-head {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; min-height: 42px; padding: 0 14px;
-    background: none; border: none; color: inherit; font: inherit;
-    text-align: left; cursor: pointer;
-  }
-  .row-open-ind {
-    width: 3px; height: 16px; border-radius: 999px; flex: none;
-    background: transparent;
-  }
-  .row.open .row-open-ind { background: var(--accent); box-shadow: 0 0 8px rgba(155,123,234,.55); }
-  .row-icon { width: 18px; height: 18px; flex: none; color: rgba(244,247,245,.5); }
-  .row-icon svg { width: 18px; height: 18px; }
-  .row-main { flex: 1; min-width: 0; }
-  .row-title {
-    display: block; font-size: 13px; font-weight: 600;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .row-meta {
-    display: flex; gap: 8px; margin-top: 1px;
-    font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+  .item-meta {
+    display: flex; gap: 8px; margin-bottom: 3px;
+    font-size: 10px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
     color: var(--text-3);
   }
-  .row-meta .badge { color: var(--accent-strong); }
-  .chev {
-    width: 16px; height: 16px; flex: none; color: var(--text-3);
-    transition: transform 200ms var(--ease-decel);
-  }
-  .row.open .chev { transform: rotate(180deg); }
+  .item-meta .badge { color: var(--accent-strong); }
+  .item-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
+  .item-body { margin: 0 0 8px; color: var(--text-2); font-size: 13px; line-height: 1.62; white-space: pre-wrap; }
 
-  .row-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms var(--ease-standard); }
-  .row.open .row-body { grid-template-rows: 1fr; }
-  .row-body > div { overflow: hidden; min-height: 0; }
-  .row-panel {
-    margin: 0 14px 10px;
-    padding: 8px 12px 10px;
-    border-radius: var(--r-control);
-    background: rgba(255,255,255,.02);
-    border: 1px solid rgba(255,255,255,.07);
-  }
-
-  .row-body .body { margin: 0 0 10px; color: var(--text-2); font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
   .btn-link {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--accent-strong); font-size: 13px; font-weight: 600; text-decoration: none;
-    background: none; border: none; padding: 4px 0; cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; margin-top: 2px;
+    color: var(--accent-strong); font-size: 12.5px; font-weight: 600; text-decoration: none;
+    background: none; border: none; padding: 2px 0; cursor: pointer; font-family: inherit;
   }
   .btn-link:hover { text-decoration: underline; }
 
-  /* ---- Options (poll/survey) ---- */
+  /* ---- Options: quiet radio text rows ---- */
   .opt {
-    display: flex; align-items: center; gap: 10px; width: 100%;
-    min-height: 36px; margin-top: 5px; padding: 0 12px;
-    border-radius: var(--r-control);
-    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
-    color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
-    transition: background 140ms var(--ease-standard), border-color 140ms var(--ease-standard);
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    min-height: 30px; margin-top: 3px; padding: 0 10px;
+    border-radius: 9px; border: 1px solid transparent; background: transparent;
+    color: var(--text-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+    transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
   }
-  .opt:hover { background: rgba(255,255,255,.07); }
-  .opt:active { transform: scale(.99); }
+  .opt:hover { background: rgba(255,255,255,.05); color: var(--text); }
   .opt .dot {
-    width: 14px; height: 14px; border-radius: 999px; flex: none;
-    border: 1.5px solid rgba(255,255,255,.28);
-    transition: background 140ms, border-color 140ms;
+    width: 12px; height: 12px; border-radius: 999px; flex: none;
+    border: 1.5px solid rgba(255,255,255,.3);
+    transition: background 140ms, border-color 140ms, box-shadow 140ms;
   }
-  .opt .check { margin-left: auto; width: 14px; height: 14px; opacity: 0; transition: opacity 120ms; flex: none; }
-  .opt.sel { background: var(--accent-weak); border-color: rgba(155,123,234,.42); }
-  .opt.sel .dot { background: var(--accent); border-color: var(--accent-strong); box-shadow: 0 0 0 3px rgba(155,123,234,.25); }
-  .opt.sel .check { opacity: 1; }
+  .opt.sel { color: var(--text); }
+  .opt.sel .dot { background: var(--accent); border-color: var(--accent-strong); box-shadow: 0 0 0 3px rgba(155,123,234,.22); }
 
   /* ---- Survey questions ---- */
   .q { margin-top: 10px; }
-  .q-title { font-size: 12.5px; font-weight: 600; margin: 0 0 2px; }
+  .q-title { margin: 0 0 2px; font-size: 12.5px; font-weight: 600; }
 
-  /* ---- Results bars ---- */
-  .bar-row { margin-top: 10px; }
-  .bar-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
-  .bar-label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; min-width: 0; }
+  /* ---- A/B: two plain rows with a letter tag ---- */
+  .ab-row {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    min-height: 30px; margin-top: 3px; padding: 0 10px;
+    border-radius: 9px; border: 1px solid transparent; background: transparent;
+    color: var(--text-2); font: inherit; text-align: left; cursor: pointer;
+    transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
+  }
+  .ab-row:hover { background: rgba(255,255,255,.05); color: var(--text); }
+  .ab-tag {
+    width: 18px; height: 18px; border-radius: 999px; flex: none;
+    background: rgba(255,255,255,.08); border: 1px solid var(--hairline);
+    font-size: 10px; font-weight: 700; display: grid; place-items: center; color: var(--text-2);
+    transition: background 140ms, border-color 140ms, color 140ms;
+  }
+  .ab-row.sel { color: var(--text); }
+  .ab-row.sel .ab-tag { background: var(--accent); border-color: var(--accent-strong); color: #0b0d0c; }
+  .ab-text { flex: 1; min-width: 0; }
+  .ab-t { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ab-d { display: block; font-size: 11.5px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ab-img { width: 100%; max-width: 220px; max-height: 110px; object-fit: cover; border-radius: 10px; margin: 6px 0 2px; display: block; }
+
+  /* ---- Results: thin bars ---- */
+  .bar-row { margin-top: 7px; }
+  .bar-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .bar-label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; min-width: 0; }
   .bar-label span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bar-label .you {
-    flex: none; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    flex: none; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
     color: var(--accent-strong); background: var(--accent-weak);
-    border: 1px solid rgba(155,123,234,.35); border-radius: 999px; padding: 1px 7px 2px;
+    border: 1px solid rgba(155,123,234,.35); border-radius: 999px; padding: 1px 6px 2px;
   }
-  .bar-count { flex: none; font-family: var(--mono); font-size: 11.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.15); }
+  .bar-count { flex: none; font-family: var(--mono); font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; }
   .bar-fill {
     height: 100%; border-radius: 999px; width: 0;
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    box-shadow: 0 1px 3px rgba(155,123,234,.3);
     transition: width 460ms var(--ease-decel);
   }
 
-  /* ---- A/B panels ---- */
-  .ab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-  .ab-panel {
-    border-radius: var(--r-control); text-align: left;
-    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
-    padding: 12px; cursor: pointer; color: var(--text); font: inherit;
-    transition: background 140ms var(--ease-standard), border-color 140ms var(--ease-standard);
-  }
-  .ab-panel:hover { background: rgba(255,255,255,.07); }
-  .ab-panel:active { transform: scale(.99); }
-  .ab-panel.sel { background: var(--accent-weak); border-color: rgba(155,123,234,.5); }
-  .ab-panel img { width: 100%; border-radius: 10px; margin-bottom: 10px; display: block; }
-  .ab-label {
-    display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
-    border-radius: 999px; background: rgba(255,255,255,.09); border: 1px solid var(--hairline);
-    font-size: 11px; font-weight: 700; margin-bottom: 8px;
-    transition: background 140ms, border-color 140ms, color 140ms;
-  }
-  .ab-panel.sel .ab-label { background: var(--accent); border-color: var(--accent-strong); color: #0b0d0c; }
-  .ab-title { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
-  .ab-body { font-size: 12px; color: var(--text-2); margin: 0; line-height: 1.5; }
-
-  /* ---- Buttons ---- */
+  /* ---- Buttons: small ---- */
   .btn {
-    display: inline-flex; align-items: center; gap: 8px; min-height: 32px;
-    padding: 0 14px; border-radius: var(--r-control);
+    display: inline-flex; align-items: center; min-height: 30px;
+    padding: 0 14px; border-radius: 10px;
     border: 1px solid transparent; font: inherit; font-size: 12.5px; font-weight: 600;
     cursor: pointer; transition: background 140ms var(--ease-standard), transform 80ms var(--ease-standard);
   }
   .btn:active { transform: scale(.97); }
-  .btn-primary { background: var(--accent); color: #0b0d0c; margin-top: 10px; }
+  .btn-primary { background: var(--accent); color: #0b0d0c; margin-top: 8px; }
   .btn-primary:hover { background: var(--accent-strong); }
-  .btn-primary:disabled { opacity: .45; cursor: default; transform: none; }
-  .btn-subtle { background: transparent; color: var(--text-2); padding: 0 6px; min-height: 28px; }
+  .btn-primary:disabled { opacity: .4; cursor: default; transform: none; }
+  .btn-subtle { background: none; color: var(--text-2); padding: 2px 6px; min-height: 24px; }
   .btn-subtle:hover { color: var(--text); }
   .row-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .voted-note { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); margin-top: 10px; }
+  .voted-note { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-2); margin-top: 8px; }
   .voted-note .dotv { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 8px rgba(155,123,234,.8); flex: none; }
 
   /* ---- Skeleton ---- */
-  .sk-section { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
-  .sk-row { padding: 20px; }
-  .sk-row + .sk-row { border-top: 1px solid rgba(255,255,255,.06); }
-  .sk-line { height: 11px; border-radius: 999px; background: rgba(255,255,255,.07); position: relative; overflow: hidden; }
+  .sk-feed { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
+  .sk-item { padding: 16px 20px; }
+  .sk-item + .sk-item { border-top: 1px solid rgba(255,255,255,.06); }
+  .sk-line { height: 10px; border-radius: 999px; background: rgba(255,255,255,.07); position: relative; overflow: hidden; margin-bottom: 8px; }
   .sk-line::after {
     content: ""; position: absolute; inset: 0; transform: translateX(-100%);
     background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
@@ -250,8 +211,8 @@
   @keyframes shimmer { to { transform: translateX(100%); } }
 
   /* ---- Empty ---- */
-  .empty { text-align: center; padding: 34px 20px; color: var(--text-2); }
-  .empty svg { width: 36px; height: 36px; opacity: .4; margin-bottom: 12px; }
+  .empty { text-align: center; padding: 40px 20px; color: var(--text-2); }
+  .empty svg { width: 32px; height: 32px; opacity: .4; margin-bottom: 12px; }
   .empty h3 { margin: 0 0 4px; color: var(--text); font-size: 15px; font-weight: 600; }
   .empty p { margin: 0; font-size: 13px; }
 
@@ -262,16 +223,14 @@
   }
 
   /* ---- Entrance (once) + focus + scrollbar ---- */
-  .section, .empty { opacity: 0; transform: translateY(8px); animation: cardIn .42s var(--ease-decel) forwards; }
+  .feed, .empty { opacity: 0; transform: translateY(8px); animation: cardIn .42s var(--ease-decel) forwards; }
   @keyframes cardIn { to { opacity: 1; transform: none; } }
-  body.settled .section, body.settled .empty { opacity: 1; transform: none; animation: none; }
+  body.settled .feed, body.settled .empty { opacity: 1; transform: none; animation: none; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(155,123,234,.15); }
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(155,123,234,.32); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(177,150,241,.55); }
-
-  @media (max-width: 560px) { .ab-grid { grid-template-columns: 1fr; } }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -279,7 +238,7 @@
       transition-duration: .01ms !important;
       animation-iteration-count: 1 !important;
     }
-    .section, .empty { opacity: 1; transform: none; }
+    .feed, .empty { opacity: 1; transform: none; }
   }
 </style>
 </head>
@@ -323,7 +282,6 @@
   var votes = {};          // announcementId -> { questionId: optionKey }
   var pending = {};        // announcementId -> { questionId: optionKey } (while choosing)
   var resultsShown = {};   // announcementId -> true once submitted
-  var openState = {};      // announcementId -> true when the row is expanded
   var sentRendered = false;
 
   var listEl = document.getElementById("list");
@@ -461,27 +419,16 @@
   }, { rootMargin: "80px 0px" }).observe(ditherHost);
   start();
 
-  /* ---------------- Icons ---------------- */
-  var ICONS = {
-    news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l14-5v12L3 13v-2Z"/><path d="M17 8.5a2.5 2.5 0 1 1 0 7"/><path d="M7.5 13.5v4a1.5 1.5 0 0 0 3 0v-2"/></svg>',
-    poll: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>',
-    survey: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>',
-    ab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="7" height="16" rx="1.5"/><rect x="13.5" y="4" width="7" height="16" rx="1.5"/></svg>',
-    sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4L12 3Z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg>',
-    check: '<svg viewBox="0 0 24 24" fill="none" stroke="#b196f1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    chevron: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
-  };
-
-  /* ---------------- Rendering ---------------- */
+  /* ---------------- Rendering: plain editorial text ---------------- */
   function typeInfo(a) {
     var map = { news: "typeNews", poll: "typePoll", survey: "typeSurvey", ab: "typeAb" };
-    return { key: map[a.type] || "typeNews", icon: ICONS[a.type] || ICONS.news };
+    return { key: map[a.type] || "typeNews" };
   }
 
   function questionOptions(a, qId) {
     if (a.type === "ab") {
       return a.variants.map(function (v) {
-        return { key: v.id, label: (v.label ? v.label + " — " : "") + (v.title || v.id) };
+        return { key: v.id, label: (v.label ? v.label + " — " : "") + v.title, detail: v.body, image: v.image };
       });
     }
     if (a.type === "survey") {
@@ -492,9 +439,7 @@
   }
 
   function baseResults(a, qId) {
-    if (a.type === "survey") {
-      return a.questionResults && a.questionResults[qId] ? a.questionResults[qId] : {};
-    }
+    if (a.type === "survey") return (a.questionResults || {})[qId] || {};
     return a.results || {};
   }
 
@@ -525,28 +470,33 @@
     return out;
   }
 
-  function optHtml(a, qId, opts) {
+  function optHtml(a, qId, opts, abMode) {
     var sel = pending[a.id] || {};
     return opts.map(function (o) {
+      if (abMode) {
+        var img = o.image ? '<img class="ab-img" src="' + esc(o.image) + '" alt="" onerror="this.style.display=\'none\'">' : "";
+        return '<div class="ab-row' + (sel[qId] === o.key ? " sel" : "") + '" data-q="' + esc(qId) + '" data-opt="' + esc(o.key) + '" role="button" tabindex="0">' +
+          '<span class="ab-tag">' + esc(o.label.split(" — ")[0]) + "</span>" +
+          '<span class="ab-text"><span class="ab-t">' + esc(o.label.split(" — ").slice(1).join(" — ") || o.label) + "</span>" +
+            (o.detail ? '<span class="ab-d">' + esc(o.detail) + "</span>" : "") + "</span>" + img + "</div>";
+      }
       return '<button class="opt' + (sel[qId] === o.key ? " sel" : "") + '" data-q="' + esc(qId) + '" data-opt="' + esc(o.key) + '">' +
-        '<span class="dot"></span><span>' + esc(o.label) + "</span>" + ICONS.check + "</button>";
+        '<span class="dot"></span><span>' + esc(o.label) + "</span></button>";
     }).join("");
   }
 
   function isComplete(a) {
     var p = pending[a.id] || {};
-    if (a.type === "survey") {
-      return a.questions.every(function (q) { return !!p[q.id]; });
-    }
+    if (a.type === "survey") return a.questions.every(function (q) { return !!p[q.id]; });
     return !!p.choice;
   }
 
-  function bodyContent(a) {
+  function itemContent(a) {
     var voted = !!resultsShown[a.id];
     var parts = [];
 
     if (a.type === "news") {
-      if (a.body) parts.push('<p class="body">' + esc(a.body) + "</p>");
+      if (a.body) parts.push('<p class="item-body">' + esc(a.body) + "</p>");
       if (a.link) {
         parts.push('<button class="btn-link" data-link="' + esc(a.link) + '">' +
           esc(L("learnMore", "Learn more")) + " &rarr;</button>");
@@ -555,18 +505,8 @@
     }
 
     if (a.type === "ab") {
-      var sel = (pending[a.id] || {}).choice;
-      parts.push('<div class="ab-grid">');
-      (a.variants || []).forEach(function (v) {
-        var img = v.image ? '<img src="' + esc(v.image) + '" alt="" onerror="this.style.display=\'none\'">' : "";
-        parts.push(
-          '<button class="ab-panel' + (sel === v.id ? " sel" : "") + '" data-v="' + esc(v.id) + '">' +
-          '<span class="ab-label">' + esc(v.label || v.id) + "</span>" + img +
-          '<p class="ab-title">' + esc(v.title || "") + "</p>" +
-          (v.body ? '<p class="ab-body">' + esc(v.body) + "</p>" : "") + "</button>");
-      });
-      parts.push("</div>");
-      if (voted) { parts.push(barsHtml(a, "choice")); parts.push(votedFooter(a)); }
+      parts.push(optHtml(a, "choice", questionOptions(a, "choice"), true));
+      if (voted) { parts.push(barsHtml(a, "choice")); parts.push(votedFooter()); }
       else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
       return parts.join("");
     }
@@ -574,42 +514,35 @@
     if (a.type === "survey") {
       (a.questions || []).forEach(function (q) {
         parts.push('<div class="q"><p class="q-title">' + esc(q.text) + "</p>" +
-          optHtml(a, q.id, q.options.map(function (o) { return { key: o, label: o }; })) + "</div>");
+          optHtml(a, q.id, q.options.map(function (o) { return { key: o, label: o }; }), false) + "</div>");
       });
-      if (voted) { (a.questions || []).forEach(function (q) { parts.push(barsHtml(a, q.id)); }); parts.push(votedFooter(a)); }
+      if (voted) { (a.questions || []).forEach(function (q) { parts.push(barsHtml(a, q.id)); }); parts.push(votedFooter()); }
       else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
       return parts.join("");
     }
 
     // poll
-    parts.push(optHtml(a, "choice", (a.options || []).map(function (o) { return { key: o, label: o }; })));
-    if (voted) { parts.push(barsHtml(a, "choice")); parts.push(votedFooter(a)); }
+    parts.push(optHtml(a, "choice", (a.options || []).map(function (o) { return { key: o, label: o }; }), false));
+    if (voted) { parts.push(barsHtml(a, "choice")); parts.push(votedFooter()); }
     else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
     return parts.join("");
   }
 
-  function votedFooter(a) {
+  function votedFooter() {
     return '<div class="row-actions">' +
       '<span class="voted-note"><span class="dotv"></span>' + esc(L("thanks", "Thanks for voting!")) + "</span>" +
       '<button class="btn btn-subtle change-btn">' + esc(L("change", "Change")) + "</button></div>";
   }
 
-  function rowHtml(a, i) {
+  function itemHtml(a) {
     var t = typeInfo(a);
-    var open = openState[a.id];
     var meta = '<span>' + esc(L(t.key, t.key)) + "</span>";
     if (a.date) meta += '<span>' + esc(a.date) + "</span>";
     if (a.badge) meta += '<span class="badge">' + esc(a.badge) + "</span>";
-
-    return '<div class="row' + (open ? " open" : "") + '" data-id="' + esc(a.id) + '">' +
-      '<button class="row-head" aria-expanded="' + (open ? "true" : "false") + '">' +
-        '<span class="row-open-ind"></span>' +
-        '<span class="row-icon">' + t.icon + "</span>" +
-        '<span class="row-main"><span class="row-title">' + esc(a.title) + "</span>" +
-          '<span class="row-meta">' + meta + "</span></span>" +
-        ICONS.chevron +
-      "</button>" +
-      '<div class="row-body"><div class="row-panel">' + bodyContent(a) + "</div></div>" +
+    return '<div class="item" data-id="' + esc(a.id) + '">' +
+      '<div class="item-meta">' + meta + "</div>" +
+      '<h3 class="item-title">' + esc(a.title) + "</h3>" +
+      itemContent(a) +
     "</div>";
   }
 
@@ -621,56 +554,46 @@
 
     if (!announcements.length) {
       listEl.innerHTML =
-        '<div class="empty">' + ICONS.sparkle +
+        '<div class="empty">' +
         "<h3>" + esc(L("emptyTitle", "Nothing new right now")) + "</h3>" +
         "<p>" + esc(L("emptyBody", "News, polls and updates will appear here.")) + "</p></div>";
       finishRender();
       return;
     }
 
-    var html = '<div class="section">';
-    announcements.forEach(function (a, i) {
-      if (openState[a.id] === undefined) openState[a.id] = i === 0;
-      html += rowHtml(a, i);
-    });
+    var html = '<div class="feed">';
+    announcements.forEach(function (a) { html += itemHtml(a); });
     html += "</div>";
     listEl.innerHTML = html;
 
-    listEl.querySelectorAll(".row").forEach(function (row) {
-      var id = row.getAttribute("data-id");
-      row.querySelector(".row-head").addEventListener("click", function () {
-        openState[id] = !openState[id];
-        render();
-      });
-      row.querySelectorAll(".opt").forEach(function (btn) {
-        btn.addEventListener("click", function () {
+    listEl.querySelectorAll(".item").forEach(function (item) {
+      var id = item.getAttribute("data-id");
+      var a = announcements.filter(function (x) { return x.id === id; })[0];
+      item.querySelectorAll(".opt, .ab-row").forEach(function (ctl) {
+        ctl.addEventListener("click", function () {
           if (resultsShown[id]) return;
-          var q = btn.getAttribute("data-q"), o = btn.getAttribute("data-opt");
+          var q = ctl.getAttribute("data-q"), o = ctl.getAttribute("data-opt");
           if (!pending[id]) pending[id] = {};
           if (pending[id][q] === o) delete pending[id][q]; else pending[id][q] = o;
           render();
         });
+        if (ctl.classList.contains("ab-row")) {
+          ctl.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ctl.click(); }
+          });
+        }
       });
-      row.querySelectorAll(".ab-panel").forEach(function (panel) {
-        panel.addEventListener("click", function () {
-          if (resultsShown[id]) return;
-          var v = panel.getAttribute("data-v");
-          if (!pending[id]) pending[id] = {};
-          if (pending[id].choice === v) delete pending[id].choice; else pending[id].choice = v;
-          render();
-        });
-      });
-      var voteBtn = row.querySelector(".vote-btn");
+      var voteBtn = item.querySelector(".vote-btn");
       if (voteBtn) {
+        voteBtn.disabled = a ? !isComplete(a) : true;
         voteBtn.addEventListener("click", function () {
           votes[id] = pending[id] || {};
           resultsShown[id] = true;
-          openState[id] = true;
           post({ type: "vote", id: id, answers: votes[id] });
           render();
         });
       }
-      var changeBtn = row.querySelector(".change-btn");
+      var changeBtn = item.querySelector(".change-btn");
       if (changeBtn) {
         changeBtn.addEventListener("click", function () {
           resultsShown[id] = false;
@@ -678,19 +601,12 @@
           render();
         });
       }
-      var linkBtn = row.querySelector(".btn-link");
+      var linkBtn = item.querySelector(".btn-link");
       if (linkBtn) {
         linkBtn.addEventListener("click", function () {
           post({ type: "openUrl", url: linkBtn.getAttribute("data-link") });
         });
       }
-    });
-
-    // Disable vote buttons that are incomplete (computed AFTER wiring).
-    listEl.querySelectorAll(".vote-btn").forEach(function (btn, i) {
-      var row = btn.closest(".row");
-      var a = announcements.filter(function (x) { return x.id === row.getAttribute("data-id"); })[0];
-      btn.disabled = a ? !isComplete(a) : true;
     });
 
     requestAnimationFrame(function () {
@@ -719,8 +635,6 @@
 
   post({ type: "ready" });
 
-  // Settings-style window chrome: ghost buttons post window actions, the
-  // chrome row itself is the drag region.
   document.querySelectorAll(".winbtn").forEach(function (btn) {
     btn.addEventListener("click", function () {
       post({ type: "windowAction", action: btn.getAttribute("data-act") });

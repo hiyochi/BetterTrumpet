@@ -7,7 +7,7 @@
         Name="WindowRoot"
         Title="{x:Static resx:Resources.AnnouncementsTitle}"
         Width="720"
-        Height="600"
+        Height="680"
         MinWidth="480"
         MinHeight="400"
         Theme:AcrylicBrush.Background="AcrylicColor_Settings"
