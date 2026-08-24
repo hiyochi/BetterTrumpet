@@ -241,3 +241,30 @@ nul
 /manifests/x/xmn/BetterTrumpet/3.0.9/
 /manifests/x/xmn/BetterTrumpet/3.0.10/
 /manifests/x/xmn/BetterTrumpet/3.1.0-beta/
+
+## ---- BetterTrumpet repo hygiene (2026-08-25) ----
+# Build/release artifacts: never track these
+/dist/
+/artifacts/
+/nuget.exe
+*.nupkg
+
+# Web projects that live outside this repo
+/bettertrumpet-next/
+/bettertrumpet-site/
+
+# Cloudflare Worker local cache
+votes-worker/.wrangler/
+
+# Never-committed onboarding web WIP (excluded from build via csproj)
+/EarTrumpet/OnboardingWeb/
+/EarTrumpet/UI/Views/WebOnboardingWindow.xaml
+/EarTrumpet/UI/Views/WebOnboardingWindow.xaml.cs
+
+# Dead media (purged from history; kept under Documents/)
+/assets/3.0.11.gif
+/Graphics/hero.gif
+/Graphics/hero4.gif
+/music.gif
+/music2.gif
+/Resources/vhdkJalkuP.gif
