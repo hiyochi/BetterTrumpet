@@ -200,7 +200,15 @@ namespace EarTrumpet.UI.Views
                         PostAnnouncements();
                         break;
                     case "rendered":
+                        Trace.WriteLine("AnnouncementsWindow page rendered");
                         HideSplash();
+                        break;
+                    case "log":
+                        var logMsg = root.TryGetProperty("msg", out var logElement) &&
+                            logElement.ValueKind == JsonValueKind.String
+                            ? logElement.GetString()
+                            : null;
+                        Trace.WriteLine($"AnnouncementsWindow page: {logMsg}");
                         break;
                     case "windowAction":
                         HandleWindowAction(root);
@@ -305,6 +313,7 @@ namespace EarTrumpet.UI.Views
                     labels = new Dictionary<string, string>
                     {
                         ["title"] = R("AnnouncementsTitle"),
+                        ["pageDesc"] = R("AnnouncementsPageDescription"),
                         ["emptyTitle"] = R("AnnouncementsEmptyTitle"),
                         ["emptyBody"] = R("AnnouncementsEmptyBody"),
                         ["vote"] = R("AnnouncementsVoteButton"),
@@ -338,6 +347,7 @@ namespace EarTrumpet.UI.Views
             };
 
             var json = JsonSerializer.Serialize(payload, JsonOptions);
+            Trace.WriteLine($"AnnouncementsWindow posting {_service.Announcements.Count} announcement(s)");
             AnnouncementsWebView.CoreWebView2.PostWebMessageAsJson(json);
 
             // Opening the window marks every announcement as read.

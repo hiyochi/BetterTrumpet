@@ -15,6 +15,7 @@
     --accent-weak: rgba(155,123,234,.16);
     --hairline: rgba(255,255,255,.10);
     --hairline-strong: rgba(255,255,255,.14);
+    --hairline-weak: rgba(255,255,255,.08);
     --card: rgba(22,18,32,.68);
     --card-solid: #1d1928;
     --r-control: 14px;
@@ -36,6 +37,7 @@
     user-select: none;
     overflow-x: hidden;
   }
+
   /* Rounded floating surface (settings-style shell: black frame + panel) */
   .stage {
     position: relative;
@@ -51,12 +53,10 @@
   }
   @media (prefers-reduced-transparency: reduce) {
     .stage { background: linear-gradient(145deg, #3d3750, #2a2540); }
-    .card { background: var(--card-solid); backdrop-filter: none; }
+    .section { background: var(--card-solid); backdrop-filter: none; }
   }
 
-  /* ---- Ink dither field (variant 07, crisp pass only). The bloom layer
-       (mix-blend-mode: plus-lighter) leaks outside the rounded panel on older
-       WebView2 runtimes, so it is deliberately omitted. */
+  /* ---- Ink dither field (crisp pass only; bloom leaks on older WebView2) ---- */
   .dither { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .dither canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .dither-crisp { image-rendering: pixelated; opacity: .6; }
@@ -68,9 +68,7 @@
     height: 46px; padding: 0 12px 0 14px;
     background: #050706;
   }
-  .chrome-logo, .chrome-logo img {
-    width: 28px; height: 28px; border-radius: 9px; flex: none;
-  }
+  .chrome-logo, .chrome-logo img { width: 28px; height: 28px; border-radius: 9px; flex: none; }
   .chrome-logo { box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
   .chrome-title {
     flex: 1; min-width: 0;
@@ -90,68 +88,94 @@
   .winbtn-close:hover { background: rgba(150,34,26,.55); color: #fff; }
   .winbtn svg { width: 14px; height: 14px; }
 
-  /* ---- Shell ---- */
-  .shell { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 22px 28px 36px; }
+  /* ---- Shell + page header ---- */
+  .shell { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 20px 24px 28px; }
+  .page-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+  .page-desc { margin: 4px 0 18px; color: var(--text-2); font-size: 13px; }
 
-  /* ---- Cards ---- */
-  .card {
+  /* ---- One section card, accordion rows (settings-style) ---- */
+  .section {
     position: relative;
     background: var(--card);
     border: 1px solid var(--hairline);
     border-radius: var(--r-card);
-    padding: 22px 24px;
-    margin-bottom: 16px;
     backdrop-filter: blur(16px);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 28px rgba(10,8,15,.22);
+    overflow: hidden;
   }
-  .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
-    color: var(--text-2); background: rgba(255,255,255,.08);
-    border: 1px solid var(--hairline); border-radius: 999px; padding: 3px 10px 4px;
+  .row + .row { border-top: 1px solid rgba(255,255,255,.09); }
+
+  .row-head {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; min-height: 58px; padding: 0 20px;
+    background: none; border: none; color: inherit; font: inherit;
+    text-align: left; cursor: pointer;
   }
-  .chip svg { width: 12px; height: 12px; opacity: .7; }
-  .chip .badge { color: var(--accent-strong); margin-left: 2px; }
-  .date {
-    margin-left: auto; flex: none;
-    font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
-    color: var(--accent-strong);
+  .row-open-ind {
+    width: 3px; height: 20px; border-radius: 999px; flex: none;
+    background: transparent;
   }
-  .card h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
-  .card .body { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+  .row.open .row-open-ind { background: var(--accent); box-shadow: 0 0 8px rgba(155,123,234,.55); }
+  .row-icon { width: 20px; height: 20px; flex: none; color: rgba(244,247,245,.5); }
+  .row-icon svg { width: 20px; height: 20px; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-title {
+    display: block; font-size: 13.5px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .row-meta {
+    display: flex; gap: 8px; margin-top: 2px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .row-meta .badge { color: var(--accent-strong); }
+  .chev {
+    width: 16px; height: 16px; flex: none; color: var(--text-3);
+    transition: transform 200ms var(--ease-decel);
+  }
+  .row.open .chev { transform: rotate(180deg); }
+
+  .row-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 220ms var(--ease-standard); }
+  .row.open .row-body { grid-template-rows: 1fr; }
+  .row-body > div { overflow: hidden; min-height: 0; }
+  .row-panel { padding: 2px 20px 16px 35px; }
+
+  .row-body .body { margin: 0 0 12px; color: var(--text-2); font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
   .btn-link {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
-    color: var(--accent-strong); font-size: 14px; font-weight: 600; text-decoration: none;
-    cursor: pointer; background: none; border: none; padding: 4px 0; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--accent-strong); font-size: 13px; font-weight: 600; text-decoration: none;
+    background: none; border: none; padding: 4px 0; cursor: pointer; font-family: inherit;
   }
   .btn-link:hover { text-decoration: underline; }
 
-  /* ---- Poll / survey options ---- */
+  /* ---- Options (poll/survey) ---- */
   .opt {
-    display: flex; align-items: center; gap: 12px; width: 100%;
-    min-height: 44px; margin-top: 8px; padding: 0 14px;
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    min-height: 40px; margin-top: 6px; padding: 0 12px;
     border-radius: var(--r-control);
     background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
-    color: var(--text); font: inherit; font-size: 14px; text-align: left;
-    cursor: pointer;
+    color: var(--text); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer;
     transition: background 140ms var(--ease-standard), border-color 140ms var(--ease-standard);
   }
   .opt:hover { background: rgba(255,255,255,.07); }
   .opt:active { transform: scale(.99); }
   .opt .dot {
-    width: 16px; height: 16px; border-radius: 999px; flex: none;
+    width: 14px; height: 14px; border-radius: 999px; flex: none;
     border: 1.5px solid rgba(255,255,255,.28);
     transition: background 140ms, border-color 140ms;
   }
-  .opt .check { margin-left: auto; width: 16px; height: 16px; opacity: 0; transition: opacity 120ms; flex: none; }
+  .opt .check { margin-left: auto; width: 14px; height: 14px; opacity: 0; transition: opacity 120ms; flex: none; }
   .opt.sel { background: var(--accent-weak); border-color: rgba(155,123,234,.42); }
   .opt.sel .dot { background: var(--accent); border-color: var(--accent-strong); box-shadow: 0 0 0 3px rgba(155,123,234,.25); }
   .opt.sel .check { opacity: 1; }
 
+  /* ---- Survey questions ---- */
+  .q { margin-top: 12px; }
+  .q-title { font-size: 13px; font-weight: 600; margin: 0 0 2px; }
+
   /* ---- Results bars ---- */
-  .bar-row { margin-top: 14px; }
-  .bar-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .bar-row { margin-top: 12px; }
+  .bar-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 5px; }
   .bar-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; min-width: 0; }
   .bar-label span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bar-label .you {
@@ -159,8 +183,8 @@
     color: var(--accent-strong); background: var(--accent-weak);
     border: 1px solid rgba(155,123,234,.35); border-radius: 999px; padding: 1px 7px 2px;
   }
-  .bar-count { flex: none; font-family: var(--mono); font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.15); }
+  .bar-count { flex: none; font-family: var(--mono); font-size: 11.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .bar { height: 5px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.15); }
   .bar-fill {
     height: 100%; border-radius: 999px; width: 0;
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
@@ -168,91 +192,80 @@
     transition: width 460ms var(--ease-decel);
   }
 
-  /* ---- Survey questions ---- */
-  .q { margin-top: 18px; }
-  .q-title { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
-
   /* ---- A/B panels ---- */
-  .ab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .ab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
   .ab-panel {
-    position: relative; border-radius: var(--r-card); text-align: left;
+    border-radius: var(--r-control); text-align: left;
     background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
-    padding: 18px; cursor: pointer; color: var(--text); font: inherit;
+    padding: 14px; cursor: pointer; color: var(--text); font: inherit;
     transition: background 140ms var(--ease-standard), border-color 140ms var(--ease-standard);
   }
   .ab-panel:hover { background: rgba(255,255,255,.07); }
   .ab-panel:active { transform: scale(.99); }
   .ab-panel.sel { background: var(--accent-weak); border-color: rgba(155,123,234,.5); }
-  .ab-panel img { width: 100%; border-radius: 12px; margin-bottom: 12px; display: block; }
+  .ab-panel img { width: 100%; border-radius: 10px; margin-bottom: 10px; display: block; }
   .ab-label {
-    display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+    display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
     border-radius: 999px; background: rgba(255,255,255,.09); border: 1px solid var(--hairline);
-    font-size: 12px; font-weight: 700; margin-bottom: 10px;
+    font-size: 11px; font-weight: 700; margin-bottom: 8px;
     transition: background 140ms, border-color 140ms, color 140ms;
   }
   .ab-panel.sel .ab-label { background: var(--accent); border-color: var(--accent-strong); color: #0b0d0c; }
-  .ab-title { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
-  .ab-body { font-size: 13px; color: var(--text-2); margin: 0; line-height: 1.55; }
+  .ab-title { font-size: 13.5px; font-weight: 600; margin: 0 0 4px; }
+  .ab-body { font-size: 12.5px; color: var(--text-2); margin: 0; line-height: 1.5; }
 
   /* ---- Buttons ---- */
   .btn {
-    display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
-    padding: 0 18px; border-radius: var(--r-control);
-    border: 1px solid transparent; font: inherit; font-size: 14px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 36px;
+    padding: 0 16px; border-radius: var(--r-control);
+    border: 1px solid transparent; font: inherit; font-size: 13px; font-weight: 600;
     cursor: pointer; transition: background 140ms var(--ease-standard), transform 80ms var(--ease-standard);
   }
   .btn:active { transform: scale(.97); }
-  .btn-primary { background: var(--accent); color: #0b0d0c; margin-top: 16px; }
+  .btn-primary { background: var(--accent); color: #0b0d0c; margin-top: 12px; }
   .btn-primary:hover { background: var(--accent-strong); }
   .btn-primary:disabled { opacity: .45; cursor: default; transform: none; }
-  .btn-subtle { background: transparent; color: var(--text-2); padding: 0 6px; min-height: 32px; }
+  .btn-subtle { background: transparent; color: var(--text-2); padding: 0 6px; min-height: 28px; }
   .btn-subtle:hover { color: var(--text); }
   .row-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .voted-note { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); margin-top: 16px; }
-  .voted-note .dotv { width: 7px; height: 7px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 8px rgba(155,123,234,.8); flex: none; }
+  .voted-note { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); margin-top: 12px; }
+  .voted-note .dotv { width: 6px; height: 6px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 8px rgba(155,123,234,.8); flex: none; }
 
   /* ---- Skeleton ---- */
-  .sk {
-    background: rgba(255,255,255,.06); border-radius: var(--r-card);
-    padding: 22px 24px; margin-bottom: 16px; position: relative; overflow: hidden;
-  }
-  .sk::after {
+  .sk-section { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
+  .sk-row { padding: 20px; }
+  .sk-row + .sk-row { border-top: 1px solid rgba(255,255,255,.06); }
+  .sk-line { height: 11px; border-radius: 999px; background: rgba(255,255,255,.07); position: relative; overflow: hidden; }
+  .sk-line::after {
     content: ""; position: absolute; inset: 0; transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
     animation: shimmer 1.6s infinite;
   }
   @keyframes shimmer { to { transform: translateX(100%); } }
-  .sk-line { height: 12px; border-radius: 999px; background: rgba(255,255,255,.07); margin-bottom: 10px; }
 
   /* ---- Empty ---- */
-  .empty { text-align: center; padding: 64px 20px; color: var(--text-2); }
-  .empty svg { width: 44px; height: 44px; opacity: .4; margin-bottom: 14px; }
-  .empty h3 { margin: 0 0 6px; color: var(--text); font-size: 16px; font-weight: 600; }
-  .empty p { margin: 0; font-size: 14px; }
+  .empty { text-align: center; padding: 56px 20px; color: var(--text-2); }
+  .empty svg { width: 36px; height: 36px; opacity: .4; margin-bottom: 12px; }
+  .empty h3 { margin: 0 0 4px; color: var(--text); font-size: 15px; font-weight: 600; }
+  .empty p { margin: 0; font-size: 13px; }
 
   footer {
     position: relative; z-index: 1; max-width: 680px; margin: 8px auto 0;
-    padding: 0 28px 30px; color: var(--text-3); font-size: 12px;
+    padding: 0 28px 26px; color: var(--text-3); font-size: 12px;
     display: flex; justify-content: space-between; gap: 12px;
   }
 
-  /* ---- Entrance ---- */
-  .card, .ab-panel { opacity: 0; transform: translateY(8px); animation: cardIn .42s var(--ease-decel) forwards; }
+  /* ---- Entrance (once) + focus + scrollbar ---- */
+  .section, .empty { opacity: 0; transform: translateY(8px); animation: cardIn .42s var(--ease-decel) forwards; }
   @keyframes cardIn { to { opacity: 1; transform: none; } }
-  /* After the first paint, later in-place re-renders (option selection, result
-     refresh) must NOT replay the entrance animation — calm surfaces. */
-  body.settled .card, body.settled .ab-panel { opacity: 1; transform: none; animation: none; }
-
-  /* ---- Focus ---- */
+  body.settled .section, body.settled .empty { opacity: 1; transform: none; animation: none; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(155,123,234,.15); }
-
-  /* ---- Scrollbar ---- */
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(155,123,234,.32); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(177,150,241,.55); }
 
-  @media (max-width: 640px) { .ab-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .ab-grid { grid-template-columns: 1fr; } }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -260,7 +273,7 @@
       transition-duration: .01ms !important;
       animation-iteration-count: 1 !important;
     }
-    .card, .ab-panel { opacity: 1; transform: none; }
+    .section, .empty { opacity: 1; transform: none; }
   }
 </style>
 </head>
@@ -283,6 +296,8 @@
       <canvas class="dither-crisp"></canvas>
     </div>
     <div class="shell">
+      <h2 class="page-title" id="pageTitle">What's new</h2>
+      <p class="page-desc" id="pageDesc"></p>
       <div id="list"></div>
     </div>
   </div>
@@ -302,9 +317,12 @@
   var votes = {};          // announcementId -> { questionId: optionKey }
   var pending = {};        // announcementId -> { questionId: optionKey } (while choosing)
   var resultsShown = {};   // announcementId -> true once submitted
+  var openState = {};      // announcementId -> true when the row is expanded
   var sentRendered = false;
 
   var listEl = document.getElementById("list");
+  var pageTitleEl = document.getElementById("pageTitle");
+  var pageDescEl = document.getElementById("pageDesc");
   var titleEl = document.getElementById("title");
   var footVersionEl = document.getElementById("footVersion");
 
@@ -318,7 +336,7 @@
   }
   function L(key, fallback) { return labels[key] || fallback || key; }
 
-  /* ---------------- Dither (Ink variant 07, vanilla port) ---------------- */
+  /* ---------------- Dither (Ink variant 07, crisp pass) ---------------- */
   var BAYER = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]]
     .map(function (row) { return row.map(function (v) { return (v + 0.5) / 16; }); });
   var OFF_TIER = 0.4, MAX_COLS = 960, MAX_ROWS = 600, CELL = 2;
@@ -439,29 +457,19 @@
 
   /* ---------------- Icons ---------------- */
   var ICONS = {
-    news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l14-5v12L3 13v-2Z"/><path d="M17 8.5a2.5 2.5 0 1 1 0 7"/><path d="M7.5 13.5v4a1.5 1.5 0 0 0 3 0v-2"/></svg>',
-    poll: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>',
-    survey: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>',
-    ab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="7" height="16" rx="1.5"/><rect x="13.5" y="4" width="7" height="16" rx="1.5"/></svg>',
+    news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l14-5v12L3 13v-2Z"/><path d="M17 8.5a2.5 2.5 0 1 1 0 7"/><path d="M7.5 13.5v4a1.5 1.5 0 0 0 3 0v-2"/></svg>',
+    poll: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>',
+    survey: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>',
+    ab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="7" height="16" rx="1.5"/><rect x="13.5" y="4" width="7" height="16" rx="1.5"/></svg>',
     sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4L12 3Z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg>',
-    check: '<svg viewBox="0 0 24 24" fill="none" stroke="#b196f1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="#b196f1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    chevron: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
   };
 
-  /* ---------------- Card rendering ---------------- */
+  /* ---------------- Rendering ---------------- */
   function typeInfo(a) {
     var map = { news: "typeNews", poll: "typePoll", survey: "typeSurvey", ab: "typeAb" };
     return { key: map[a.type] || "typeNews", icon: ICONS[a.type] || ICONS.news };
-  }
-
-  function chipHtml(a) {
-    var t = typeInfo(a);
-    var badge = a.badge ? '<span class="badge">' + esc(a.badge) + "</span>" : "";
-    return '<span class="chip">' + t.icon + esc(L(t.key, t.key)) + badge + "</span>";
-  }
-
-  function headHtml(a) {
-    return '<div class="card-head">' + chipHtml(a) +
-      (a.date ? '<span class="date">' + esc(a.date) + "</span>" : "") + "</div>";
   }
 
   function questionOptions(a, qId) {
@@ -479,26 +487,16 @@
 
   function baseResults(a, qId) {
     if (a.type === "survey") {
-      var m = (a.questionResults || {})[qId] || {};
-      var out = {};
-      Object.keys(m).forEach(function (k) { out[k] = m[k]; });
-      return out;
+      return a.questionResults && a.questionResults[qId] ? a.questionResults[qId] : {};
     }
-    var r = {};
-    Object.keys(a.results || {}).forEach(function (k) { r[k] = a.results[k]; });
-    return r;
+    return a.results || {};
   }
 
   function resultsFor(a, qId) {
     var base = baseResults(a, qId);
     var mine = (votes[a.id] || {})[qId];
-    var opts = questionOptions(a, qId);
-    var rows = opts.map(function (o) {
-      return {
-        key: o.key, label: o.label,
-        count: (base[o.key] || 0) + (mine === o.key ? 1 : 0),
-        mine: mine === o.key
-      };
+    var rows = questionOptions(a, qId).map(function (o) {
+      return { key: o.key, label: o.label, count: (base[o.key] || 0) + (mine === o.key ? 1 : 0), mine: mine === o.key };
     });
     var total = rows.reduce(function (s, r) { return s + r.count; }, 0);
     return { rows: rows, total: total };
@@ -507,28 +505,25 @@
   function barsHtml(a, qId) {
     var res = resultsFor(a, qId);
     var youLabel = L("youVoted", "You voted");
-    return res.rows.map(function (r) {
+    var out = res.rows.map(function (r) {
       var pct = res.total ? Math.round((r.count / res.total) * 100) : 0;
       return '<div class="bar-row">' +
         '<div class="bar-meta">' +
           '<span class="bar-label"><span class="t">' + esc(r.label) + "</span>" +
-            (r.mine ? '<span class="you">' + esc(youLabel) + "</span>" : "") +
-          "</span>" +
-          '<span class="bar-count">' + r.count + " · " + pct + "%</span>" +
-        "</div>" +
-        '<div class="bar"><div class="bar-fill" data-w="' + pct + '"></div></div>' +
-      "</div>";
-    }).join("") +
-    '<div class="bar-row"><div class="bar-meta"><span class="bar-label"><span class="t" style="font-weight:400;color:var(--text-3)">' +
-      esc(L("votesFormat", "{0} votes").replace("{0}", String(res.total))) + "</span></span></div></div>";
+            (r.mine ? '<span class="you">' + esc(youLabel) + "</span>" : "") + "</span>" +
+          '<span class="bar-count">' + r.count + " · " + pct + "%</span></div>" +
+        '<div class="bar"><div class="bar-fill" data-w="' + pct + '"></div></div></div>';
+    }).join("");
+    out += '<div class="bar-row"><div class="bar-meta"><span class="bar-label"><span class="t" style="font-weight:400;color:var(--text-3)">' +
+      esc(L("votesFormat", "{0} votes").replace("{0}", String(res.total))) + '</span></span></div></div>';
+    return out;
   }
 
   function optHtml(a, qId, opts) {
     var sel = pending[a.id] || {};
     return opts.map(function (o) {
       return '<button class="opt' + (sel[qId] === o.key ? " sel" : "") + '" data-q="' + esc(qId) + '" data-opt="' + esc(o.key) + '">' +
-        '<span class="dot"></span><span>' + esc(o.label) + "</span>" + ICONS.check +
-      "</button>";
+        '<span class="dot"></span><span>' + esc(o.label) + "</span>" + ICONS.check + "</button>";
     }).join("");
   }
 
@@ -540,7 +535,7 @@
     return !!p.choice;
   }
 
-  function cardBody(a) {
+  function bodyContent(a) {
     var voted = !!resultsShown[a.id];
     var parts = [];
 
@@ -560,19 +555,13 @@
         var img = v.image ? '<img src="' + esc(v.image) + '" alt="" onerror="this.style.display=\'none\'">' : "";
         parts.push(
           '<button class="ab-panel' + (sel === v.id ? " sel" : "") + '" data-v="' + esc(v.id) + '">' +
-          '<span class="ab-label">' + esc(v.label || v.id) + "</span>" +
-          img +
+          '<span class="ab-label">' + esc(v.label || v.id) + "</span>" + img +
           '<p class="ab-title">' + esc(v.title || "") + "</p>" +
-          (v.body ? '<p class="ab-body">' + esc(v.body) + "</p>" : "") +
-          "</button>");
+          (v.body ? '<p class="ab-body">' + esc(v.body) + "</p>" : "") + "</button>");
       });
       parts.push("</div>");
-      if (voted) {
-        parts.push(barsHtml(a, "choice"));
-        parts.push(votedFooter(a));
-      } else {
-        parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
-      }
+      if (voted) { parts.push(barsHtml(a, "choice")); parts.push(votedFooter(a)); }
+      else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
       return parts.join("");
     }
 
@@ -581,34 +570,46 @@
         parts.push('<div class="q"><p class="q-title">' + esc(q.text) + "</p>" +
           optHtml(a, q.id, q.options.map(function (o) { return { key: o, label: o }; })) + "</div>");
       });
-      if (voted) {
-        (a.questions || []).forEach(function (q) { parts.push(barsHtml(a, q.id)); });
-        parts.push(votedFooter(a));
-      } else {
-        parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
-      }
+      if (voted) { (a.questions || []).forEach(function (q) { parts.push(barsHtml(a, q.id)); }); parts.push(votedFooter(a)); }
+      else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
       return parts.join("");
     }
 
     // poll
     parts.push(optHtml(a, "choice", (a.options || []).map(function (o) { return { key: o, label: o }; })));
-    if (voted) {
-      parts.push(barsHtml(a, "choice"));
-      parts.push(votedFooter(a));
-    } else {
-      parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
-    }
+    if (voted) { parts.push(barsHtml(a, "choice")); parts.push(votedFooter(a)); }
+    else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
     return parts.join("");
   }
 
   function votedFooter(a) {
     return '<div class="row-actions">' +
       '<span class="voted-note"><span class="dotv"></span>' + esc(L("thanks", "Thanks for voting!")) + "</span>" +
-      '<button class="btn btn-subtle change-btn">' + esc(L("change", "Change")) + "</button>" +
+      '<button class="btn btn-subtle change-btn">' + esc(L("change", "Change")) + "</button></div>";
+  }
+
+  function rowHtml(a, i) {
+    var t = typeInfo(a);
+    var open = openState[a.id];
+    var meta = '<span>' + esc(L(t.key, t.key)) + "</span>";
+    if (a.date) meta += '<span>' + esc(a.date) + "</span>";
+    if (a.badge) meta += '<span class="badge">' + esc(a.badge) + "</span>";
+
+    return '<div class="row' + (open ? " open" : "") + '" data-id="' + esc(a.id) + '">' +
+      '<button class="row-head" aria-expanded="' + (open ? "true" : "false") + '">' +
+        '<span class="row-open-ind"></span>' +
+        '<span class="row-icon">' + t.icon + "</span>" +
+        '<span class="row-main"><span class="row-title">' + esc(a.title) + "</span>" +
+          '<span class="row-meta">' + meta + "</span></span>" +
+        ICONS.chevron +
+      "</button>" +
+      '<div class="row-body"><div class="row-panel">' + bodyContent(a) + "</div></div>" +
     "</div>";
   }
 
   function render() {
+    pageTitleEl.textContent = L("title", "What's new");
+    pageDescEl.textContent = L("pageDesc", "");
     titleEl.textContent = L("title", "What's new");
     footVersionEl.textContent = version ? "v" + version : "";
 
@@ -621,63 +622,71 @@
       return;
     }
 
-    listEl.innerHTML = "";
+    var html = '<div class="section">';
     announcements.forEach(function (a, i) {
-      var el = document.createElement("div");
-      el.className = "card";
-      el.style.animationDelay = Math.min(i * 0.05, 0.35) + "s";
-      el.innerHTML = headHtml(a) + "<h2>" + esc(a.title) + "</h2>" + cardBody(a);
+      if (openState[a.id] === undefined) openState[a.id] = i === 0;
+      html += rowHtml(a, i);
+    });
+    html += "</div>";
+    listEl.innerHTML = html;
 
-      el.querySelectorAll(".opt").forEach(function (btn) {
+    listEl.querySelectorAll(".row").forEach(function (row) {
+      var id = row.getAttribute("data-id");
+      row.querySelector(".row-head").addEventListener("click", function () {
+        openState[id] = !openState[id];
+        render();
+      });
+      row.querySelectorAll(".opt").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          if (resultsShown[a.id]) return;
-          var q = btn.getAttribute("data-q");
-          var o = btn.getAttribute("data-opt");
-          if (!pending[a.id]) pending[a.id] = {};
-          if (pending[a.id][q] === o) delete pending[a.id][q];
-          else pending[a.id][q] = o;
+          if (resultsShown[id]) return;
+          var q = btn.getAttribute("data-q"), o = btn.getAttribute("data-opt");
+          if (!pending[id]) pending[id] = {};
+          if (pending[id][q] === o) delete pending[id][q]; else pending[id][q] = o;
           render();
         });
       });
-      el.querySelectorAll(".ab-panel").forEach(function (panel) {
+      row.querySelectorAll(".ab-panel").forEach(function (panel) {
         panel.addEventListener("click", function () {
-          if (resultsShown[a.id]) return;
+          if (resultsShown[id]) return;
           var v = panel.getAttribute("data-v");
-          if (!pending[a.id]) pending[a.id] = {};
-          if (pending[a.id].choice === v) delete pending[a.id].choice;
-          else pending[a.id].choice = v;
+          if (!pending[id]) pending[id] = {};
+          if (pending[id].choice === v) delete pending[id].choice; else pending[id].choice = v;
           render();
         });
       });
-      var voteBtn = el.querySelector(".vote-btn");
+      var voteBtn = row.querySelector(".vote-btn");
       if (voteBtn) {
-        voteBtn.disabled = !isComplete(a);
         voteBtn.addEventListener("click", function () {
-          votes[a.id] = pending[a.id] || {};
-          resultsShown[a.id] = true;
-          post({ type: "vote", id: a.id, answers: votes[a.id] });
+          votes[id] = pending[id] || {};
+          resultsShown[id] = true;
+          openState[id] = true;
+          post({ type: "vote", id: id, answers: votes[id] });
           render();
         });
       }
-      var changeBtn = el.querySelector(".change-btn");
+      var changeBtn = row.querySelector(".change-btn");
       if (changeBtn) {
         changeBtn.addEventListener("click", function () {
-          resultsShown[a.id] = false;
-          pending[a.id] = votes[a.id] ? JSON.parse(JSON.stringify(votes[a.id])) : {};
+          resultsShown[id] = false;
+          pending[id] = votes[id] ? JSON.parse(JSON.stringify(votes[id])) : {};
           render();
         });
       }
-      var linkBtn = el.querySelector(".btn-link");
+      var linkBtn = row.querySelector(".btn-link");
       if (linkBtn) {
         linkBtn.addEventListener("click", function () {
           post({ type: "openUrl", url: linkBtn.getAttribute("data-link") });
         });
       }
-
-      listEl.appendChild(el);
     });
 
-    // Animate result bars after the frame paints.
+    // Disable vote buttons that are incomplete (computed AFTER wiring).
+    listEl.querySelectorAll(".vote-btn").forEach(function (btn, i) {
+      var row = btn.closest(".row");
+      var a = announcements.filter(function (x) { return x.id === row.getAttribute("data-id"); })[0];
+      btn.disabled = a ? !isComplete(a) : true;
+    });
+
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         listEl.querySelectorAll(".bar-fill").forEach(function (f) {
@@ -692,13 +701,16 @@
   function finishRender() {
     if (sentRendered) return;
     sentRendered = true;
-    // Let the staggered entrance animations play (~0.42s + 0.35s max delay),
-    // then freeze layout so later in-place re-renders stay calm.
     window.setTimeout(function () { document.body.classList.add("settled"); }, 850);
+    post({ type: "log", msg: "rendered cards=" + announcements.length });
     post({ type: "rendered" });
   }
 
   /* ---------------- Host bridge ---------------- */
+  window.addEventListener("error", function (ev) {
+    post({ type: "log", msg: "page error: " + String((ev && (ev.error || ev.message)) || ev) });
+  });
+
   post({ type: "ready" });
 
   // Settings-style window chrome: ghost buttons post window actions, the
@@ -716,12 +728,20 @@
 
   window.chrome.webview.addEventListener("message", function (e) {
     var msg;
-    try { msg = JSON.parse(e.data); } catch (err) { return; }
+    // PostWebMessageAsJson may deliver e.data as an already-parsed object on
+    // some WebView2 runtimes, or as a JSON string on others. Accept both.
+    try {
+      msg = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+    } catch (err) {
+      post({ type: "log", msg: "parse failed: " + err.message });
+      return;
+    }
     if (msg.type !== "announcements" || !msg.data) return;
+    post({ type: "log", msg: "got announcements" });
+
     labels = msg.data.labels || {};
     version = msg.data.version || "";
     var fresh = msg.data.announcements || [];
-    // Merge in the authoritative local votes pushed from the host.
     fresh.forEach(function (a) {
       if (a.localVote && Object.keys(a.localVote).length) {
         votes[a.id] = a.localVote;

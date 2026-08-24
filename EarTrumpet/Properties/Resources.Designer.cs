@@ -3180,6 +3180,9 @@ namespace EarTrumpet.Properties {
         public static string AnnouncementsTitle {
             get { return ResourceManager.GetString("AnnouncementsTitle", resourceCulture); }
         }
+        public static string AnnouncementsPageDescription {
+            get { return ResourceManager.GetString("AnnouncementsPageDescription", resourceCulture); }
+        }
         public static string AnnouncementsLoading {
             get { return ResourceManager.GetString("AnnouncementsLoading", resourceCulture); }
         }
