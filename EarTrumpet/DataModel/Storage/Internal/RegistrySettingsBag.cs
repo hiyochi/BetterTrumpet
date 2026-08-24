@@ -56,7 +56,8 @@ namespace EarTrumpet.DataModel.Storage.Internal
                 T ret = defaultValue;
                 try
                 {
-                    ret = (T)regKey.GetValue(key);
+                    var raw = regKey.GetValue(key);
+                    ret = raw == null ? defaultValue : (T)raw;
                 }
                 catch (Exception ex)
                 {
