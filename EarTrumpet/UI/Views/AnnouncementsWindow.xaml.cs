@@ -327,6 +327,9 @@ namespace EarTrumpet.UI.Views
                         ["typePoll"] = R("AnnouncementsTypePoll"),
                         ["typeSurvey"] = R("AnnouncementsTypeSurvey"),
                         ["typeAb"] = R("AnnouncementsTypeAb"),
+                        ["typeText"] = R("AnnouncementsTypeText"),
+                        ["submit"] = R("AnnouncementsSubmitButton"),
+                        ["textPlaceholder"] = R("AnnouncementsTextPlaceholder"),
                     },
                     announcements = _service.Announcements.Select(a => new
                     {

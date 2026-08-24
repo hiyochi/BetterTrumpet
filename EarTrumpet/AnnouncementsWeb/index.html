@@ -137,6 +137,24 @@
   .opt.sel { color: var(--text); }
   .opt.sel .dot { background: var(--accent); border-color: var(--accent-strong); box-shadow: 0 0 0 3px rgba(155,123,234,.22); }
 
+  /* ---- Free-text answers (DA input) ---- */
+  .text-input {
+    display: block; width: 100%; min-height: 76px; margin-top: 4px; padding: 9px 12px;
+    border-radius: var(--r-control); border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.07); color: var(--text);
+    font: inherit; font-size: 13px; line-height: 1.5;
+    resize: vertical; user-select: text; outline: none;
+    transition: border-color 140ms var(--ease-standard), box-shadow 140ms var(--ease-standard);
+  }
+  .text-input:focus { border-color: rgba(155,123,234,.55); box-shadow: 0 0 0 3px rgba(155,123,234,.13); }
+  .text-input::placeholder { color: rgba(244,247,245,.42); }
+  .your-text {
+    margin: 2px 0 0; padding: 8px 12px; border-left: 2px solid var(--accent);
+    background: rgba(255,255,255,.03); border-radius: 0 10px 10px 0;
+    color: var(--text-2); font-size: 13px; line-height: 1.55; user-select: text;
+    white-space: pre-wrap;
+  }
+
   /* ---- Survey questions ---- */
   .q { margin-top: 10px; }
   .q-title { margin: 0 0 2px; font-size: 12.5px; font-weight: 600; }
@@ -434,7 +452,7 @@
 
   /* ---------------- Rendering: plain editorial text ---------------- */
   function typeInfo(a) {
-    var map = { news: "typeNews", poll: "typePoll", survey: "typeSurvey", ab: "typeAb" };
+    var map = { news: "typeNews", poll: "typePoll", survey: "typeSurvey", ab: "typeAb", text: "typeText" };
     return { key: map[a.type] || "typeNews" };
   }
 
@@ -507,6 +525,7 @@
   function isComplete(a) {
     var p = pending[a.id] || {};
     if (a.type === "survey") return a.questions.every(function (q) { return !!p[q.id]; });
+    if (a.type === "text") return typeof p.text === "string" && p.text.trim().length > 0;
     return !!p.choice;
   }
 
@@ -537,6 +556,18 @@
       });
       if (voted) { (a.questions || []).forEach(function (q) { parts.push(barsHtml(a, q.id)); }); parts.push(votedFooter()); }
       else parts.push('<button class="btn btn-primary vote-btn" disabled>' + esc(L("vote", "Vote")) + "</button>");
+      return parts.join("");
+    }
+
+    if (a.type === "text") {
+      if (voted) {
+        var ans = (votes[a.id] || {}).text || "";
+        parts.push('<div class="your-text">"' + esc(ans) + '"</div>');
+        parts.push(votedFooter());
+      } else {
+        parts.push('<textarea class="text-input" rows="2" maxlength="500" placeholder="' + esc(L("textPlaceholder", "Type your answer...")) + '"></textarea>');
+        parts.push('<button class="btn btn-primary submit-btn" disabled>' + esc(L("submit", "Send")) + "</button>");
+      }
       return parts.join("");
     }
 
@@ -644,6 +675,22 @@
     if (linkBtn) {
       linkBtn.addEventListener("click", function () {
         post({ type: "openUrl", url: linkBtn.getAttribute("data-link") });
+      });
+    }
+    var tInput = item.querySelector(".text-input");
+    var submitBtn = item.querySelector(".submit-btn");
+    if (tInput && submitBtn) {
+      var updateText = function () {
+        if (!pending[id]) pending[id] = {};
+        pending[id].text = tInput.value;
+        submitBtn.disabled = !(tInput.value.trim().length > 0);
+      };
+      tInput.addEventListener("input", updateText);
+      submitBtn.addEventListener("click", function () {
+        votes[id] = pending[id] || { text: tInput.value };
+        resultsShown[id] = true;
+        post({ type: "vote", id: id, answers: votes[id] });
+        rebuildItem(item, a);
       });
     }
   }

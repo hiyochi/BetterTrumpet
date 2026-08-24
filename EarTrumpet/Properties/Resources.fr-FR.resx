@@ -1812,6 +1812,15 @@ Détails : {0}</value>
   <data name="AnnouncementsTypeAb" xml:space="preserve">
     <value>A/B</value>
   </data>
+  <data name="AnnouncementsTypeText" xml:space="preserve">
+    <value>Avis</value>
+  </data>
+  <data name="AnnouncementsSubmitButton" xml:space="preserve">
+    <value>Envoyer</value>
+  </data>
+  <data name="AnnouncementsTextPlaceholder" xml:space="preserve">
+    <value>Écrivez votre réponse...</value>
+  </data>
   <data name="PresetCategoryAll" xml:space="preserve">
     <value>Toutes</value>
   </data>

@@ -3247,6 +3247,15 @@ namespace EarTrumpet.Properties {
         public static string AnnouncementsTypeAb {
             get { return ResourceManager.GetString("AnnouncementsTypeAb", resourceCulture); }
         }
+        public static string AnnouncementsTypeText {
+            get { return ResourceManager.GetString("AnnouncementsTypeText", resourceCulture); }
+        }
+        public static string AnnouncementsSubmitButton {
+            get { return ResourceManager.GetString("AnnouncementsSubmitButton", resourceCulture); }
+        }
+        public static string AnnouncementsTextPlaceholder {
+            get { return ResourceManager.GetString("AnnouncementsTextPlaceholder", resourceCulture); }
+        }
         public static string PresetCategoryAll {
             get { return ResourceManager.GetString("PresetCategoryAll", resourceCulture); }
         }
