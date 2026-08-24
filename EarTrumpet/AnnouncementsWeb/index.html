@@ -173,6 +173,11 @@
     color: var(--accent-strong); background: var(--accent-weak);
     border: 1px solid rgba(155,123,234,.35); border-radius: 999px; padding: 1px 6px 2px;
   }
+  .bar-label .live {
+    flex: none; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    color: #7ee0a3; background: rgba(64,178,119,.14);
+    border: 1px solid rgba(126,224,163,.3); border-radius: 999px; padding: 1px 6px 2px;
+  }
   .bar-count { flex: none; font-family: var(--mono); font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
   .bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.10); overflow: hidden; }
   .bar-fill {
@@ -279,6 +284,8 @@
   var labels = {};
   var announcements = [];
   var version = "";
+  var liveResults = {};     // announcementId -> questionId -> optionKey -> count
+  var resultsUpdatedAt = "";
   var votes = {};          // announcementId -> { questionId: optionKey }
   var pending = {};        // announcementId -> { questionId: optionKey } (while choosing)
   var resultsShown = {};   // announcementId -> true once submitted
@@ -439,6 +446,10 @@
   }
 
   function baseResults(a, qId) {
+    // Live totals from the collector win over owner-maintained fallbacks.
+    if (liveResults && liveResults[a.id] && liveResults[a.id][qId]) {
+      return liveResults[a.id][qId];
+    }
     if (a.type === "survey") return (a.questionResults || {})[qId] || {};
     return a.results || {};
   }
@@ -466,7 +477,9 @@
         '<div class="bar"><div class="bar-fill" data-w="' + pct + '"></div></div></div>';
     }).join("");
     out += '<div class="bar-row"><div class="bar-meta"><span class="bar-label"><span class="t" style="font-weight:400;color:var(--text-3)">' +
-      esc(L("votesFormat", "{0} votes").replace("{0}", String(res.total))) + '</span></span></div></div>';
+      esc(L("votesFormat", "{0} votes").replace("{0}", String(res.total))) +
+      (resultsUpdatedAt ? ' <span class="live">' + esc(L("live", "Live")) + "</span>" : "") +
+      '</span></span></div></div>';
     return out;
   }
 
@@ -661,6 +674,8 @@
 
     labels = msg.data.labels || {};
     version = msg.data.version || "";
+    liveResults = msg.data.liveResults || {};
+    resultsUpdatedAt = msg.data.resultsUpdatedAt || "";
     var fresh = msg.data.announcements || [];
     fresh.forEach(function (a) {
       if (a.localVote && Object.keys(a.localVote).length) {

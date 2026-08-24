@@ -1,4 +1,6 @@
 {
+  "voteEndpoint": "",
+  "resultsUrl": "",
   "announcements": [
     {
       "id": "2026-08-25-whats-new-feed",

@@ -314,6 +314,7 @@ namespace EarTrumpet.UI.Views
                     {
                         ["title"] = R("AnnouncementsTitle"),
                         ["pageDesc"] = R("AnnouncementsPageDescription"),
+                        ["live"] = R("AnnouncementsLive"),
                         ["emptyTitle"] = R("AnnouncementsEmptyTitle"),
                         ["emptyBody"] = R("AnnouncementsEmptyBody"),
                         ["vote"] = R("AnnouncementsVoteButton"),
@@ -343,6 +344,8 @@ namespace EarTrumpet.UI.Views
                         questionResults = a.QuestionResults,
                         localVote = ParseLocalVote(App.Settings.GetPollVote(a.Id)),
                     }),
+                    liveResults = _service.LiveResults,
+                    resultsUpdatedAt = _service.ResultsUpdatedAt?.ToString("o") ?? string.Empty,
                 },
             };
 

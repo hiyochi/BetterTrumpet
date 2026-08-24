@@ -697,8 +697,9 @@ namespace EarTrumpet
                 return;
             }
 
-            // Fresh fetch so an early open never shows a stale/empty feed.
+            // Fresh fetch + live totals so an early open never shows stale data.
             _announcementService.CheckForAnnouncementsAsync();
+            _ = _announcementService.UpdateResultsAsync();
 
             var window = new UI.Views.AnnouncementsWindow(_announcementService);
             window.Show();

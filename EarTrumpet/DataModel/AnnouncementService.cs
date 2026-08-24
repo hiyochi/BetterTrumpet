@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -57,9 +58,9 @@ namespace EarTrumpet.DataModel
         public List<AnnouncementQuestion> Questions { get; set; } = new List<AnnouncementQuestion>();
         /// <summary>A/B variants (ab type).</summary>
         public List<AnnouncementVariant> Variants { get; set; } = new List<AnnouncementVariant>();
-        /// <summary>Owner-maintained counts: optionKey -> votes (poll/ab).</summary>
+        /// <summary>Owner-maintained counts: optionKey -> votes (poll/ab, fallback).</summary>
         public Dictionary<string, int> Results { get; set; } = new Dictionary<string, int>();
-        /// <summary>Owner-maintained counts per question: questionId -> optionKey -> votes (survey).</summary>
+        /// <summary>Owner-maintained counts per question: questionId -> optionKey -> votes (survey, fallback).</summary>
         public Dictionary<string, Dictionary<string, int>> QuestionResults { get; set; } = new Dictionary<string, Dictionary<string, int>>();
         /// <summary>Optional per-item vote collector endpoint; falls back to the feed-wide one.</summary>
         public string VoteEndpoint { get; set; }
@@ -69,12 +70,15 @@ namespace EarTrumpet.DataModel
     /// Fetches the remote announcements feed (hosted on GitHub raw) so the
     /// "What's new" window can show pushed messages, polls, surveys and A/B
     /// comparisons without shipping an update. Checks at startup (after a
-    /// short delay) then every 6 hours. Votes are stored locally and, when a
-    /// collector endpoint is configured in the feed, POSTed to it.
+    /// short delay) then every 6 hours. Votes are stored locally, submitted
+    /// to a collector endpoint (when configured) under a salted per-install
+    /// voter id, and retried while they fail. Live totals are fetched from the
+    /// collector's results endpoint so shown numbers are real, not edited.
     /// </summary>
     public class AnnouncementService
     {
         private const string FeedUrl = "https://raw.githubusercontent.com/xammen/BetterTrumpet/master/announcements.json";
+        private const string VoterIdSalt = "BetterTrumpet.Votes.v1";
         private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(6);
         private static readonly TimeSpan StartupDelay = TimeSpan.FromSeconds(10);
 
@@ -83,6 +87,7 @@ namespace EarTrumpet.DataModel
         private readonly HttpClient _httpClient;
         private readonly DispatcherTimer _timer;
         private readonly Dispatcher _dispatcher;
+        private readonly List<(string AnnouncementId, Dictionary<string, string> Answers)> _pendingVotes = new List<(string, Dictionary<string, string>)>();
         private bool _started;
 
         private IReadOnlyList<Announcement> _announcements = Array.Empty<Announcement>();
@@ -95,6 +100,17 @@ namespace EarTrumpet.DataModel
                 UpdateUnreadState();
             }
         }
+
+        private string _resultsUrl = string.Empty;
+        /// <summary>Collector endpoint returning live totals ({ results, updatedAt }).</summary>
+        public string ResultsUrl => _resultsUrl;
+
+        private Dictionary<string, Dictionary<string, Dictionary<string, int>>> _liveResults = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
+        /// <summary>Normalized live counts: announcementId -> questionId -> optionKey -> count.</summary>
+        public IReadOnlyDictionary<string, Dictionary<string, Dictionary<string, int>>> LiveResults => _liveResults;
+
+        private DateTime? _resultsUpdatedAt;
+        public DateTime? ResultsUpdatedAt => _resultsUpdatedAt;
 
         private bool _hasUnreadAnnouncements;
         public bool HasUnreadAnnouncements
@@ -135,7 +151,7 @@ namespace EarTrumpet.DataModel
             {
                 Interval = CheckInterval
             };
-            _timer.Tick += (_, __) => CheckForAnnouncementsAsync();
+            _timer.Tick += (_, __) => PeriodicCheck();
         }
 
         /// <summary>Start the announcement check cycle: delay then check, then every 6h.</summary>
@@ -154,7 +170,7 @@ namespace EarTrumpet.DataModel
             startupTimer.Tick += (_, __) =>
             {
                 startupTimer.Stop();
-                CheckForAnnouncementsAsync();
+                PeriodicCheck();
                 _timer.Start();
             };
             startupTimer.Start();
@@ -167,6 +183,14 @@ namespace EarTrumpet.DataModel
             _timer.Stop();
         }
 
+        /// <summary>Periodic pass: feed, live results, pending vote retries.</summary>
+        private async void PeriodicCheck()
+        {
+            CheckForAnnouncementsAsync();
+            await UpdateResultsAsync();
+            await RetryPendingVotesAsync();
+        }
+
         /// <summary>Fetch and parse the remote feed, filtering by the local version.</summary>
         public async void CheckForAnnouncementsAsync()
         {
@@ -177,6 +201,7 @@ namespace EarTrumpet.DataModel
                 var json = JObject.Parse(response);
 
                 var feedVoteEndpoint = json["voteEndpoint"]?.ToString() ?? string.Empty;
+                _resultsUrl = json["resultsUrl"]?.ToString() ?? string.Empty;
                 var items = json["announcements"] as JArray;
                 if (items == null)
                 {
@@ -211,9 +236,74 @@ namespace EarTrumpet.DataModel
         }
 
         /// <summary>
+        /// Pull live totals from the collector's results endpoint (when the feed
+        /// declares one). Counts replace the owner-maintained fallbacks.
+        /// </summary>
+        public async Task UpdateResultsAsync()
+        {
+            if (string.IsNullOrWhiteSpace(_resultsUrl))
+            {
+                return;
+            }
+
+            try
+            {
+                var response = await _httpClient.GetStringAsync(_resultsUrl);
+                var json = JsonDocument.Parse(response);
+                var root = json.RootElement;
+
+                var results = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
+                if (root.TryGetProperty("results", out var resultsElement) &&
+                    resultsElement.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var announcement in resultsElement.EnumerateObject())
+                    {
+                        var byQuestion = new Dictionary<string, Dictionary<string, int>>();
+                        if (announcement.Value.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var question in announcement.Value.EnumerateObject())
+                            {
+                                var byOption = new Dictionary<string, int>();
+                                if (question.Value.ValueKind == JsonValueKind.Object)
+                                {
+                                    foreach (var option in question.Value.EnumerateObject())
+                                    {
+                                        if (option.Value.ValueKind == JsonValueKind.Number)
+                                        {
+                                            byOption[option.Name] = option.Value.GetInt32();
+                                        }
+                                    }
+                                }
+                                byQuestion[question.Name] = byOption;
+                            }
+                        }
+                        results[announcement.Name] = byQuestion;
+                    }
+                }
+
+                DateTime? updatedAt = null;
+                if (root.TryGetProperty("updatedAt", out var updatedElement) &&
+                    updatedElement.ValueKind == JsonValueKind.String &&
+                    DateTime.TryParse(updatedElement.GetString(), out var parsed))
+                {
+                    updatedAt = parsed.ToLocalTime();
+                }
+
+                _liveResults = results;
+                _resultsUpdatedAt = updatedAt ?? DateTime.Now;
+                Trace.WriteLine($"AnnouncementService: Live results refreshed ({_liveResults.Values.Sum(a => a.Values.Sum(q => q.Values.Sum()))} votes)");
+                AnnouncementsChanged?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"AnnouncementService: Results fetch failed — {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Records the user's vote locally (so the UI stays truthful and the state
-        /// survives restarts) and, when a collector endpoint is configured, submits
-        /// it there in the background.
+        /// survives restarts) and submits it to the collector under a salted
+        /// per-install voter id. Failed submissions are retried on later checks.
         /// </summary>
         public async Task VoteAsync(string announcementId, Dictionary<string, string> answers)
         {
@@ -246,16 +336,38 @@ namespace EarTrumpet.DataModel
                     app = "BetterTrumpet",
                     version = App.PackageVersion?.ToString(),
                     announcementId,
+                    voterId = HashVoterId(App.Settings.VoteAnonymousId),
                     answers,
                     votedAt = DateTime.UtcNow,
                 };
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
                 using var response = await _httpClient.PostAsync(endpoint, content);
-                Trace.WriteLine($"AnnouncementService: Vote submitted to {endpoint} ({response.StatusCode})");
+                if (response.IsSuccessStatusCode)
+                {
+                    Trace.WriteLine($"AnnouncementService: Vote submitted to {endpoint} ({response.StatusCode})");
+                    _pendingVotes.RemoveAll(p => p.AnnouncementId == announcementId);
+                }
+                else
+                {
+                    Trace.WriteLine($"AnnouncementService: Vote rejected by collector ({response.StatusCode})");
+                    _pendingVotes.RemoveAll(p => p.AnnouncementId == announcementId); // rejected = final
+                }
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"AnnouncementService: Vote submission failed — {ex.Message}");
+                Trace.WriteLine($"AnnouncementService: Vote submission failed — {ex.Message}; will retry");
+                if (!_pendingVotes.Any(p => p.AnnouncementId == announcementId))
+                {
+                    _pendingVotes.Add((announcementId, answers));
+                }
+            }
+        }
+
+        private async Task RetryPendingVotesAsync()
+        {
+            foreach (var pending in _pendingVotes.ToList())
+            {
+                await SubmitVoteAsync(pending.AnnouncementId, pending.Answers);
             }
         }
 
@@ -286,6 +398,14 @@ namespace EarTrumpet.DataModel
                 App.Settings.LastSeenAnnouncementId = latest.Id;
             }
             UpdateUnreadState();
+        }
+
+        /// <summary>Salted per-install voter id: the collector can dedupe but never reverse it.</summary>
+        private static string HashVoterId(string voterId)
+        {
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(VoterIdSalt));
+            var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(voterId));
+            return Convert.ToHexString(hash).ToLowerInvariant();
         }
 
         private static Announcement ParseAnnouncement(JToken item, string feedVoteEndpoint)

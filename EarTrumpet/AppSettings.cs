@@ -1331,6 +1331,23 @@ namespace EarTrumpet
             set => _settings.Set("TelemetryAnonymousId", value);
         }
 
+        // Dedicated per-install id for votes (independent from telemetry:
+        // voting is an explicit act, not a diagnostic). Created on first vote.
+        public string VoteAnonymousId
+        {
+            get
+            {
+                var id = _settings.Get("VoteAnonymousId", string.Empty);
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    id = Guid.NewGuid().ToString("N");
+                    _settings.Set("VoteAnonymousId", id);
+                }
+                return id;
+            }
+            set => _settings.Set("VoteAnonymousId", value);
+        }
+
         public bool HasCompletedOnboarding
         {
             get => _settings.Get("HasCompletedOnboarding", false);

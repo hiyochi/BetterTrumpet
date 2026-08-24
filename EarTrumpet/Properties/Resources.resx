@@ -1815,6 +1815,9 @@ Details: {0}</value>
   <data name="AnnouncementsTitle" xml:space="preserve">
     <value>What's new</value>
   </data>
+  <data name="AnnouncementsLive" xml:space="preserve">
+    <value>Live</value>
+  </data>
   <data name="AnnouncementsPageDescription" xml:space="preserve">
     <value>News, polls and surveys from the BetterTrumpet team.</value>
   </data>
