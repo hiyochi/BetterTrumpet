@@ -14,14 +14,14 @@
   <a href="https://github.com/xammen/BetterTrumpet">
     <img src="https://img.shields.io/badge/github-xammen/BetterTrumpet-trumpet?labelColor=0a0a0a&color=666&style=for-the-badge&logo=github&logoColor=888" alt="GitHub"/>
   </a>
-  <a href="https://www.producthunt.com/posts/bettertrumpet">
-    <img src="https://img.shields.io/badge/product%20hunt-bettertrumpet-da552f?labelColor=0a0a0a&style=for-the-badge&logo=producthunt&logoColor=da552f" alt="Product Hunt"/>
+  <a href="https://www.reddit.com/r/BetterTrumpet/">
+    <img src="https://img.shields.io/badge/reddit-r%2FBetterTrumpet-ff4500?labelColor=0a0a0a&style=for-the-badge&logo=reddit&logoColor=ff4500" alt="Reddit"/>
   </a>
 </p>
 
 <p align="center">
   <i>Windows volume control that actually feels good to use.</i><br/>
-  <i>A polished fork of EarTrumpet with better onboarding, themes, media controls, profiles, auto-updates, and a CLI that speaks JSON.</i>
+  <i>A polished fork of EarTrumpet with themes, media controls, profiles, a CLI, and a settings window that does not look like it is from 2012.</i>
 </p>
 
 <p align="center">
@@ -29,6 +29,7 @@
   <a href="#highlights">Highlights</a> ·
   <a href="#cli">CLI</a> ·
   <a href="#build-from-source">Build</a> ·
+  <a href="#community">Community</a> ·
   <a href="#license">License</a>
 </p>
 
@@ -44,6 +45,7 @@ system tray -> BetterTrumpet -> per-app volume
                            ├── themes
                            ├── media popup
                            ├── profiles
+                           ├── settings (React/Fluent UI)
                            ├── undo / redo
                            └── CLI / updates
 ```
@@ -92,15 +94,16 @@ nuget.exe restore EarTrumpet.vs15.sln
 
 | Area | What you get |
 | --- | --- |
-| Onboarding | 5-step setup flow for audio, appearance, privacy, ready, and tray pinning |
-| Themes | 7 color channels, presets, custom themes, and dynamic album-art mode |
-| Media popup | Hover player with cover art, seek, shuffle, repeat, and blur |
-| Profiles | Save, restore, export, import, rename, and apply full audio setups |
-| Control | Undo/redo for volume changes, plus a pin mode for the flyout |
-| Automation | Pipe-based CLI with JSON output for scripts and hotkeys |
-| Reliability | Auto-update prompts, crash reporting, and background health monitoring |
+| Settings | Full React/Fluent UI settings window with Sage Glass design, deep search, and every settings page |
+| Focus-lost | Attenuate or mute apps when they lose focus, with configurable fade and per-app scope |
+| Themes | 12 curated presets across 5 categories, 7 color channels, per-theme opacity, and dynamic album-art mode |
+| Media popup | Hover player with cover art, seek, shuffle, repeat, and per-app volume |
+| Profiles | Save, restore, export, import, rename, and apply full audio setups with per-device hotkeys |
+| CLI | Pipe-based CLI with JSON output, 20+ commands, and a friendly `bt` shortcut |
+| What's-new | In-app feed with polls, surveys, and live votes (beta, disableable) |
+| Telemetry | Anonymous ping on startup, no data sold, fully disableable. Manual log export stays on your machine |
 | Performance | Eco mode trims animations and peak meter FPS when you want it lighter |
-| Tray icon | Animated state that reflects audio activity |
+| Reliability | Auto-update prompts, crash reporting, and background health monitoring |
 
 ## Themes
 
@@ -167,17 +170,19 @@ bt doctor
 
 ## Settings
 
+The settings window is now a modern React/Fluent UI app with a collapsible sidebar, deep search, and the Sage Glass design language.
+
 | Page | What it controls |
 | --- | --- |
-| Shortcuts | Flyout, mixer, settings, volume up/down, device switch |
-| Mouse | Tray icon scroll behavior |
-| Community | Telemetry and logarithmic volume |
-| Legacy | Legacy icon and compatibility options |
-| About | Version, diagnostics, export/import settings |
-| Animations | Motion speed, peak meter FPS, eco mode |
-| Colors | Theme engine, presets, custom themes |
-| Media popup | Hover delay, blur radius, show only while playing |
-| Volume profiles | Save, restore, rename, delete, export/import |
+| Shortcuts | Flyout, mixer, settings, volume up/down, device switch, per-device hotkeys |
+| QuickTrumpet | Presets-first profiles with recordable hotkeys, rename, export, import |
+| Rules | App volume rules (set at launch, lock), folder defaults |
+| Appearance | Theme presets, custom colors, tray icon, dynamic album art |
+| Media popup | Hover delay, show while paused |
+| Performance | Peak meter FPS, eco mode |
+| Updates | Auto-check for updates |
+| Privacy | Telemetry toggle, what's-new feed toggle |
+| Diagnostics | Log export, version info |
 
 ### Hotkeys
 
@@ -198,7 +203,7 @@ The onboarding wizard has 5 pages:
 - Ready
 - Tray pin
 
-It also covers telemetry, update channels, and startup preferences during setup.
+It also covers telemetry, update channels, and startup preferences during setup. Onboarding no longer auto-shows on first launch — you can open it anytime from the tray menu or by holding `Left Ctrl` at startup.
 
 ## Build From Source
 
@@ -224,9 +229,15 @@ powershell -ExecutionPolicy Bypass -File build-portable.ps1
 | Framework | .NET 8 for Windows |
 | Audio | Windows Core Audio |
 | Media | Windows Media Session |
+| Settings | React / Fluent UI / WebView2 |
 | Packaging | MSBuild + GitVersion + Inno Setup + portable zip |
 | CLI | Named pipe IPC |
-| Crash reporting | Sentry |
+| Telemetry | Anonymous ping (homemade, no third-party SDK) |
+
+## Community
+
+- [GitHub Issues](https://github.com/xammen/BetterTrumpet/issues) — bug reports and feature requests
+- [Reddit](https://www.reddit.com/r/BetterTrumpet/) — discussions, feedback, and general hangout
 
 ## Credits
 
