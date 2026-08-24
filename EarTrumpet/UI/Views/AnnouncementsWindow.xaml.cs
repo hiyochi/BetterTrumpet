@@ -1,4 +1,7 @@
 using EarTrumpet.DataModel;
+using EarTrumpet.Extensions;
+using EarTrumpet.Interop;
+using EarTrumpet.Interop.Helpers;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
@@ -6,23 +9,30 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media.Animation;
+using System.Windows.Shell;
 
 namespace EarTrumpet.UI.Views
 {
     /// <summary>
-    /// WebView2 window that renders the pushed announcements feed (news, polls,
-    /// surveys, A/B comparisons). The C# side fetches the remote JSON via
-    /// AnnouncementService and posts it to a local HTML page. Opening the window
-    /// marks everything read; votes are stored locally and POSTed to the feed's
-    /// collector endpoint when one is configured.
+    /// Borderless WebView2 window that renders the pushed announcements feed
+    /// (news, polls, surveys, A/B comparisons) with the same chrome as the
+    /// React settings window: DWM acrylic, custom window controls posted from
+    /// the page. The C# side fetches the remote JSON via AnnouncementService
+    /// and posts it to a local HTML page. Opening the window marks everything
+    /// read; votes are stored locally and POSTed to the feed's collector
+    /// endpoint when one is configured.
     /// </summary>
     public partial class AnnouncementsWindow : Window
     {
         private const string AnnouncementsHostName = "bettertrumpet.announcements";
+        private const int WmNcLButtonDown = 0x00A1;
+        private static readonly IntPtr HtCaption = new IntPtr(2);
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -38,7 +48,24 @@ namespace EarTrumpet.UI.Views
 
             InitializeComponent();
 
+            WindowChrome.SetWindowChrome(this, new WindowChrome
+            {
+                CaptionHeight = 0,
+                CornerRadius = new CornerRadius(0),
+                GlassFrameThickness = new Thickness(0),
+                ResizeBorderThickness = SystemParameters.WindowResizeBorderThickness,
+                UseAeroCaptionButtons = false,
+            });
+
             Loaded += async (_, __) => await InitializeWebViewAsync();
+
+            SourceInitialized += (_, __) =>
+            {
+                this.Cloak();
+                this.EnableRoundedCornersIfApplicable();
+                TryEnableAcrylic();
+            };
+
             Closed += (_, __) => Trace.WriteLine("AnnouncementsWindow Closed");
         }
 
@@ -100,6 +127,23 @@ namespace EarTrumpet.UI.Views
             }
         }
 
+        private void TryEnableAcrylic()
+        {
+            try
+            {
+                var isDark = !EarTrumpet.DataModel.SystemSettings.IsLightTheme;
+                var tint = isDark
+                    ? System.Windows.Media.Color.FromArgb(0xC8, 0x14, 0x12, 0x18)
+                    : System.Windows.Media.Color.FromArgb(0xC8, 0xEF, 0xED, 0xF5);
+                AccentPolicyLibrary.EnableAcrylic(AnnouncementsWebView, tint, User32.AccentFlags.None);
+                Trace.WriteLine("AnnouncementsWindow acrylic enabled");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"AnnouncementsWindow acrylic unavailable: {ex.Message}");
+            }
+        }
+
         private void Core_NavigationStarting(object sender, CoreWebView2NavigationStartingEventArgs e)
         {
             if (!Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) ||
@@ -123,7 +167,14 @@ namespace EarTrumpet.UI.Views
         {
             try
             {
-                using var document = JsonDocument.Parse(e.WebMessageAsJson);
+                // The page posts plain objects; tolerate stringified JSON too.
+                var raw = e.TryGetWebMessageAsString();
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    raw = e.WebMessageAsJson;
+                }
+
+                using var document = JsonDocument.Parse(raw);
                 var root = document.RootElement;
                 if (!root.TryGetProperty("type", out var typeElement))
                 {
@@ -137,6 +188,9 @@ namespace EarTrumpet.UI.Views
                         break;
                     case "rendered":
                         HideSplash();
+                        break;
+                    case "windowAction":
+                        HandleWindowAction(root);
                         break;
                     case "openUrl":
                         var url = root.TryGetProperty("url", out var urlElement) &&
@@ -181,6 +235,32 @@ namespace EarTrumpet.UI.Views
                 Trace.WriteLine($"AnnouncementsWindow message failed: {ex}");
             }
         }
+
+        private void HandleWindowAction(JsonElement message)
+        {
+            var action = message.TryGetProperty("action", out var actionElement) &&
+                actionElement.ValueKind == JsonValueKind.String
+                ? actionElement.GetString()
+                : null;
+
+            switch (action)
+            {
+                case "minimize":
+                    WindowState = WindowState.Minimized;
+                    break;
+                case "close":
+                    Close();
+                    break;
+                case "drag":
+                    ReleaseCapture();
+                    User32.SendMessage(new WindowInteropHelper(this).Handle, WmNcLButtonDown, HtCaption, IntPtr.Zero);
+                    break;
+            }
+        }
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ReleaseCapture();
 
         private async Task SubmitVoteAsync(string announcementId, Dictionary<string, string> answers)
         {
@@ -245,7 +325,7 @@ namespace EarTrumpet.UI.Views
             };
 
             var json = JsonSerializer.Serialize(payload, JsonOptions);
-            AnnouncementsWebView.CoreWebView2.PostWebMessageAsString(json);
+            AnnouncementsWebView.CoreWebView2.PostWebMessageAsJson(json);
 
             // Opening the window marks every announcement as read.
             if (!_markedRead)

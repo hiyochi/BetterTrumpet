@@ -53,25 +53,40 @@
     mix-blend-mode: plus-lighter;
   }
 
-  /* ---- Shell ---- */
-  .shell { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 44px 28px 40px; }
-  header { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
-  .logo {
-    width: 44px; height: 44px; border-radius: 14px; flex: none;
+  /* ---- Chrome row (settings-style, no native title bar) ---- */
+  .chrome {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 10px;
+    height: 46px; padding: 0 12px 0 14px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .chrome-logo {
+    width: 28px; height: 28px; border-radius: 9px; flex: none;
     background: linear-gradient(135deg, #9b7bea, #5b4bb0);
     display: grid; place-items: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 20px rgba(10,8,15,.35);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
   }
-  .logo svg { width: 22px; height: 22px; }
-  .hd { flex: 1; min-width: 0; }
-  .hd h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
-  .hd p { margin: 3px 0 0; color: var(--text-2); font-size: 13px; }
-  .version {
-    margin-left: auto; flex: none;
-    font-family: var(--mono); font-size: 11px; font-weight: 600;
-    color: var(--text-2); background: rgba(255,255,255,.08);
-    border: 1px solid var(--hairline); border-radius: 999px; padding: 4px 10px 5px;
+  .chrome-logo svg { width: 15px; height: 15px; }
+  .chrome-title {
+    flex: 1; min-width: 0;
+    font-size: 13px; font-weight: 600; letter-spacing: -.01em;
+    color: var(--text-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .chrome-actions { display: flex; gap: 4px; }
+  .winbtn {
+    width: 36px; height: 28px; border-radius: 10px;
+    border: none; background: transparent;
+    color: rgba(244,247,245,.45);
+    display: grid; place-items: center; cursor: pointer;
+    transition: background 120ms var(--ease-standard), color 120ms var(--ease-standard);
+  }
+  .winbtn:hover { background: rgba(255,255,255,.07); color: rgba(244,247,245,.9); }
+  .winbtn-close:hover { background: rgba(150,34,26,.55); color: #fff; }
+  .winbtn svg { width: 14px; height: 14px; }
+
+  /* ---- Shell ---- */
+  .shell { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 22px 28px 36px; }
 
   /* ---- Cards ---- */
   .card {
@@ -250,21 +265,26 @@
     <canvas class="dither-bloom"></canvas>
   </div>
 
+  <div class="chrome" id="chrome">
+    <div class="chrome-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0b0d0c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 10v4a1 1 0 0 0 1 1h2l4 3.2V5.8L7 9H5a1 1 0 0 0-1 1Z"/>
+        <path d="M15 9.2a3.4 3.4 0 0 1 0 5.6"/>
+        <path d="M17.4 7a6.4 6.4 0 0 1 0 10"/>
+      </svg>
+    </div>
+    <div class="chrome-title" id="title">What's new</div>
+    <div class="chrome-actions">
+      <button class="winbtn" data-act="minimize" title="Minimize" aria-label="Minimize">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"/></svg>
+      </button>
+      <button class="winbtn winbtn-close" data-act="close" title="Close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>
+      </button>
+    </div>
+  </div>
+
   <div class="shell">
-    <header>
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#0b0d0c" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 10v4a1 1 0 0 0 1 1h2l4 3.2V5.8L7 9H5a1 1 0 0 0-1 1Z"/>
-          <path d="M15 9.2a3.4 3.4 0 0 1 0 5.6"/>
-          <path d="M17.4 7a6.4 6.4 0 0 1 0 10"/>
-        </svg>
-      </div>
-      <div class="hd">
-        <h1 id="title">What's new</h1>
-        <p>BetterTrumpet</p>
-      </div>
-      <span class="version" id="version"></span>
-    </header>
     <div id="list"></div>
   </div>
 
@@ -287,7 +307,6 @@
 
   var listEl = document.getElementById("list");
   var titleEl = document.getElementById("title");
-  var versionEl = document.getElementById("version");
   var footVersionEl = document.getElementById("footVersion");
 
   function esc(s) {
@@ -296,7 +315,7 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function post(obj) {
-    try { window.chrome.webview.postMessage(JSON.stringify(obj)); } catch (e) { /* host unavailable */ }
+    try { window.chrome.webview.postMessage(obj); } catch (e) { /* host unavailable */ }
   }
   function L(key, fallback) { return labels[key] || fallback || key; }
 
@@ -586,7 +605,6 @@
 
   function render() {
     titleEl.textContent = L("title", "What's new");
-    versionEl.textContent = version ? "v" + version : "";
     footVersionEl.textContent = version ? "v" + version : "";
 
     if (!announcements.length) {
@@ -677,6 +695,19 @@
 
   /* ---------------- Host bridge ---------------- */
   post({ type: "ready" });
+
+  // Settings-style window chrome: ghost buttons post window actions, the
+  // chrome row itself is the drag region.
+  document.querySelectorAll(".winbtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      post({ type: "windowAction", action: btn.getAttribute("data-act") });
+    });
+  });
+  document.getElementById("chrome").addEventListener("mousedown", function (ev) {
+    if (ev.button === 0 && !ev.target.closest(".winbtn")) {
+      post({ type: "windowAction", action: "drag" });
+    }
+  });
 
   window.chrome.webview.addEventListener("message", function (e) {
     var msg;
