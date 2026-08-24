@@ -179,6 +179,7 @@
           Condition="'$(DesignTimeBuild)' != 'true' and $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('_wpftmp')) != 'true'">
     <ItemGroup>
       <AnnouncementsWebAsset Include="$(ProjectDir)AnnouncementsWeb\**\*" />
+      <AnnouncementsWebAsset Include="$(ProjectDir)Assets\icon.png" />
     </ItemGroup>
     <Copy SourceFiles="@(AnnouncementsWebAsset)"
           DestinationFiles="@(AnnouncementsWebAsset->'$(OutputPath)AnnouncementsWeb\%(RecursiveDir)%(Filename)%(Extension)')"

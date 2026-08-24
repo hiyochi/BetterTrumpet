@@ -167,14 +167,10 @@ namespace EarTrumpet.UI.Views
         {
             try
             {
-                // The page posts plain objects; tolerate stringified JSON too.
-                var raw = e.TryGetWebMessageAsString();
-                if (string.IsNullOrWhiteSpace(raw))
-                {
-                    raw = e.WebMessageAsJson;
-                }
-
-                using var document = JsonDocument.Parse(raw);
+                // The page posts plain objects (like the React settings app);
+                // WebMessageAsJson is the real JSON. Note: TryGetWebMessageAsString
+                // THROWS ArgumentException for object messages, so never gate on it.
+                using var document = JsonDocument.Parse(e.WebMessageAsJson);
                 var root = document.RootElement;
                 if (!root.TryGetProperty("type", out var typeElement))
                 {

@@ -31,20 +31,30 @@
     font-synthesis: none;
     -webkit-font-smoothing: antialiased;
     letter-spacing: 0;
-    background:
-      radial-gradient(circle at 40% 10%, rgba(190,126,235,.46), transparent 30%),
-      linear-gradient(145deg, #47336f 0%, #3b2d8c 35%, #202064 70%, #11123f 100%);
+    background: #050706;
     color: var(--text);
     user-select: none;
     overflow-x: hidden;
   }
+  /* Rounded floating surface (settings-style shell: black frame + panel) */
+  .stage {
+    position: relative;
+    margin: 0 8px 8px;
+    border-radius: 18px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 40% 10%, rgba(190,126,235,.46), transparent 30%),
+      linear-gradient(145deg, #47336f 0%, #3b2d8c 35%, #202064 70%, #11123f 100%);
+    min-height: calc(100vh - 46px - 16px);
+    box-shadow: 0 10px 28px rgba(10,8,15,.25);
+  }
   @media (prefers-reduced-transparency: reduce) {
-    body { background: linear-gradient(145deg, #3d3750, #2a2540); }
+    .stage { background: linear-gradient(145deg, #3d3750, #2a2540); }
     .card { background: var(--card-solid); backdrop-filter: none; }
   }
 
-  /* ---- Ink dither field (variant 07), fixed backdrop ---- */
-  .dither { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  /* ---- Ink dither field (variant 07), inside the stage panel ---- */
+  .dither { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .dither canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .dither-crisp { image-rendering: pixelated; }
   .dither-bloom {
@@ -55,18 +65,15 @@
 
   /* ---- Chrome row (settings-style, no native title bar) ---- */
   .chrome {
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
     display: flex; align-items: center; gap: 10px;
     height: 46px; padding: 0 12px 0 14px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
+    background: #050706;
   }
-  .chrome-logo {
+  .chrome-logo, .chrome-logo img {
     width: 28px; height: 28px; border-radius: 9px; flex: none;
-    background: linear-gradient(135deg, #9b7bea, #5b4bb0);
-    display: grid; place-items: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
   }
-  .chrome-logo svg { width: 15px; height: 15px; }
+  .chrome-logo { box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
   .chrome-title {
     flex: 1; min-width: 0;
     font-size: 13px; font-weight: 600; letter-spacing: -.01em;
@@ -266,13 +273,7 @@
   </div>
 
   <div class="chrome" id="chrome">
-    <div class="chrome-logo" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#0b0d0c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 10v4a1 1 0 0 0 1 1h2l4 3.2V5.8L7 9H5a1 1 0 0 0-1 1Z"/>
-        <path d="M15 9.2a3.4 3.4 0 0 1 0 5.6"/>
-        <path d="M17.4 7a6.4 6.4 0 0 1 0 10"/>
-      </svg>
-    </div>
+    <img class="chrome-logo" src="./icon.png" alt="" />
     <div class="chrome-title" id="title">What's new</div>
     <div class="chrome-actions">
       <button class="winbtn" data-act="minimize" title="Minimize" aria-label="Minimize">
@@ -284,8 +285,14 @@
     </div>
   </div>
 
-  <div class="shell">
-    <div id="list"></div>
+  <div class="stage">
+    <div class="dither" aria-hidden="true">
+      <canvas class="dither-crisp"></canvas>
+      <canvas class="dither-bloom"></canvas>
+    </div>
+    <div class="shell">
+      <div id="list"></div>
+    </div>
   </div>
 
   <footer>
