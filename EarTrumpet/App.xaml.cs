@@ -699,6 +699,9 @@ namespace EarTrumpet
 
             var window = new UI.Views.AnnouncementsWindow(_announcementService);
             window.Show();
+            // The window cloaks itself during SourceInitialized; the entrance
+            // animation is what uncloaks (Cloak(false)) and fades it in.
+            WindowAnimationLibrary.BeginWindowEntranceAnimation(window, () => { });
         }
 
         private void OpenGitHubRepo()
