@@ -5,6 +5,7 @@ using EarTrumpet.UI.Helpers;
 using EarTrumpet.UI.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -163,7 +164,23 @@ else
             {
                 case FlyoutViewState.Open:
                 case FlyoutViewState.Opening:
-                    PositionWindowRelativeToTaskbar(WindowsTaskbar.Current);
+                    try
+                    {
+                        PositionWindowRelativeToTaskbar(WindowsTaskbar.Current);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // The VirtualizingStackPanel detected an inconsistent ItemsSource
+                        // (e.g. rapid device churn while the flyout is open). Close the
+                        // flyout to break the crash-loop — without this, every subsequent
+                        // layout pass throws again and the crash dialog reappears in a
+                        // loop for ~20 seconds.
+                        Trace.WriteLine("FlyoutWindow: Closing due to ItemsSource inconsistency");
+                        if (_viewModel is FlyoutViewModel fvm)
+                        {
+                            fvm.ChangeState(FlyoutViewState.Closing_Stage1);
+                        }
+                    }
                     break;
             }
         }
