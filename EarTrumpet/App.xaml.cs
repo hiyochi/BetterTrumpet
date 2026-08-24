@@ -60,6 +60,7 @@ namespace EarTrumpet
         private CliHandler _cliHandler;
         private DataModel.Audio.IAudioDeviceManager _deviceManager;
         private DataModel.UpdateService _updateService;
+        private DataModel.AnnouncementService _announcementService;
 
         public static AppSettings Settings { get; private set; }
         public static VolumeUndoService UndoService { get; } = new VolumeUndoService();
@@ -441,6 +442,35 @@ namespace EarTrumpet
                     catch (Exception ex) { Trace.WriteLine($"Startup: UpdateService failed: {ex.Message}"); }
                 }));
 
+                // Task 5b: Announcements feed (pushed what's-new messages)
+                tasks.Add(Task.Run(() =>
+                {
+                    try
+                    {
+                        Dispatcher.Invoke((Action)(() =>
+                        {
+                            if (HasIdentity)
+                            {
+                                Trace.WriteLine("Startup: Microsoft Store package detected, announcements feed disabled");
+                                return;
+                            }
+
+                            _announcementService = new DataModel.AnnouncementService();
+                            _announcementService.AnnouncementsChanged += () =>
+                            {
+                                // The tray menu is rebuilt on each right-click, so the
+                                // badge is picked up automatically; nothing to do here.
+                            };
+                            _announcementService.Start();
+                        }));
+                        if (!HasIdentity)
+                        {
+                            Trace.WriteLine($"Startup: AnnouncementService initialized at {Duration.TotalMilliseconds:F0}ms");
+                        }
+                    }
+                    catch (Exception ex) { Trace.WriteLine($"Startup: AnnouncementService failed: {ex.Message}"); }
+                }));
+
                 // Task 6: CLI pipe server
                 tasks.Add(Task.Run(() =>
                 {
@@ -468,6 +498,11 @@ namespace EarTrumpet
                     // Display first-run and changelog on UI thread (must be sequential, not parallel)
                     Dispatcher.BeginInvoke((Action)(() =>
                     {
+                        // Silent first launch: onboarding no longer auto-shows. The flag
+                        // is set so the update service is not blocked, while the onboarding
+                        // window stays reachable via LeftCtrl or the tray menu.
+                        Settings.HasShownFirstRun = true;
+
                         try { DisplayFirstRunExperience(); }
                         catch (Exception ex) { Trace.WriteLine($"Startup: FirstRun dialog failed: {ex.Message}"); }
 
@@ -649,6 +684,20 @@ namespace EarTrumpet
         {
             Trace.WriteLine($"App ShowChangelogManually");
             var window = new UI.Views.ChangelogWindow();
+            window.Show();
+        }
+
+        private void ShowAnnouncements()
+        {
+            Trace.WriteLine($"App ShowAnnouncements");
+            if (_announcementService == null)
+            {
+                // Fallback when the feed is unavailable (e.g. Store build).
+                ShowChangelogManually();
+                return;
+            }
+
+            var window = new UI.Views.AnnouncementsWindow(_announcementService);
             window.Show();
         }
 
@@ -850,9 +899,13 @@ namespace EarTrumpet
                 ret.Add(new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.CheckForUpdatesText, Glyph = "\xE895", IconData = PhosphorIconData.ArrowsClockwise, IconScale = 0.98, Command = new RelayCommand(CheckForUpdatesFromTray) });
             }
 
+            var whatsNewName = _announcementService != null && _announcementService.HasUnreadAnnouncements
+                ? string.Format(EarTrumpet.Properties.Resources.TrayWhatsNewWithBadge, _announcementService.UnreadCount)
+                : EarTrumpet.Properties.Resources.TrayWhatsNew;
+
             ret.AddRange(new List<ContextMenuItem>
                 {
-                    new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayWhatsNew, Glyph = "\xE8F1", IconData = PhosphorIconData.ListBullets, IconScale = 0.93, Command = new RelayCommand(ShowChangelogManually) },
+                    new ContextMenuItem { DisplayName = whatsNewName, Glyph = "\xE8F1", IconData = PhosphorIconData.ListBullets, IconScale = 0.93, Command = new RelayCommand(ShowAnnouncements) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayShowOnboarding, Glyph = "\xE7BE", IconData = PhosphorIconData.Sparkle, IconScale = 0.92, Command = new RelayCommand(ShowOnboardingManually) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayStarProject, Glyph = "\xE734", IconData = PhosphorIconData.GitHubLogo, IconScale = 0.96, Command = new RelayCommand(OpenGitHubRepo) },
                     new ContextMenuSeparator(),

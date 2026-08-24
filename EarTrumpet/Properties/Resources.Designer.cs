@@ -3174,6 +3174,63 @@ namespace EarTrumpet.Properties {
         public static string ChangelogContinue {
             get { return ResourceManager.GetString("ChangelogContinue", resourceCulture); }
         }
+        public static string TrayWhatsNewWithBadge {
+            get { return ResourceManager.GetString("TrayWhatsNewWithBadge", resourceCulture); }
+        }
+        public static string AnnouncementsTitle {
+            get { return ResourceManager.GetString("AnnouncementsTitle", resourceCulture); }
+        }
+        public static string AnnouncementsLoading {
+            get { return ResourceManager.GetString("AnnouncementsLoading", resourceCulture); }
+        }
+        public static string AnnouncementsLoadErrorTitle {
+            get { return ResourceManager.GetString("AnnouncementsLoadErrorTitle", resourceCulture); }
+        }
+        public static string AnnouncementsLoadErrorDescription {
+            get { return ResourceManager.GetString("AnnouncementsLoadErrorDescription", resourceCulture); }
+        }
+        public static string AnnouncementsRetryButton {
+            get { return ResourceManager.GetString("AnnouncementsRetryButton", resourceCulture); }
+        }
+        public static string AnnouncementsCloseButton {
+            get { return ResourceManager.GetString("AnnouncementsCloseButton", resourceCulture); }
+        }
+        public static string AnnouncementsVoteButton {
+            get { return ResourceManager.GetString("AnnouncementsVoteButton", resourceCulture); }
+        }
+        public static string AnnouncementsChangeVote {
+            get { return ResourceManager.GetString("AnnouncementsChangeVote", resourceCulture); }
+        }
+        public static string AnnouncementsLearnMore {
+            get { return ResourceManager.GetString("AnnouncementsLearnMore", resourceCulture); }
+        }
+        public static string AnnouncementsVotesFormat {
+            get { return ResourceManager.GetString("AnnouncementsVotesFormat", resourceCulture); }
+        }
+        public static string AnnouncementsYouVoted {
+            get { return ResourceManager.GetString("AnnouncementsYouVoted", resourceCulture); }
+        }
+        public static string AnnouncementsThanks {
+            get { return ResourceManager.GetString("AnnouncementsThanks", resourceCulture); }
+        }
+        public static string AnnouncementsEmptyTitle {
+            get { return ResourceManager.GetString("AnnouncementsEmptyTitle", resourceCulture); }
+        }
+        public static string AnnouncementsEmptyBody {
+            get { return ResourceManager.GetString("AnnouncementsEmptyBody", resourceCulture); }
+        }
+        public static string AnnouncementsTypeNews {
+            get { return ResourceManager.GetString("AnnouncementsTypeNews", resourceCulture); }
+        }
+        public static string AnnouncementsTypePoll {
+            get { return ResourceManager.GetString("AnnouncementsTypePoll", resourceCulture); }
+        }
+        public static string AnnouncementsTypeSurvey {
+            get { return ResourceManager.GetString("AnnouncementsTypeSurvey", resourceCulture); }
+        }
+        public static string AnnouncementsTypeAb {
+            get { return ResourceManager.GetString("AnnouncementsTypeAb", resourceCulture); }
+        }
         public static string PresetCategoryAll {
             get { return ResourceManager.GetString("PresetCategoryAll", resourceCulture); }
         }

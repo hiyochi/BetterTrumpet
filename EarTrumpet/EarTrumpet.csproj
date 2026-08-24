@@ -121,6 +121,17 @@
     <None Include="UI\Controls\SearchBox.xaml" />
   </ItemGroup>
 
+  <!-- Abandoned, never-committed web-onboarding work that does not compile against
+       the current codebase (references App.Current.Services, PlaybackDevices,
+       StartupHelper). It is not referenced anywhere, so keep the files visible in
+       the IDE without treating them as build items. -->
+  <ItemGroup>
+    <Compile Remove="UI\Views\WebOnboardingWindow.xaml.cs" />
+    <Page Remove="UI\Views\WebOnboardingWindow.xaml" />
+    <None Include="UI\Views\WebOnboardingWindow.xaml" />
+    <None Include="UI\Views\WebOnboardingWindow.xaml.cs" />
+  </ItemGroup>
+
   <!-- These legacy loose files are no longer MSBuild inputs under the SDK; keep them
        visible in the IDE without treating them as build items. -->
   <ItemGroup>
@@ -158,6 +169,19 @@
     </ItemGroup>
     <Copy SourceFiles="@(SettingsWebAsset)"
           DestinationFiles="@(SettingsWebAsset->'$(OutputPath)SettingsWeb\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- The announcements page is a static HTML file copied beside the app.
+       WebView2 loads it locally; the C# side fetches the remote JSON feed. -->
+  <Target Name="CopyAnnouncementsWebAssets"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('_wpftmp')) != 'true'">
+    <ItemGroup>
+      <AnnouncementsWebAsset Include="$(ProjectDir)AnnouncementsWeb\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(AnnouncementsWebAsset)"
+          DestinationFiles="@(AnnouncementsWebAsset->'$(OutputPath)AnnouncementsWeb\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true" />
   </Target>
 

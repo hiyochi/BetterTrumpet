@@ -1743,6 +1743,63 @@ Détails : {0}</value>
   <data name="ChangelogContinue" xml:space="preserve">
     <value>OK</value>
   </data>
+  <data name="TrayWhatsNewWithBadge" xml:space="preserve">
+    <value>Nouveautés ({0})</value>
+  </data>
+  <data name="AnnouncementsTitle" xml:space="preserve">
+    <value>Nouveautés</value>
+  </data>
+  <data name="AnnouncementsLoading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="AnnouncementsLoadErrorTitle" xml:space="preserve">
+    <value>Impossible de charger les nouveautés</value>
+  </data>
+  <data name="AnnouncementsLoadErrorDescription" xml:space="preserve">
+    <value>Une erreur est survenue lors du chargement des nouveautés. Veuillez réessayer.</value>
+  </data>
+  <data name="AnnouncementsRetryButton" xml:space="preserve">
+    <value>Réessayer</value>
+  </data>
+  <data name="AnnouncementsCloseButton" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="AnnouncementsVoteButton" xml:space="preserve">
+    <value>Voter</value>
+  </data>
+  <data name="AnnouncementsChangeVote" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="AnnouncementsLearnMore" xml:space="preserve">
+    <value>En savoir plus</value>
+  </data>
+  <data name="AnnouncementsVotesFormat" xml:space="preserve">
+    <value>{0} votes</value>
+  </data>
+  <data name="AnnouncementsYouVoted" xml:space="preserve">
+    <value>Votre choix</value>
+  </data>
+  <data name="AnnouncementsThanks" xml:space="preserve">
+    <value>Merci pour votre vote !</value>
+  </data>
+  <data name="AnnouncementsEmptyTitle" xml:space="preserve">
+    <value>Rien de neuf pour le moment</value>
+  </data>
+  <data name="AnnouncementsEmptyBody" xml:space="preserve">
+    <value>Les actualités, sondages et nouveautés apparaîtront ici.</value>
+  </data>
+  <data name="AnnouncementsTypeNews" xml:space="preserve">
+    <value>Actu</value>
+  </data>
+  <data name="AnnouncementsTypePoll" xml:space="preserve">
+    <value>Sondage</value>
+  </data>
+  <data name="AnnouncementsTypeSurvey" xml:space="preserve">
+    <value>Questionnaire</value>
+  </data>
+  <data name="AnnouncementsTypeAb" xml:space="preserve">
+    <value>A/B</value>
+  </data>
   <data name="PresetCategoryAll" xml:space="preserve">
     <value>Toutes</value>
   </data>

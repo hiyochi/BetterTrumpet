@@ -329,6 +329,20 @@ namespace EarTrumpet
             HotkeyManager.Current.Register(hotkey);
         }
 
+        // Poll/survey votes from the announcements feed, keyed per announcement.
+        // The value is a JSON map of questionId -> optionKey.
+        public string GetPollVote(string announcementId)
+        {
+            if (string.IsNullOrEmpty(announcementId)) return "";
+            return _settings.Get("PollVote:" + announcementId, "");
+        }
+
+        public void SetPollVote(string announcementId, string answersJson)
+        {
+            if (string.IsNullOrEmpty(announcementId)) return;
+            _settings.Set("PollVote:" + announcementId, answersJson ?? "");
+        }
+
         public bool UseLegacyIcon
         {
             get
@@ -1317,6 +1331,12 @@ namespace EarTrumpet
             set => _settings.Set("TelemetryAnonymousId", value);
         }
 
+        public bool HasCompletedOnboarding
+        {
+            get => _settings.Get("HasCompletedOnboarding", false);
+            set => _settings.Set("HasCompletedOnboarding", value);
+        }
+
         public bool UseLogarithmicVolume
         {
             get => _settings.Get("UseLogarithmicVolume", false);
@@ -1532,6 +1552,13 @@ namespace EarTrumpet
         {
             get => _settings.Get("LastSeenVersion", "");
             set => _settings.Set("LastSeenVersion", value);
+        }
+
+        // Last seen announcement id (for the pushed what's-new feed)
+        public string LastSeenAnnouncementId
+        {
+            get => _settings.Get("LastSeenAnnouncementId", "");
+            set => _settings.Set("LastSeenAnnouncementId", value);
         }
 
         // Extended theme colors (Window Background, Text, Accent Glow)

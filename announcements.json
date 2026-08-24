@@ -1,0 +1,71 @@
+{
+  "announcements": [
+    {
+      "id": "2026-08-25-whats-new-feed",
+      "type": "news",
+      "title": "What's new, now without an update",
+      "body": "BetterTrumpet can now push messages here without shipping a new version. This is the first one — expect tips, news, polls and the occasional heads-up between releases.",
+      "date": "2026-08-25",
+      "badge": "New",
+      "minVersion": "3.2.3",
+      "link": "https://bettertrumpet.com/changelog"
+    },
+    {
+      "id": "poll-2026-08-25-flyout-style",
+      "type": "poll",
+      "title": "Which flyout style do you prefer?",
+      "body": "We are considering a layout refresh for the volume flyout. Pick the direction you like best.",
+      "date": "2026-08-25",
+      "minVersion": "3.2.3",
+      "options": ["Compact, like today", "More spacious rows", "Full-width cards"],
+      "results": { "Compact, like today": 42, "More spacious rows": 27, "Full-width cards": 9 }
+    },
+    {
+      "id": "survey-2026-08-25-next-release",
+      "type": "survey",
+      "title": "Help shape the next release",
+      "body": "Two quick questions so we know where to focus.",
+      "date": "2026-08-25",
+      "minVersion": "3.2.3",
+      "questions": [
+        {
+          "id": "pain",
+          "text": "What is your biggest pain point today?",
+          "options": ["Default device switching", "Per-app routing", "Themes and colors", "Update flow"]
+        },
+        {
+          "id": "next",
+          "text": "What should we build next?",
+          "options": ["Advanced per-app rules", "Better media controls", "More presets", "CLI improvements"]
+        }
+      ],
+      "results": {
+        "pain": { "Default device switching": 18, "Per-app routing": 11, "Themes and colors": 8, "Update flow": 4 },
+        "next": { "Advanced per-app rules": 14, "Better media controls": 12, "More presets": 9, "CLI improvements": 6 }
+      }
+    },
+    {
+      "id": "ab-2026-08-25-volume-bar",
+      "type": "ab",
+      "title": "Two volume-bar treatments — pick your favorite",
+      "body": "We sketched two looks for the volume bar in the flyout. Which one feels right?",
+      "date": "2026-08-25",
+      "minVersion": "3.2.3",
+      "variants": [
+        {
+          "id": "a",
+          "label": "A",
+          "title": "Rounded gradient",
+          "body": "A pill-shaped bar with a violet gradient fill and a soft glow at the top."
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "title": "Flat segmented",
+          "body": "A flat bar split into thin segments, keeping the current accent color."
+        }
+      ],
+      "results": { "a": 23, "b": 31 }
+    }
+  ]
+}
