@@ -66,7 +66,8 @@ namespace EarTrumpet.DataModel.Storage.Internal
             T ret = defaultValue;
             try
             {
-                ret = (T)_appDataManager.LocalSettings.Values[key];
+                var raw = _appDataManager.LocalSettings.Values[key];
+                ret = raw == null ? defaultValue : (T)raw;
             }
             catch (Exception ex)
             {
