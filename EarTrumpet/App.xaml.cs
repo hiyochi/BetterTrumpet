@@ -697,6 +697,9 @@ namespace EarTrumpet
                 return;
             }
 
+            // Fresh fetch so an early open never shows a stale/empty feed.
+            _announcementService.CheckForAnnouncementsAsync();
+
             var window = new UI.Views.AnnouncementsWindow(_announcementService);
             window.Show();
             // The window cloaks itself during SourceInitialized; the entrance

@@ -59,14 +59,31 @@ namespace EarTrumpet.UI.Views
 
             Loaded += async (_, __) => await InitializeWebViewAsync();
 
+            // Refresh the rendered cards whenever the feed changes (initial load,
+            // periodic check, votes) so an early open never stays empty.
+            _service.AnnouncementsChanged += OnAnnouncementsChanged;
+            Closed += (_, __) =>
+            {
+                _service.AnnouncementsChanged -= OnAnnouncementsChanged;
+                Trace.WriteLine("AnnouncementsWindow Closed");
+            };
+
             SourceInitialized += (_, __) =>
             {
                 this.Cloak();
                 this.EnableRoundedCornersIfApplicable();
                 TryEnableAcrylic();
             };
+        }
 
-            Closed += (_, __) => Trace.WriteLine("AnnouncementsWindow Closed");
+        private void OnAnnouncementsChanged()
+        {
+            if (!_isInitialized || AnnouncementsWebView.CoreWebView2 == null)
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(new Action(PostAnnouncements));
         }
 
         private async Task InitializeWebViewAsync()
