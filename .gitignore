@@ -268,3 +268,17 @@ votes-worker/.wrangler/
 /music.gif
 /music2.gif
 /Resources/vhdkJalkuP.gif
+
+## ---- Private dev docs (local only, purged from history 2026-08-25) ----
+/.claude/
+/.planning/
+/EarTrumpet/.planning/
+/AGENTS.md
+/SKILL.md
+/sidebar-polish-issues.md
+/docs/DEV-BUILD-RUN.md
+/docs/FEATURES-3.0.13.md
+/docs/RECENT-CHANGES.md
+/release-notes-3.*.md
+/.impeccable.md
+/BUILD_INSTRUCTIONS.md
