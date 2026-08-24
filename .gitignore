@@ -282,3 +282,7 @@ votes-worker/.wrangler/
 /release-notes-3.*.md
 /.impeccable.md
 /BUILD_INSTRUCTIONS.md
+
+## ---- Release artifacts (2026-08-25, purged) ----
+/.chocolatey/
+/release-checksums-*.txt
