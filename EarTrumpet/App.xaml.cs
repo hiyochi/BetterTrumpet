@@ -455,6 +455,12 @@ namespace EarTrumpet
                                 return;
                             }
 
+                            if (!Settings.AnnouncementsEnabled)
+                            {
+                                Trace.WriteLine("Startup: Announcements feed disabled by privacy setting");
+                                return;
+                            }
+
                             _announcementService = new DataModel.AnnouncementService();
                             _announcementService.AnnouncementsChanged += () =>
                             {
@@ -906,18 +912,23 @@ namespace EarTrumpet
                 ret.Add(new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.CheckForUpdatesText, Glyph = "\xE895", IconData = PhosphorIconData.ArrowsClockwise, IconScale = 0.98, Command = new RelayCommand(CheckForUpdatesFromTray) });
             }
 
-            var whatsNewName = _announcementService != null && _announcementService.HasUnreadAnnouncements
-                ? string.Format(EarTrumpet.Properties.Resources.TrayWhatsNewWithBadge, _announcementService.UnreadCount)
-                : EarTrumpet.Properties.Resources.TrayWhatsNew;
-
-            ret.AddRange(new List<ContextMenuItem>
+            var moreItems = new List<ContextMenuItem>
                 {
-                    new ContextMenuItem { DisplayName = whatsNewName, Glyph = "\xE8F1", IconData = PhosphorIconData.ListBullets, IconScale = 0.93, Command = new RelayCommand(ShowAnnouncements) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayShowOnboarding, Glyph = "\xE7BE", IconData = PhosphorIconData.Sparkle, IconScale = 0.92, Command = new RelayCommand(ShowOnboardingManually) },
                     new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.TrayStarProject, Glyph = "\xE734", IconData = PhosphorIconData.GitHubLogo, IconScale = 0.96, Command = new RelayCommand(OpenGitHubRepo) },
-                    new ContextMenuSeparator(),
-                    new ContextMenuItem
-                    {
+                };
+            if (Settings.AnnouncementsEnabled)
+            {
+                var whatsNewName = _announcementService != null && _announcementService.HasUnreadAnnouncements
+                    ? string.Format(EarTrumpet.Properties.Resources.TrayWhatsNewWithBadge, _announcementService.UnreadCount)
+                    : EarTrumpet.Properties.Resources.TrayWhatsNew;
+                moreItems.Insert(0, new ContextMenuItem { DisplayName = whatsNewName, Glyph = "\xE8F1", IconData = PhosphorIconData.ListBullets, IconScale = 0.93, Command = new RelayCommand(ShowAnnouncements) });
+            }
+            ret.AddRange(moreItems);
+
+            ret.Add(new ContextMenuSeparator());
+            ret.Add(new ContextMenuItem
+            {
                         DisplayName = EarTrumpet.Properties.Resources.TrayWindowsAudioTools,
                         Glyph = "\xE782",
                         Children = new List<ContextMenuItem>
@@ -932,10 +943,10 @@ namespace EarTrumpet
                                     EarTrumpet.Properties.Resources.OpenAppsVolume_Windows11_Text
                                     : EarTrumpet.Properties.Resources.OpenAppsVolume_Windows10_Text, Command = new RelayCommand(() => SettingsPageHelper.Open("apps-volume")) },
                         },
-                    },
-                    new ContextMenuSeparator(),
-                    new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.ContextMenuExitTitle, Glyph = "\xE7E8", IconData = PhosphorIconData.Power, IconScale = 0.95, Command = new RelayCommand(Shutdown) },
-                });
+            });
+
+            ret.Add(new ContextMenuSeparator());
+            ret.Add(new ContextMenuItem { DisplayName = EarTrumpet.Properties.Resources.ContextMenuExitTitle, Glyph = "\xE7E8", IconData = PhosphorIconData.Power, IconScale = 0.95, Command = new RelayCommand(Shutdown) });
             return ret;
         }
 

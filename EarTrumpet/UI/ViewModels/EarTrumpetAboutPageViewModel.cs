@@ -49,6 +49,21 @@ namespace EarTrumpet.UI.ViewModels
             }
         }
 
+        // What's-new announcements feed (privacy). Inherited by the privacy page.
+        public bool AnnouncementsEnabled
+        {
+            get => _settings.AnnouncementsEnabled;
+            set
+            {
+                if (_settings.AnnouncementsEnabled == value)
+                {
+                    return;
+                }
+                _settings.AnnouncementsEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AnnouncementsEnabled)));
+            }
+        }
+
         /// <summary>
         /// Description text explaining what telemetry collects.
         /// </summary>

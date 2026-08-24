@@ -503,6 +503,12 @@ Open [https://eartrumpet.app/jmp/fixfonts] now?</value>
   <data name="PrivacyCheckboxText" xml:space="preserve">
     <value>Send crash data to help improve BetterTrumpet</value>
   </data>
+  <data name="PrivacyAnnouncementsText" xml:space="preserve">
+    <value>What's-new announcements</value>
+  </data>
+  <data name="PrivacyAnnouncementsDesc" xml:space="preserve">
+    <value>Receive news, polls and surveys pushed into the What's new window.</value>
+  </data>
   <data name="ActionAdditionalText" xml:space="preserve">
     <value>and</value>
   </data>

@@ -488,6 +488,12 @@ Voulez-vous ouvrir [https://eartrumpet.app/jmp/fixfonts] maintenant?</value>
   <data name="PrivacyCheckboxText" xml:space="preserve">
     <value>Envoyer les données de diagnostic pour améliorer BetterTrumpet</value>
   </data>
+  <data name="PrivacyAnnouncementsText" xml:space="preserve">
+    <value>Annonces What's new</value>
+  </data>
+  <data name="PrivacyAnnouncementsDesc" xml:space="preserve">
+    <value>Recevoir les actualités, sondages et questionnaires poussés dans la fenêtre What's new.</value>
+  </data>
   <data name="ActionAdditionalText" xml:space="preserve">
     <value>et</value>
   </data>

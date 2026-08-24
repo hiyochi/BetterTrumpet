@@ -1348,6 +1348,14 @@ namespace EarTrumpet
             set => _settings.Set("VoteAnonymousId", value);
         }
 
+        // What's-new announcements feed (privacy setting: some users don't want
+        // pushed news/polls fetched in the background).
+        public bool AnnouncementsEnabled
+        {
+            get => _settings.Get("AnnouncementsEnabled", true);
+            set => _settings.Set("AnnouncementsEnabled", value);
+        }
+
         public bool HasCompletedOnboarding
         {
             get => _settings.Get("HasCompletedOnboarding", false);

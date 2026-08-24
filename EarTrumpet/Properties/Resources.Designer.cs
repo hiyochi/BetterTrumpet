@@ -1582,6 +1582,16 @@ namespace EarTrumpet.Properties {
                 return ResourceManager.GetString("PrivacyCheckboxText", resourceCulture);
             }
         }
+        public static string PrivacyAnnouncementsText {
+            get {
+                return ResourceManager.GetString("PrivacyAnnouncementsText", resourceCulture);
+            }
+        }
+        public static string PrivacyAnnouncementsDesc {
+            get {
+                return ResourceManager.GetString("PrivacyAnnouncementsDesc", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Privacy policy.

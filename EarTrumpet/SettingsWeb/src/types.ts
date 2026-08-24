@@ -36,6 +36,7 @@ export type SettingKey =
   | "textColor"
   | "accentGlowColor"
   | "isTelemetryEnabled"
+  | "announcementsEnabled"
   | "autoCheckForUpdates"
   | "updateChannelIndex"
   | "useMonkeyTickSound";

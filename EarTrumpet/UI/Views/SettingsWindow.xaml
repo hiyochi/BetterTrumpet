@@ -3231,7 +3231,7 @@
         <DataTemplate DataType="{x:Type vm:EarTrumpetPrivacyPageViewModel}">
             <StackPanel Orientation="Vertical" Margin="0,0,16,0">
 
-                <!-- Telemetry card -->
+                // Telemetry card
                 <Border Style="{StaticResource SectionCardBorder}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
@@ -3253,6 +3253,28 @@
                                        VerticalAlignment="Center"
                                        FontSize="12"
                                        Text="{Binding TelemetryStatusText}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- What's-new feed card -->
+                <Border Style="{StaticResource SectionCardBorder}" Margin="0,8,0,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Border Style="{StaticResource SectionIconBorder}">
+                                <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Foreground="White" />
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{x:Static resx:Resources.PrivacyAnnouncementsText}" FontSize="15" FontWeight="SemiBold" />
+                                <TextBlock Text="{x:Static resx:Resources.PrivacyAnnouncementsDesc}"
+                                           Style="{StaticResource BodySubText}" FontSize="12" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <CheckBox IsChecked="{Binding AnnouncementsEnabled, Mode=TwoWay}"
+                                      VerticalAlignment="Center" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
