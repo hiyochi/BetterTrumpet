@@ -32,7 +32,17 @@ namespace EarTrumpet.Interop.Helpers
 
         public static void EnableAcrylic(Visual target, Color color, User32.AccentFlags flags)
         {
-            SetAccentPolicy(HandleFromVisual(target),
+            var handle = HandleFromVisual(target);
+
+            // Acrylic and DWM corner rounding are coupled by the platform, not by choice:
+            // SetWindowCompositionAttribute fills the whole window rect and ignores WPF corner
+            // radii, so an acrylic surface with rounded content shows its tint bleeding past the
+            // corners unless DWM clips the window to the same shape. Rounding here rather than at
+            // each call site because forgetting the pair has already caused that bug twice. A
+            // caller that genuinely wants square acrylic can set DWMWCP_DONOTROUND afterwards.
+            WindowExtensions.EnableRoundedCornersIfApplicable(handle);
+
+            SetAccentPolicy(handle,
                 new User32.AccentPolicy
                 {
                     AccentFlags = flags,
@@ -50,7 +60,7 @@ namespace EarTrumpet.Interop.Helpers
                 });
         }
 
-        internal static IntPtr HandleFromVisual(Visual visual)
+        private static IntPtr HandleFromVisual(Visual visual)
         {
             Visual targetVisual = visual;
 

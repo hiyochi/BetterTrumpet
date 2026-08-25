@@ -48,11 +48,14 @@
                     </Theme:Ref>
                     <!--  Tint for the tray menu and its submenus. Values follow WinUI's
                           AcrylicInAppFillColorDefault so the menus read as standard Win11 flyouts.
-                          Must stay in step with the menus' own Background veil (see the tray menu
-                          in ShellNotifyIcon and SubmenuBorder below): the tint is a window-level
-                          DWM effect that WPF opacity cannot touch, so if the two disagree the
+                          The tint is a window-level DWM effect that WPF opacity cannot touch, so it
+                          must stay in step with MenuBackground below: if the two disagree, the
                           brighter one shows through around the rounded corners.  -->
                     <Theme:Ref Key="AcrylicColor_Menu" Value="Light=#F3F3F3/0.7, Dark=#2C2C2C/0.7" />
+                    <!--  Veil painted over that tint, and its hairline. Used by both the tray menu
+                          (ShellNotifyIcon) and SubmenuBorder below.  -->
+                    <Theme:Ref Key="MenuBackground" Value="Light=#F3F3F3/0.36/0.86, Dark=#2C2C2C/0.36/0.86, HighContrast=Menu" />
+                    <Theme:Ref Key="MenuBorder" Value="Light=Black/0.02/0.02, Dark=White/0.09/0.09, HighContrast=ControlText" />
                     <Theme:Ref Key="AcrylicColor_Settings" Value="Light=LightChromeWhite/0.6, Dark=ApplicationBackgroundDarkTheme/0.7" />
                     <Theme:Ref Key="AcrylicBackground">
                         <Theme:Ref.Rules>
@@ -842,11 +845,10 @@
                                            Placement="Right"
                                            PopupAnimation="None">
 
-                                        <!--  Radius 7 for the same reason as ContentBorder above.
-                                              Colors must stay in step with AcrylicColor_Menu.  -->
+                                        <!--  Radius 7 for the same reason as ContentBorder above.  -->
                                         <Border x:Name="SubmenuBorder"
-                                                Theme:Brush.Background="Light=#F3F3F3/0.36/0.86, Dark=#2C2C2C/0.36/0.86, HighContrast=Menu"
-                                                Theme:Brush.BorderBrush="Light=Black/0.02/0.02, Dark=White/0.09/0.09, HighContrast=ControlText"
+                                                Theme:Brush.Background="MenuBackground"
+                                                Theme:Brush.BorderBrush="MenuBorder"
                                                 BorderThickness="1"
                                                 CornerRadius="7"
                                                 SnapsToDevicePixels="True">
