@@ -1,32 +1,52 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Windows;
 
 namespace EarTrumpet.UI.Themes
 {
     public static class Brush
     {
-        private static readonly Dictionary<string, Dictionary<DependencyObject, ThemeBindingInfo<System.Windows.Media.Brush>>> _bindingInfo = 
-            new Dictionary<string, Dictionary<DependencyObject, ThemeBindingInfo<System.Windows.Media.Brush>>>();
+        // Weak keys. Elements that are rebuilt repeatedly would otherwise be pinned here for the
+        // life of the process: the tray context menu creates a fresh ContextMenu and a fresh set of
+        // MenuItem containers on every right-click, each carrying several theme bindings.
+        private static readonly Dictionary<string, ConditionalWeakTable<DependencyObject, ThemeBindingInfo<System.Windows.Media.Brush>>> _bindingInfo =
+            new Dictionary<string, ConditionalWeakTable<DependencyObject, ThemeBindingInfo<System.Windows.Media.Brush>>>();
 
         private static void ImplementPropertyChanged(string propertyName, DependencyObject dependencyObject, object newValue)
         {
             var value = (string)newValue;
 
-            if (!_bindingInfo.ContainsKey(propertyName))
+            if (!_bindingInfo.TryGetValue(propertyName, out var bindings))
             {
-                _bindingInfo[propertyName] = new Dictionary<DependencyObject, ThemeBindingInfo<System.Windows.Media.Brush>>();
+                bindings = new ConditionalWeakTable<DependencyObject, ThemeBindingInfo<System.Windows.Media.Brush>>();
+                _bindingInfo[propertyName] = bindings;
             }
 
-            var outgoing = _bindingInfo[propertyName].ContainsKey(dependencyObject) ? _bindingInfo[propertyName][dependencyObject] : null;
-            if (outgoing != null)
+            if (bindings.TryGetValue(dependencyObject, out var outgoing))
             {
-                _bindingInfo[propertyName][dependencyObject] = null;
+                bindings.Remove(dependencyObject);
                 outgoing.Leaving();
             }
 
             if (!string.IsNullOrWhiteSpace(value))
             {
-                _bindingInfo[propertyName][dependencyObject] = new ThemeBindingInfo<System.Windows.Media.Brush>(dependencyObject, value, propertyName, BrushValueParser.Parse);
+                bindings.Add(dependencyObject, new ThemeBindingInfo<System.Windows.Media.Brush>(dependencyObject, value, propertyName, BrushValueParser.Parse));
+            }
+        }
+
+        /// <summary>
+        /// Re-applies the theme bindings held for an element. Called when Options.Source changes,
+        /// since a binding created before Source inherited from the parent could not resolve a
+        /// theme yet.
+        /// </summary>
+        internal static void ReapplyBindings(DependencyObject dependencyObject)
+        {
+            foreach (var bindings in _bindingInfo.Values)
+            {
+                if (bindings.TryGetValue(dependencyObject, out var info))
+                {
+                    info.ApplyValue(dependencyObject);
+                }
             }
         }
 
