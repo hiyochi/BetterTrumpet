@@ -344,8 +344,8 @@ namespace EarTrumpet.UI.Helpers
                 }
 
                 Themes.Options.SetSource(contextMenu, Themes.Options.SourceKind.System);
-                Themes.Brush.SetBackground(contextMenu, "MenuBackground");
-                Themes.Brush.SetBorderBrush(contextMenu, "MenuBorder");
+                Themes.Brush.SetBackground(contextMenu, "AcrylicMenuBackground");
+                Themes.Brush.SetBorderBrush(contextMenu, "AcrylicMenuBorder");
                 contextMenu.PreviewKeyDown += (_, e) =>
                 {
                     if (e.Key == Key.Escape)
@@ -364,7 +364,7 @@ namespace EarTrumpet.UI.Helpers
                     // Disable only the exit animation.
                     var popup = (Popup)contextMenu.Parent;
                     popup.PopupAnimation = PopupAnimation.None;
-                    ApplyTrayContextMenuAcrylic(popup, contextMenu);
+                    UI.Behaviors.PopupEx.ApplyMenuAcrylic(popup, contextMenu);
                     if (HasValidContextMenuPoint(point))
                     {
                         PositionTrayContextMenu(popupSource.Handle, point);
@@ -510,19 +510,6 @@ namespace EarTrumpet.UI.Helpers
             }
 
             return WindowsTaskbar.Current.Location;
-        }
-
-        private static void ApplyTrayContextMenuAcrylic(Popup popup, DependencyObject themeTarget)
-        {
-            if (!SystemSettings.IsTransparencyEnabled || SystemParameters.HighContrast)
-            {
-                return;
-            }
-
-            AccentPolicyLibrary.EnableAcrylic(
-                popup,
-                Themes.Manager.Current.ResolveRef(themeTarget, "AcrylicColor_Menu"),
-                User32.AccentFlags.None);
         }
     }
 }

@@ -49,7 +49,7 @@
                     <!--  Tint for the tray menu and its submenus. Neutral values follow WinUI's
                           AcrylicInAppFillColorDefault so the menus read as standard Win11 flyouts.
                           The tint is a window-level DWM effect that WPF opacity cannot touch, so it
-                          must stay in step with MenuBackground below: if the two disagree, the
+                          must stay in step with AcrylicMenuBackground below: if the two disagree, the
                           brighter one shows through around the rounded corners. Any rule added to
                           one has to be mirrored in the other.  -->
                     <Theme:Ref Key="AcrylicColor_Menu">
@@ -61,7 +61,7 @@
                     </Theme:Ref>
                     <!--  Veil painted over that tint. Used by both the tray menu (ShellNotifyIcon)
                           and SubmenuBorder below. Mirrors AcrylicColor_Menu rule for rule.  -->
-                    <Theme:Ref Key="MenuBackground">
+                    <Theme:Ref Key="AcrylicMenuBackground">
                         <Theme:Ref.Rules>
                             <Theme:Rule On="HighContrast" Value="Menu" />
                             <Theme:Rule On="UseAccentColor" Value="SystemAccentDark1/0.36/0.86" />
@@ -77,7 +77,7 @@
                           Must use explicit Light=/Dark= keys: a bare value would win over the
                           HighContrast branch in BrushValueParser and take the border away there
                           too.  -->
-                    <Theme:Ref Key="MenuBorder" Value="Light=Transparent, Dark=Transparent, HighContrast=ControlText" />
+                    <Theme:Ref Key="AcrylicMenuBorder" Value="Light=Transparent, Dark=Transparent, HighContrast=ControlText" />
                     <Theme:Ref Key="AcrylicColor_Settings" Value="Light=LightChromeWhite/0.6, Dark=ApplicationBackgroundDarkTheme/0.7" />
                     <Theme:Ref Key="AcrylicBackground">
                         <Theme:Ref.Rules>
@@ -869,16 +869,15 @@
 
                                         <!--  Radius 7 for the same reason as ContentBorder above.  -->
                                         <Border x:Name="SubmenuBorder"
-                                                Theme:Brush.Background="MenuBackground"
-                                                Theme:Brush.BorderBrush="MenuBorder"
+                                                Theme:Brush.Background="AcrylicMenuBackground"
+                                                Theme:Brush.BorderBrush="AcrylicMenuBorder"
                                                 BorderThickness="1"
                                                 CornerRadius="7"
                                                 SnapsToDevicePixels="True">
-                                            <Border.Effect>
-                                                <DropShadowEffect BlurRadius="16"
-                                                                  Opacity="0.3"
-                                                                  ShadowDepth="4" />
-                                            </Border.Effect>
+                                            <!--  No DropShadowEffect: the popup HWND is sized from
+                                                  this border's DesiredSize, which does not include
+                                                  an effect's bleed, so the shadow was clipped away
+                                                  while still forcing an offscreen render pass.  -->
                                             <Border Padding="4,4"
                                                     Background="Transparent"
                                                     BorderBrush="Transparent"
