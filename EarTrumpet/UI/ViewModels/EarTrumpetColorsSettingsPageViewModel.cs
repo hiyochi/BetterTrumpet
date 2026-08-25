@@ -1007,8 +1007,8 @@ namespace EarTrumpet.UI.ViewModels
                     // Same for the menu acrylic, and for the veil painted over it. These two have to
                     // be overridden together: the tint is a window-level DWM effect that the veil's
                     // alpha shows through, so tinting only one of them makes the menus disagree with
-                    // themselves. MenuBorder is left alone on purpose -- it is a neutral hairline,
-                    // not a surface.
+                    // themselves. MenuBorder is left alone because it is transparent outside high
+                    // contrast, where a custom colour has no business overriding the system border.
                     var acrylicMenuRef = refs.FirstOrDefault(r => r.Key == "AcrylicColor_Menu");
                     if (acrylicMenuRef != null)
                     {

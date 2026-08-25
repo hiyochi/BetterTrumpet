@@ -69,11 +69,15 @@
                             <Theme:Rule Value="#2C2C2C/0.36/0.86" />
                         </Theme:Ref.Rules>
                     </Theme:Ref>
-                    <!--  Neutral hairline. Light alpha is WinUI's SurfaceStrokeColorFlyout
-                          (#0F000000, i.e. 15/255). Deliberately does NOT follow the accent or the
-                          custom background colour: it reads as an edge, not as a surface, so it has
-                          no tint to stay in step with.  -->
-                    <Theme:Ref Key="MenuBorder" Value="Light=Black/0.06/0.06, Dark=White/0.09/0.09, HighContrast=ControlText" />
+                    <!--  Transparent outside high contrast: on Win11 the DWM border drawn on the
+                          rounded popup is the only edge the menus need, and it follows DWM's own
+                          arc rather than the template's undercut radius. High contrast keeps a real
+                          border, because there EnableAcrylic bails early, so the menu gets neither
+                          acrylic nor DWM rounding and would otherwise have no outline at all.
+                          Must use explicit Light=/Dark= keys: a bare value would win over the
+                          HighContrast branch in BrushValueParser and take the border away there
+                          too.  -->
+                    <Theme:Ref Key="MenuBorder" Value="Light=Transparent, Dark=Transparent, HighContrast=ControlText" />
                     <Theme:Ref Key="AcrylicColor_Settings" Value="Light=LightChromeWhite/0.6, Dark=ApplicationBackgroundDarkTheme/0.7" />
                     <Theme:Ref Key="AcrylicBackground">
                         <Theme:Ref.Rules>
@@ -861,7 +865,7 @@
                                            HorizontalOffset="2"
                                            IsOpen="{TemplateBinding IsSubmenuOpen}"
                                            Placement="Right"
-                                           PopupAnimation="None">
+                                           PopupAnimation="Fade">
 
                                         <!--  Radius 7 for the same reason as ContentBorder above.  -->
                                         <Border x:Name="SubmenuBorder"
