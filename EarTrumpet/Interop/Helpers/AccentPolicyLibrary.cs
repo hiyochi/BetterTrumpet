@@ -38,8 +38,15 @@ namespace EarTrumpet.Interop.Helpers
             // SetWindowCompositionAttribute fills the whole window rect and ignores WPF corner
             // radii, so an acrylic surface with rounded content shows its tint bleeding past the
             // corners unless DWM clips the window to the same shape. Rounding here rather than at
-            // each call site because forgetting the pair has already caused that bug twice. A
-            // caller that genuinely wants square acrylic can set DWMWCP_DONOTROUND afterwards.
+            // each call site so the two cannot drift apart.
+            //
+            // Precondition: the HWND rect has to BE the visible surface. A template that reserves
+            // layout space outside the visible edge -- the ContextMenu style's HasDropShadow
+            // padding, for instance -- makes the window larger than what the user sees, and DWM
+            // then rounds the wrong rectangle. Such a caller needs its own clipping, not this.
+            //
+            // Pre-Win11 the rounding is a no-op and the tint stays square; the menus rely on tint
+            // and veil being the same colour, so there the bleed is unnoticeable, not absent.
             WindowExtensions.EnableRoundedCornersIfApplicable(handle);
 
             SetAccentPolicy(handle,

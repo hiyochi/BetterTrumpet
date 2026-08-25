@@ -27,6 +27,9 @@ namespace EarTrumpet.UI.ViewModels
         // material. The final /1 value supplies an accessible solid fallback when
         // system transparency is disabled.
         private const string FlyoutContentTintOpacity = "0.2";
+        // Alpha of the veil the menus paint over their acrylic tint. Mirrors the default in
+        // App.xaml's MenuBackground Ref; keep the two in step.
+        private const string MenuVeilOpacity = "0.36";
 
         // Default colors from shared registry
         private static readonly Color DefaultAccentColor = ThemeRegistry.DefaultAccentColor;
@@ -1001,13 +1004,23 @@ namespace EarTrumpet.UI.ViewModels
                         acrylicFlyoutRef.Rules.Clear();
                     }
 
-                    // Same for the menu acrylic. It is a separate Ref so the menus' tint can stay
-                    // paired with their own background veil, but it still tracks the custom color.
+                    // Same for the menu acrylic, and for the veil painted over it. These two have to
+                    // be overridden together: the tint is a window-level DWM effect that the veil's
+                    // alpha shows through, so tinting only one of them makes the menus disagree with
+                    // themselves. MenuBorder is left alone on purpose -- it is a neutral hairline,
+                    // not a surface.
                     var acrylicMenuRef = refs.FirstOrDefault(r => r.Key == "AcrylicColor_Menu");
                     if (acrylicMenuRef != null)
                     {
                         acrylicMenuRef.Value = $"{bgHex}/{acrylicOpacity}/1";
                         acrylicMenuRef.Rules.Clear();
+                    }
+
+                    var menuBackgroundRef = refs.FirstOrDefault(r => r.Key == "MenuBackground");
+                    if (menuBackgroundRef != null)
+                    {
+                        menuBackgroundRef.Value = $"{bgHex}/{MenuVeilOpacity}/1";
+                        menuBackgroundRef.Rules.Clear();
                     }
 
                     // Override AcrylicBackgroundFallback
@@ -1035,7 +1048,7 @@ namespace EarTrumpet.UI.ViewModels
         {
             if (_refsBackedUp) return;
 
-            var keysToBackup = new[] { "Text", "GrayText", "Background", "FlyoutBackground", "PopupBackground", "AcrylicColor_Flyout", "AcrylicColor_Menu", "AcrylicBackgroundFallback" };
+            var keysToBackup = new[] { "Text", "GrayText", "Background", "FlyoutBackground", "PopupBackground", "AcrylicColor_Flyout", "AcrylicColor_Menu", "MenuBackground", "AcrylicBackgroundFallback" };
             foreach (var key in keysToBackup)
             {
                 var r = Manager.Current.References.FirstOrDefault(x => x.Key == key);

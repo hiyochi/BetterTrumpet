@@ -38,6 +38,7 @@ namespace EarTrumpet.Extensions
         /// fills the entire window rect and ignores WPF corner radii, so without this the square
         /// backdrop bleeds out past the rounded content. Also usable for Popup-hosted HWNDs,
         /// which are not Windows and so cannot go through the extension method above.
+        /// No-op before Windows 11, where the backdrop therefore stays square.
         /// </summary>
         internal static void EnableRoundedCornersIfApplicable(IntPtr handle)
         {
