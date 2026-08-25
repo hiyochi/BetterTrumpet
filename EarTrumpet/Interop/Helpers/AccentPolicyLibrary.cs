@@ -50,7 +50,7 @@ namespace EarTrumpet.Interop.Helpers
                 });
         }
 
-        private static IntPtr HandleFromVisual(Visual visual)
+        internal static IntPtr HandleFromVisual(Visual visual)
         {
             Visual targetVisual = visual;
 

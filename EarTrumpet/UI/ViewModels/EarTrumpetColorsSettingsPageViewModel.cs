@@ -1001,6 +1001,15 @@ namespace EarTrumpet.UI.ViewModels
                         acrylicFlyoutRef.Rules.Clear();
                     }
 
+                    // Same for the menu acrylic. It is a separate Ref so the menus' tint can stay
+                    // paired with their own background veil, but it still tracks the custom color.
+                    var acrylicMenuRef = refs.FirstOrDefault(r => r.Key == "AcrylicColor_Menu");
+                    if (acrylicMenuRef != null)
+                    {
+                        acrylicMenuRef.Value = $"{bgHex}/{acrylicOpacity}/1";
+                        acrylicMenuRef.Rules.Clear();
+                    }
+
                     // Override AcrylicBackgroundFallback
                     var acrylicFallbackRef = refs.FirstOrDefault(r => r.Key == "AcrylicBackgroundFallback");
                     if (acrylicFallbackRef != null)
@@ -1026,7 +1035,7 @@ namespace EarTrumpet.UI.ViewModels
         {
             if (_refsBackedUp) return;
 
-            var keysToBackup = new[] { "Text", "GrayText", "Background", "FlyoutBackground", "PopupBackground", "AcrylicColor_Flyout", "AcrylicBackgroundFallback" };
+            var keysToBackup = new[] { "Text", "GrayText", "Background", "FlyoutBackground", "PopupBackground", "AcrylicColor_Flyout", "AcrylicColor_Menu", "AcrylicBackgroundFallback" };
             foreach (var key in keysToBackup)
             {
                 var r = Manager.Current.References.FirstOrDefault(x => x.Key == key);

@@ -1,4 +1,5 @@
 using EarTrumpet.DataModel;
+using EarTrumpet.Extensions;
 using EarTrumpet.Interop;
 using EarTrumpet.Interop.Helpers;
 using System;
@@ -44,9 +45,13 @@ namespace EarTrumpet.UI.Behaviors
                 }
 
                 var themeTarget = popup.Child ?? (DependencyObject)popup;
+                // Round the popup HWND before applying acrylic: the acrylic pane covers the whole
+                // window rect and knows nothing about SubmenuBorder's CornerRadius, so without
+                // this it shows through as a square frame around the rounded submenu.
+                WindowExtensions.EnableRoundedCornersIfApplicable(AccentPolicyLibrary.HandleFromVisual(popup));
                 AccentPolicyLibrary.EnableAcrylic(
                     popup,
-                    UI.Themes.Manager.Current.ResolveRef(themeTarget, "AcrylicColor_Flyout"),
+                    UI.Themes.Manager.Current.ResolveRef(themeTarget, "AcrylicColor_Menu"),
                     User32.AccentFlags.None);
             }), DispatcherPriority.Loaded);
         }

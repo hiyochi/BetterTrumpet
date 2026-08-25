@@ -11,7 +11,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace EarTrumpet.UI.Helpers
@@ -333,8 +332,6 @@ namespace EarTrumpet.UI.Helpers
                 Trace.WriteLine("ShellNotifyIcon ShowContextMenu");
                 var contextMenu = new ContextMenu
                 {
-                    Background = new SolidColorBrush(Color.FromArgb(142, 24, 24, 26)),
-                    BorderBrush = new SolidColorBrush(Color.FromArgb(88, 255, 255, 255)),
                     FlowDirection = SystemSettings.IsRTL ? FlowDirection.RightToLeft : FlowDirection.LeftToRight,
                     HasDropShadow = false,
                     StaysOpen = true,
@@ -347,8 +344,11 @@ namespace EarTrumpet.UI.Helpers
                 }
 
                 Themes.Options.SetSource(contextMenu, Themes.Options.SourceKind.System);
-                Themes.Brush.SetBackground(contextMenu, "Theme=#18181A/0.36/0.86, HighContrast=Menu");
-                Themes.Brush.SetBorderBrush(contextMenu, "Theme=White/0.28/0.28, HighContrast=ControlText");
+                // Keep these in step with AcrylicColor_Menu in App.xaml. The menu text follows the
+                // system theme, so the background has to as well -- a fixed dark veil gives dark
+                // text on a dark menu under a light system theme.
+                Themes.Brush.SetBackground(contextMenu, "Light=#F3F3F3/0.36/0.86, Dark=#2C2C2C/0.36/0.86, HighContrast=Menu");
+                Themes.Brush.SetBorderBrush(contextMenu, "Light=Black/0.02/0.02, Dark=White/0.09/0.09, HighContrast=ControlText");
                 contextMenu.PreviewKeyDown += (_, e) =>
                 {
                     if (e.Key == Key.Escape)
@@ -367,6 +367,10 @@ namespace EarTrumpet.UI.Helpers
                     // Disable only the exit animation.
                     var popup = (Popup)contextMenu.Parent;
                     popup.PopupAnimation = PopupAnimation.None;
+                    // Round the popup HWND before applying acrylic: the acrylic pane covers the
+                    // whole window rect and knows nothing about the template's CornerRadius, so
+                    // without this it shows through as a square frame around the rounded menu.
+                    WindowExtensions.EnableRoundedCornersIfApplicable(popupSource.Handle);
                     ApplyTrayContextMenuAcrylic(popup, contextMenu);
                     if (HasValidContextMenuPoint(point))
                     {
@@ -524,7 +528,7 @@ namespace EarTrumpet.UI.Helpers
 
             AccentPolicyLibrary.EnableAcrylic(
                 popup,
-                Themes.Manager.Current.ResolveRef(themeTarget, "AcrylicColor_Flyout"),
+                Themes.Manager.Current.ResolveRef(themeTarget, "AcrylicColor_Menu"),
                 User32.AccentFlags.None);
         }
     }
