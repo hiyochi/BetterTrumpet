@@ -464,19 +464,25 @@ namespace EarTrumpet.DataModel
                 var exePath = Process.GetCurrentProcess().MainModule.FileName;
                 var targetDir = Path.GetDirectoryName(exePath);
 
-                // 'robocopy /E' (no /MIR, no /PURGE) overwrites app files but keeps user data
-                // such as ./config, portable.marker or runtimes that are not in the zip.
+                // robocopy mirrors the new release over the app folder:
+                //   /MIR  — also prunes files removed from the new release (no stale DLLs);
+                //   /XD   — keeps ./config, the only user data in portable mode;
+                //   /R /W — bound retries so a transient lock (AV, lingering child process)
+                //           can't hang the script forever (robocopy defaults to ~1M retries).
                 var script = string.Join(Environment.NewLine, new[]
                 {
                     "$ErrorActionPreference = 'Stop'",
-                    $"Wait-Process -Id {Environment.ProcessId} -ErrorAction SilentlyContinue",
+                    // Wait for this process to exit, capped at 60s; force-kill as a safety net
+                    // if shutdown hangs (e.g. a modal dialog is still up).
+                    $"$proc = Get-Process -Id {Environment.ProcessId} -ErrorAction SilentlyContinue",
+                    $"if ($proc -and -not $proc.WaitForExit(60000)) {{ Stop-Process -Id {Environment.ProcessId} -Force }}",
                     "Start-Sleep -Milliseconds 500",
-                    $"robocopy '{sourceDir}' '{targetDir}' /E /NFL /NDL /NJH /NJS /NP | Out-Null",
+                    $"robocopy '{sourceDir}' '{targetDir}' /MIR /XD '{targetDir}\\config' /XJ /R:3 /W:5 /NFL /NDL /NJH /NJS /NP | Out-Null",
                     "if ($LASTEXITCODE -ge 8) { throw \"robocopy failed with exit code $LASTEXITCODE\" }",
                     $"Remove-Item '{extractDir}' -Recurse -Force -ErrorAction SilentlyContinue",
                     $"Remove-Item '{zipPath}' -Force -ErrorAction SilentlyContinue",
-                    $"Start-Process '{exePath}'",
-                    $"Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue",
+                    $"Start-Process '{exePath}' -WorkingDirectory '{targetDir}'",
+                    "Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue",
                 });
 
                 scriptPath = Path.Combine(Path.GetTempPath(), $"BetterTrumpet-update-{LatestVersion}.ps1");
@@ -488,8 +494,7 @@ namespace EarTrumpet.DataModel
                 {
                     FileName = "powershell.exe",
                     Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{scriptPath}\"",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
+                    UseShellExecute = true
                 });
 
                 // Exit via the dispatcher so the app shuts down cleanly; the script
