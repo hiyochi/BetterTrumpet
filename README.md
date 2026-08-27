@@ -209,10 +209,17 @@ It also covers telemetry, update channels, and startup preferences during setup.
 
 ```powershell
 nuget.exe restore EarTrumpet.vs15.sln
-& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" EarTrumpet\EarTrumpet.csproj /p:Configuration=Release /p:Platform=x86 /p:OutputPath=..\Build\Release /t:Rebuild /v:minimal
-powershell -ExecutionPolicy Bypass -File build-portable.ps1
-& 'C:\Users\xammen\AppData\Local\Programs\Inno Setup 6\ISCC.exe' installer.iss
+
+# Build one of x86 / x64 / arm64. The output folder is chosen by the project file:
+# Build\Release, Build\Release-x64, Build\Release-arm64.
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" EarTrumpet\EarTrumpet.csproj /p:Configuration=Release /p:Platform=x86 /t:Rebuild /v:minimal
+
+powershell -ExecutionPolicy Bypass -File build-portable.ps1 -Arch x86
+& 'C:\Users\xammen\AppData\Local\Programs\Inno Setup 6\ISCC.exe' /DArch=x86 installer.iss
 ```
+
+Swap `x86` for `x64` or `arm64` in all three commands to build the other architectures.
+`release.ps1` does all three in one pass.
 
 ## Supported Systems
 

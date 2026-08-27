@@ -45,12 +45,14 @@ peut contenir du travail utilisateur non lie : ne pas utiliser `git add -A`.
 Mettre a jour les sources de version suivantes :
 
 - `GitVersion.yml` : `next-version: X.Y.Z`
-- `installer.iss` : `AppVersion`, `AppVerName`, `OutputBaseFilename`,
-  `VersionInfoVersion` (`X.Y.Z.0`) et `VersionInfoProductVersion`
-- `build-portable.ps1` : dossier et nom du ZIP
+- `installer.iss` : `AppVersion`, `AppVerName`, les trois `OutputName`
+  (x86 / x64 / arm64), `VersionInfoVersion` (`X.Y.Z.0`) et
+  `VersionInfoProductVersion`
+- `release.ps1` : `$Version`
+- `build-portable.ps1` : `$Version` (dossier et nom du ZIP)
 - `chocolatey/bettertrumpet.nuspec` : version et URL des notes
-- `chocolatey/tools/chocolateyInstall.ps1` : URL du setup; le checksum vient
-  apres le build
+- `chocolatey/tools/chocolateyInstall.ps1` : `$version` (les URL en decoulent);
+  les trois checksums viennent apres le build
 - `winget-manifest/xmn.BetterTrumpet*.yaml` et
   `winget-manifest/manifests/x/xmn/BetterTrumpet/X.Y.Z/` : les trois manifestes
   de staging et les trois manifestes canoniques (version, installer, locale);
@@ -63,7 +65,7 @@ Une recherche avant le commit permet de trouver les anciennes valeurs qui
 resteraient dans les fichiers de release :
 
 ```powershell
-rg -n "3\.2\.1|X\.Y\.Z" GitVersion.yml installer.iss build-portable.ps1 `
+rg -n "3\.3\.1|X\.Y\.Z" GitVersion.yml installer.iss release.ps1 build-portable.ps1 `
   chocolatey winget-manifest EarTrumpet.Package release-notes-*.md
 ```
 
@@ -100,7 +102,7 @@ Ajouter explicitement les fichiers prepares, puis creer un tag annote. Le build
 realise ensuite sur ce tag obtient la bonne version GitVersion.
 
 ```powershell
-git add GitVersion.yml installer.iss build-portable.ps1 `
+git add GitVersion.yml installer.iss release.ps1 build-portable.ps1 `
   chocolatey/bettertrumpet.nuspec chocolatey/tools/chocolateyInstall.ps1 `
   winget-manifest/xmn.BetterTrumpet.yaml `
   winget-manifest/xmn.BetterTrumpet.installer.yaml `
@@ -136,8 +138,8 @@ nuget.exe restore EarTrumpet.vs15.sln
   /t:Rebuild `
   /v:minimal
 
-powershell -ExecutionPolicy Bypass -File build-portable.ps1
-& 'C:\Users\xammen\AppData\Local\Programs\Inno Setup 6\ISCC.exe' installer.iss
+powershell -ExecutionPolicy Bypass -File build-portable.ps1 -Arch x86
+& 'C:\Users\xammen\AppData\Local\Programs\Inno Setup 6\ISCC.exe' /DArch=x86 installer.iss
 
 [System.Diagnostics.FileVersionInfo]::GetVersionInfo('Build\Release\BetterTrumpet.exe') |
   Select-Object FileVersion, ProductVersion
