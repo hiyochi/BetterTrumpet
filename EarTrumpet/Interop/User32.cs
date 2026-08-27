@@ -295,7 +295,7 @@ namespace EarTrumpet.Interop
             IntPtr hWnd,
             GWL nIndex,
             int dwNewLong);
-#elif X64
+#elif X64 || ARM64
         [DllImport("user32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
         public static extern IntPtr GetWindowLongPtr(
             IntPtr hWnd,

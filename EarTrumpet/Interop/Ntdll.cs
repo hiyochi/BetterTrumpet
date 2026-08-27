@@ -26,7 +26,7 @@ namespace EarTrumpet.Interop
             public int UniqueProcessId;
             /* ... */
         }
-        #elif X64
+        #elif X64 || ARM64
         [StructLayout(LayoutKind.Explicit)]
         public struct SYSTEM_PROCESS_INFORMATION
         {

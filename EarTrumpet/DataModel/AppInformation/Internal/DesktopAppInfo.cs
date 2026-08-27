@@ -137,7 +137,7 @@ namespace EarTrumpet.DataModel.AppInformation.Internal
                         processInfo = Marshal.PtrToStructure<Ntdll.SYSTEM_PROCESS_INFORMATION>(entryPtr);
 #if X86
                         if (processInfo.UniqueProcessId == processId && processInfo.ImageName.Buffer != IntPtr.Zero)
-#elif X64
+#elif X64 || ARM64
                         if (processInfo.UniqueProcessId.ToInt32() == processId && processInfo.ImageName.Buffer != IntPtr.Zero)
 #endif
                         {

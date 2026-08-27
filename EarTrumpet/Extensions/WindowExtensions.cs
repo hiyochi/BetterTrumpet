@@ -120,7 +120,7 @@ namespace EarTrumpet.Extensions
 #if X86
         private static int GetWindowStyle(IntPtr hWnd, User32.GWL index) => User32.GetWindowLong(hWnd, index);
         private static int SetWindowStyle(IntPtr hWnd, User32.GWL index, int style) => User32.SetWindowLong(hWnd, index, style);
-#elif X64
+#elif X64 || ARM64
         private static int GetWindowStyle(IntPtr hWnd, User32.GWL index) => User32.GetWindowLongPtr(hWnd, index).ToInt32();
         private static int SetWindowStyle(IntPtr hWnd, User32.GWL index, int style) => User32.SetWindowLongPtr(hWnd, index, new IntPtr(style)).ToInt32();
 #endif

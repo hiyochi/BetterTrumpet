@@ -13,7 +13,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>EarTrumpet</RootNamespace>
     <AssemblyName>BetterTrumpet</AssemblyName>
-    <Platforms>x86;x64</Platforms>
+    <Platforms>x86;x64;arm64</Platforms>
     <ApplicationIcon>Assets\BetterTrumpet.ico</ApplicationIcon>
     <ApplicationManifest>App.manifest</ApplicationManifest>
     <LangVersion>latest</LangVersion>
@@ -52,6 +52,12 @@
     <DefineConstants>$(DefineConstants);X64</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Platform)' == 'arm64'">
+    <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+    <PlatformTarget>arm64</PlatformTarget>
+    <DefineConstants>$(DefineConstants);ARM64</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86' OR '$(Configuration)|$(Platform)' == 'VSDebug|x86'">
     <OutputPath>..\Build\Debug\</OutputPath>
     <DebugSymbols>true</DebugSymbols>
@@ -64,11 +70,21 @@
     <DebugType>full</DebugType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|arm64' OR '$(Configuration)|$(Platform)' == 'VSDebug|arm64'">
+    <OutputPath>..\Build\Debug-arm64\</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'VSDebug|x86'">
     <DefineConstants>$(DefineConstants);VSDEBUG</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'VSDebug|x64'">
+    <DefineConstants>$(DefineConstants);VSDEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'VSDebug|arm64'">
     <DefineConstants>$(DefineConstants);VSDEBUG</DefineConstants>
   </PropertyGroup>
 
@@ -81,6 +97,13 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>..\Build\Release-x64\</OutputPath>
+    <SelfContained>true</SelfContained>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|arm64'">
+    <OutputPath>..\Build\Release-arm64\</OutputPath>
     <SelfContained>true</SelfContained>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
