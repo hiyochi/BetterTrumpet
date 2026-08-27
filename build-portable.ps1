@@ -1,5 +1,17 @@
-$src = 'Build\Release'
-$dst = 'dist\BetterTrumpet-3.3.1-portable'
+param(
+    [ValidateSet('x86', 'x64', 'arm64')]
+    [string]$Arch = 'x86'
+)
+
+$Version = '3.3.1'
+
+switch ($Arch) {
+    'x86'   { $src = 'Build\Release';        $suffix = '' }
+    'x64'   { $src = 'Build\Release-x64';    $suffix = '-x64' }
+    'arm64' { $src = 'Build\Release-arm64';  $suffix = '-arm64' }
+}
+
+$dst = "dist\BetterTrumpet-$Version-portable$suffix"
 Remove-Item $dst -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $dst | Out-Null
 
@@ -24,7 +36,7 @@ foreach ($folder in @('SettingsWeb', 'AnnouncementsWeb', 'runtimes')) {
 Set-Content (Join-Path $dst 'portable.marker') 'BetterTrumpet Portable Mode'
 
 # Zip it
-$zipPath = 'dist\BetterTrumpet-3.3.1-portable.zip'
+$zipPath = "dist\BetterTrumpet-$Version-portable$suffix.zip"
 Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
 Compress-Archive -Path "$dst\*" -DestinationPath $zipPath -CompressionLevel Optimal
 
