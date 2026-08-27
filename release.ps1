@@ -44,15 +44,20 @@ if (-not $SkipBuild) {
         Write-Host "  Building Release $arch..."
 
         # Drop the previous run's binary first, so the existence check below cannot be
-        # satisfied by a stale exe if msbuild fails to produce a new one.
+        # satisfied by a stale exe if the build fails to produce a new one.
         Remove-Item "$buildDir\BetterTrumpet.exe" -Force -ErrorAction SilentlyContinue
 
-        & msbuild EarTrumpet.vs15.sln /t:Rebuild /p:Configuration=Release /p:Platform=$arch /m /v:minimal
+        # Build the app project rather than the solution. EarTrumpet.ColorTool is a legacy
+        # x86-only dev utility whose csproj defines OutputPath only for Debug|x86 and
+        # Release|x86, so a solution build fails outright on x64/arm64 with "BaseOutputPath/
+        # OutputPath property is not set"; EarTrumpet.Package is x86-only Store packaging
+        # (AppxBundlePlatforms=x86). Neither ships in the installer or the portable ZIP.
+        & dotnet build EarTrumpet\EarTrumpet.csproj --no-incremental -c Release -p:Platform=$arch -v:minimal --nologo
 
         # $ErrorActionPreference does not apply to native command exit codes, so check
-        # explicitly. Both conditions must hold — a failed build is fatal on its own.
+        # explicitly. Both conditions are independently fatal.
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ Build failed for $arch (msbuild exit code $LASTEXITCODE)!" -ForegroundColor Red
+            Write-Host "❌ Build failed for $arch (dotnet build exit code $LASTEXITCODE)!" -ForegroundColor Red
             exit 1
         }
         if (-not (Test-Path "$buildDir\BetterTrumpet.exe")) {
