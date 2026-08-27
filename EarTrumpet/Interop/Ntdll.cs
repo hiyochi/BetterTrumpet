@@ -36,7 +36,7 @@ namespace EarTrumpet.Interop
             [FieldOffset(56)]
             public UNICODE_STRING ImageName;
             /* ... */
-            [FieldOffset(76)]
+            [FieldOffset(80)]
             public IntPtr UniqueProcessId;
             /* ... */
         }

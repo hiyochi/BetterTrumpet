@@ -129,8 +129,13 @@ if (-not $SkipGit) {
     if ($confirm -ne 'y') {
         Write-Host "  ⏭️  Skipping git operations" -ForegroundColor Gray
     } else {
-        # Stage all
-        git add -A
+        # Stage only the release-artifact files that were modified during this
+        # run. Avoid `git add -A` here because it would scoop up `dist/` (built
+        # installers/portable zips) and any other untracked local state.
+        git add -- `
+            chocolatey\tools\chocolateyInstall.ps1 `
+            winget-manifest\xmn.BetterTrumpet.installer.yaml `
+            "winget-manifest\manifests\x\xmn\BetterTrumpet\$Version\xmn.BetterTrumpet.installer.yaml"
 
         # Commit
         $commitMsg = @"
