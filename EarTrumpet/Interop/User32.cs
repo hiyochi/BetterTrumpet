@@ -295,6 +295,17 @@ namespace EarTrumpet.Interop
             IntPtr hWnd,
             GWL nIndex,
             int dwNewLong);
+#elif X64
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
+        public static extern IntPtr GetWindowLongPtr(
+            IntPtr hWnd,
+            GWL nIndex);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
+        public static extern IntPtr SetWindowLongPtr(
+            IntPtr hWnd,
+            GWL nIndex,
+            IntPtr dwNewLong);
 #else
 #error [Get/Set]WindowLong not supported on 64-bit platforms
 #endif

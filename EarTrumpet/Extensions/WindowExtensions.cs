@@ -90,32 +90,40 @@ namespace EarTrumpet.Extensions
 
         public static void RemoveWindowStyle(this Window window, int styleToRemove)
         {
-            var currentStyle = User32.GetWindowLong(window.GetHandle(), User32.GWL.GWL_STYLE);
+            var currentStyle = GetWindowStyle(window.GetHandle(), User32.GWL.GWL_STYLE);
             if (currentStyle == 0)
             {
                 Trace.WriteLine($"WindowExtensions RemoveWindowStyle Failed: ({Marshal.GetLastWin32Error()})");
                 return;
             }
 
-            User32.SetWindowLong(window.GetHandle(), User32.GWL.GWL_STYLE, (currentStyle & ~styleToRemove));
+            SetWindowStyle(window.GetHandle(), User32.GWL.GWL_STYLE, currentStyle & ~styleToRemove);
         }
 
         public static void ApplyExtendedWindowStyle(this Window window, int newExStyle)
         {
-            var currentExStyle = User32.GetWindowLong(window.GetHandle(), User32.GWL.GWL_EXSTYLE);
+            var currentExStyle = GetWindowStyle(window.GetHandle(), User32.GWL.GWL_EXSTYLE);
             if (currentExStyle == 0)
             {
                 Trace.WriteLine($"WindowExtensions ApplyExtendedWindowStyle Failed: ({Marshal.GetLastWin32Error()})");
                 return;
             }
 
-            var oldExStyle = User32.SetWindowLong(window.GetHandle(), User32.GWL.GWL_EXSTYLE, currentExStyle | newExStyle);
+            var oldExStyle = SetWindowStyle(window.GetHandle(), User32.GWL.GWL_EXSTYLE, currentExStyle | newExStyle);
             if (oldExStyle != currentExStyle)
             {
                 Trace.WriteLine($"WindowExtensions ApplyExtendedWindowStyle Unexpected: ({oldExStyle} vs. {currentExStyle})");
                 return;
             }
         }
+
+#if X86
+        private static int GetWindowStyle(IntPtr hWnd, User32.GWL index) => User32.GetWindowLong(hWnd, index);
+        private static int SetWindowStyle(IntPtr hWnd, User32.GWL index, int style) => User32.SetWindowLong(hWnd, index, style);
+#elif X64
+        private static int GetWindowStyle(IntPtr hWnd, User32.GWL index) => User32.GetWindowLongPtr(hWnd, index).ToInt32();
+        private static int SetWindowStyle(IntPtr hWnd, User32.GWL index, int style) => User32.SetWindowLongPtr(hWnd, index, new IntPtr(style)).ToInt32();
+#endif
 
         public static IntPtr GetHandle(this Window window)
         {
