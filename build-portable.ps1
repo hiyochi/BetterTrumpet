@@ -3,12 +3,19 @@ param(
     [string]$Arch = 'x86'
 )
 
-$Version = '3.3.1'
+$ErrorActionPreference = 'Stop'
+$Version = '3.4.0'
 
 switch ($Arch) {
     'x86'   { $src = 'Build\Release';        $suffix = '' }
     'x64'   { $src = 'Build\Release-x64';    $suffix = '-x64' }
     'arm64' { $src = 'Build\Release-arm64';  $suffix = '-arm64' }
+}
+
+# Without this, a missing build dir is only a non-terminating error: the script would sail on and
+# emit a ~200-byte ZIP containing nothing but portable.marker, with exit code 0.
+if (-not (Test-Path (Join-Path $src 'BetterTrumpet.exe'))) {
+    throw "Build output not found: $src\BetterTrumpet.exe - build Release|$Arch first."
 }
 
 $dst = "dist\BetterTrumpet-$Version-portable$suffix"
