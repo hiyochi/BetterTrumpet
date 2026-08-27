@@ -124,22 +124,17 @@ Avant de continuer, confirmer que `git show vX.Y.Z` pointe vers le commit attend
 
 ## 4. Construire et verifier les artefacts GitHub
 
-Utiliser le MSBuild de Visual Studio installe. Le chemin ci-dessous est le
-chemin habituel; l'adapter si la version de Visual Studio est differente.
+`EarTrumpet.csproj` est au format SDK : `dotnet build` suffit et restaure tout
+seul. Ne pas construire la solution pour x64/arm64 : `EarTrumpet.ColorTool` et
+`EarTrumpet.Package` sont x86 uniquement et en sont exclus. Remplacer `x86` par
+`x64` ou `arm64` dans les trois commandes; le dossier de sortie est choisi par
+le fichier projet (`Build\Release`, `Build\Release-x64`, `Build\Release-arm64`).
 
 ```powershell
-nuget.exe restore EarTrumpet.vs15.sln
-
-& 'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe' `
-  EarTrumpet\EarTrumpet.csproj `
-  /p:Configuration=Release `
-  /p:Platform=x86 `
-  /p:OutputPath=..\Build\Release `
-  /t:Rebuild `
-  /v:minimal
+dotnet build EarTrumpet\EarTrumpet.csproj --no-incremental -c Release -p:Platform=x86
 
 powershell -ExecutionPolicy Bypass -File build-portable.ps1 -Arch x86
-& 'C:\Users\xammen\AppData\Local\Programs\Inno Setup 6\ISCC.exe' /DArch=x86 installer.iss
+& "$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe" /DArch=x86 installer.iss
 
 [System.Diagnostics.FileVersionInfo]::GetVersionInfo('Build\Release\BetterTrumpet.exe') |
   Select-Object FileVersion, ProductVersion
