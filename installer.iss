@@ -7,23 +7,29 @@
 #if Arch == "x86"
   #define BuildDir "Build\Release"
   #define ArchAllowed "x86compatible"
-  #define OutputName "BetterTrumpet-3.3.1-setup"
+  #define OutputName "BetterTrumpet-3.4.0-setup"
 #elif Arch == "x64"
   #define BuildDir "Build\Release-x64"
   #define ArchAllowed "x64compatible"
-  #define OutputName "BetterTrumpet-3.3.1-setup-x64"
+  #define ArchIn64BitMode "x64compatible"
+  #define OutputName "BetterTrumpet-3.4.0-setup-x64"
 #elif Arch == "arm64"
   #define BuildDir "Build\Release-arm64"
   #define ArchAllowed "arm64"
-  #define OutputName "BetterTrumpet-3.3.1-setup-arm64"
+  #define ArchIn64BitMode "arm64"
+  #define OutputName "BetterTrumpet-3.4.0-setup-arm64"
 #else
   #error Unknown Arch value. Use x86, x64, or arm64.
 #endif
 
 [Setup]
+; One AppId for all three architectures, matching the value Inno derived from AppName before it
+; was set explicitly, so existing installs keep their uninstall entry, and installing a different
+; architecture upgrades in place instead of leaving two copies registered side by side.
+AppId=BetterTrumpet
 AppName=BetterTrumpet
-AppVersion=3.3.1
-AppVerName=BetterTrumpet 3.3.1
+AppVersion=3.4.0
+AppVerName=BetterTrumpet 3.4.0
 AppPublisher=xammen
 AppPublisherURL=https://bettertrumpet.hiii.boo
 AppSupportURL=https://github.com/xammen/BetterTrumpet/issues
@@ -36,6 +42,12 @@ OutputBaseFilename={#OutputName}
 Compression=lzma2/ultra64
 SolidCompression=yes
 ArchitecturesAllowed={#ArchAllowed}
+; Without this, {autopf} resolves through {commonpf32}, so a native x64/arm64 build would install
+; into "Program Files (x86)" with its registry writes redirected into Wow6432Node.
+; x86 omits the directive entirely: blank is both its default and the value it wants.
+#ifdef ArchIn64BitMode
+ArchitecturesInstallIn64BitMode={#ArchIn64BitMode}
+#endif
 SetupIconFile=EarTrumpet\Assets\BetterTrumpet.ico
 WizardStyle=modern
 WizardSizePercent=110,110
@@ -43,11 +55,11 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 LicenseFile=LICENSE
-VersionInfoVersion=3.3.1.0
+VersionInfoVersion=3.4.0.0
 VersionInfoCompany=xammen
 VersionInfoDescription=BetterTrumpet - Windows Volume Control
 VersionInfoProductName=BetterTrumpet
-VersionInfoProductVersion=3.3.1
+VersionInfoProductVersion=3.4.0
 MinVersion=10.0.17134
 
 [Languages]
