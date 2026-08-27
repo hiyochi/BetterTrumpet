@@ -14,19 +14,7 @@ InstallModes:
 Installers:
   - Architecture: x86
     InstallerUrl: https://github.com/xammen/BetterTrumpet/releases/download/v3.3.1/BetterTrumpet-3.3.1-setup.exe
-    InstallerSha256: PLACEHOLDER_CHECKSUM_X86
-    InstallerSwitches:
-      Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
-      SilentWithProgress: /SILENT /SUPPRESSMSGBOXES /NORESTART /SP-
-  - Architecture: x64
-    InstallerUrl: https://github.com/xammen/BetterTrumpet/releases/download/v3.3.1/BetterTrumpet-3.3.1-setup-x64.exe
-    InstallerSha256: PLACEHOLDER_CHECKSUM_X64
-    InstallerSwitches:
-      Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
-      SilentWithProgress: /SILENT /SUPPRESSMSGBOXES /NORESTART /SP-
-  - Architecture: arm64
-    InstallerUrl: https://github.com/xammen/BetterTrumpet/releases/download/v3.3.1/BetterTrumpet-3.3.1-setup-arm64.exe
-    InstallerSha256: PLACEHOLDER_CHECKSUM_ARM64
+    InstallerSha256: 6A36FEF090BBE1629CF5AE42E4B092092D1B847B414AA3A757EDE370508FC972
     InstallerSwitches:
       Silent: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
       SilentWithProgress: /SILENT /SUPPRESSMSGBOXES /NORESTART /SP-
