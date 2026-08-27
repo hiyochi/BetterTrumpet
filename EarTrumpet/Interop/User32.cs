@@ -307,7 +307,7 @@ namespace EarTrumpet.Interop
             GWL nIndex,
             IntPtr dwNewLong);
 #else
-#error [Get/Set]WindowLong not supported on 64-bit platforms
+#error Platform not supported. Define X86, X64 or ARM64.
 #endif
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
