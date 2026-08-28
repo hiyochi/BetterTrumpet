@@ -51,6 +51,10 @@ namespace EarTrumpet.UI.Themes
         /// </summary>
         internal static void ReapplyBindings(DependencyObject dependencyObject)
         {
+            // Also here, not just in ImplementPropertyChanged: a binding created while Manager did
+            // not yet exist skips the subscription, and this is the path that then attaches it.
+            EnsureSubscribedToThemeChanged();
+
             foreach (var bindings in _bindingInfo.Values)
             {
                 if (bindings.TryGetValue(dependencyObject, out var info))
@@ -80,9 +84,10 @@ namespace EarTrumpet.UI.Themes
 
         private static void OnThemeChanged()
         {
-            // Materialized before dispatching: enumerating a ConditionalWeakTable while a handler
-            // sets another theme binding would be a concurrent mutation. Collected keys are already
-            // absent from the enumeration.
+            // Materialized before dispatching: a handler that sets a theme binding would otherwise
+            // mutate what is being enumerated -- the ConditionalWeakTable it lands in, and the outer
+            // Dictionary too if it is the first binding for that property name. Collected keys are
+            // already absent from the enumeration.
             var bindings = _bindingInfo.Values.SelectMany(table => table).Select(entry => entry.Value).ToList();
             foreach (var binding in bindings)
             {
