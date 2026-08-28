@@ -292,6 +292,10 @@ namespace EarTrumpet.DataModel
         /// Release-asset suffix for the architecture this process is running as. x86 keeps the
         /// historical unsuffixed name ("BetterTrumpet-3.4.0-setup.exe"); x64 and arm64 releases
         /// carry "-x64"/"-arm64" so each install updates to a binary of its own architecture.
+        /// This is deliberately the *process* architecture, not the machine's: an x86 install
+        /// running under ARM64 emulation keeps updating to x86 rather than swapping the user's
+        /// install out from under them for a different binary. Migrating to a native build is a
+        /// manual reinstall.
         /// </summary>
         private static string ArchAssetSuffix
         {

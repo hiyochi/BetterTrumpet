@@ -247,6 +247,10 @@ Write-Host ""
 # ============================================================================
 # STEP 5: Git Commit & Tag
 # ============================================================================
+# This tags after building, the reverse of the manual order in docs/RELEASE.md, so that the
+# tagged commit already carries the checksums computed in step 4. It does not change what gets
+# stamped into the binaries: GitVersion.yml pins next-version and formats every version field as
+# {MajorMinorPatch}, so an untagged build and a tagged one both produce $Version exactly.
 if (-not $SkipGit) {
     Write-Host "📝 Step 5: Git Commit & Tag..." -ForegroundColor Yellow
 

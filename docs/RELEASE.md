@@ -45,9 +45,9 @@ peut contenir du travail utilisateur non lie : ne pas utiliser `git add -A`.
 Mettre a jour les sources de version suivantes :
 
 - `GitVersion.yml` : `next-version: X.Y.Z`
-- `installer.iss` : `AppVersion`, `AppVerName`, les trois `OutputName`
-  (x86 / x64 / arm64), `VersionInfoVersion` (`X.Y.Z.0`) et
-  `VersionInfoProductVersion`
+- `installer.iss` : `#define AppVersionStr "X.Y.Z"` uniquement; `AppVersion`,
+  `AppVerName`, les trois `OutputName`, `VersionInfoVersion` (`X.Y.Z.0`) et
+  `VersionInfoProductVersion` en decoulent
 - `release.ps1` : `$Version`
 - `build-portable.ps1` : `$Version` (dossier et nom du ZIP)
 - `chocolatey/bettertrumpet.nuspec` : version et URL des notes
@@ -121,6 +121,11 @@ git push origin vX.Y.Z
 
 Si la release ne comprend pas le Store, omettre son manifeste du `git add`.
 Avant de continuer, confirmer que `git show vX.Y.Z` pointe vers le commit attendu.
+
+`release.ps1` inverse cet ordre : il construit d'abord et ne tagge qu'apres avoir
+ecrit les checksums, de sorte que le commit tagge les contienne deja. Les deux
+ordres produisent les memes binaires : `GitVersion.yml` fixe `next-version` et
+formate chaque champ de version en `{MajorMinorPatch}`.
 
 ## 4. Construire et verifier les artefacts GitHub
 

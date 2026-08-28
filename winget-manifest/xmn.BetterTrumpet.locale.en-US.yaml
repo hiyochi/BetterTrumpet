@@ -21,7 +21,7 @@ Tags:
   - bettertrumpet
   - eartrumpet
   - windows
-ReleaseNotes: "Adds native x64 and ARM64 builds alongside x86 — winget now installs the package matching your machine. Also fixes an overflow that broke the tray context menu on 64-bit builds when opened from the keyboard or from a monitor above the primary one."
+ReleaseNotes: "Adds native x64 and ARM64 builds alongside x86 — winget now installs the package matching your machine. Existing x86 installs keep updating to x86 and do not migrate on their own; reinstall to switch to the native build. Also fixes an overflow that broke the tray context menu on 64-bit builds when opened from the keyboard or from a monitor above the primary one, and a struct-layout error that corrupted tray scroll-wheel input on 64-bit builds."
 ReleaseNotesUrl: https://github.com/xammen/BetterTrumpet/releases/tag/v3.4.0
 ManifestType: defaultLocale
 ManifestVersion: 1.10.0
