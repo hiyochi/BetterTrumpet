@@ -4,32 +4,42 @@
   #define Arch "x86"
 #endif
 
+#define AppVersionStr "3.4.0"
+
 #if Arch == "x86"
   #define BuildDir "Build\Release"
   #define ArchAllowed "x86compatible"
-  #define OutputName "BetterTrumpet-3.4.0-setup"
+  #define ArchSuffix ""
 #elif Arch == "x64"
   #define BuildDir "Build\Release-x64"
   #define ArchAllowed "x64compatible"
   #define ArchIn64BitMode "x64compatible"
-  #define OutputName "BetterTrumpet-3.4.0-setup-x64"
+  #define ArchSuffix "-x64"
 #elif Arch == "arm64"
   #define BuildDir "Build\Release-arm64"
   #define ArchAllowed "arm64"
   #define ArchIn64BitMode "arm64"
-  #define OutputName "BetterTrumpet-3.4.0-setup-arm64"
+  #define ArchSuffix "-arm64"
 #else
   #error Unknown Arch value. Use x86, x64, or arm64.
 #endif
 
+#define OutputName "BetterTrumpet-" + AppVersionStr + "-setup" + ArchSuffix
+
 [Setup]
 ; One AppId for all three architectures, matching the value Inno derived from AppName before it
-; was set explicitly, so existing installs keep their uninstall entry, and installing a different
-; architecture upgrades in place instead of leaving two copies registered side by side.
+; was set explicitly, so existing installs keep their uninstall entry.
+;
+; This makes a different architecture upgrade in place only for the default per-user install,
+; where the uninstall key lives under HKCU (not subject to WOW64 redirection) and {autopf} is
+; the same directory for every architecture. For an elevated all-users install it does not:
+; the x86 build registers under HKLM\...\Wow6432Node and lands in "Program Files (x86)" while
+; the native builds use the 64-bit view and "Program Files", so the two cannot see each other
+; and would coexist. Switching architecture on an all-users install means uninstalling first.
 AppId=BetterTrumpet
 AppName=BetterTrumpet
-AppVersion=3.4.0
-AppVerName=BetterTrumpet 3.4.0
+AppVersion={#AppVersionStr}
+AppVerName=BetterTrumpet {#AppVersionStr}
 AppPublisher=xammen
 AppPublisherURL=https://bettertrumpet.hiii.boo
 AppSupportURL=https://github.com/xammen/BetterTrumpet/issues
@@ -55,11 +65,11 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 LicenseFile=LICENSE
-VersionInfoVersion=3.4.0.0
+VersionInfoVersion={#AppVersionStr}.0
 VersionInfoCompany=xammen
 VersionInfoDescription=BetterTrumpet - Windows Volume Control
 VersionInfoProductName=BetterTrumpet
-VersionInfoProductVersion=3.4.0
+VersionInfoProductVersion={#AppVersionStr}
 MinVersion=10.0.17134
 
 [Languages]
